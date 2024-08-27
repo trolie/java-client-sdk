@@ -1,0 +1,46 @@
+# Set default behavior
+* text=auto
+
+# Explicitly set things to use LF or CRLF
+# Use LF for pretty much everything
+*.sql text eol=lf
+*.sum text eol=lf
+*.sh text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.cxx text eol=lf
+*.h text eol=lf
+*.hh text eol=lf
+*.hxx text eol=lf
+*.java text eol=lf
+*.feature text eol=lf
+*.py text eol=lf
+*.avdl text eol=lf
+*.avro text eol=lf
+*.xml text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.asc text eol=lf
+*.key text eol=lf
+*.properties text eol=lf
+*.cmake text eol=lf
+*.cfg text eol=lf
+*.config text eol=lf
+*.csv text eol=lf
+*.yml text eol=lf
+*.service text eol=lf
+*.spec text eol=lf
+*.exp text eol=lf
+*.go text eol=lf
+*.mod text eol=lf
+Jenkinsfile text eol=lf
+Dockerfile text eol=lf
+mvnw text eol=lf
+*.gitattributes text eol=lf
+*.gitignore text eol=lf
+*.dockerignore text eol=lf
+
+# Use CRLF for Windows command stuff
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
