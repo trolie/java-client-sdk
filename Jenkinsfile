@@ -68,14 +68,14 @@ pipeline {
                 --build-arg SIGNER_KEY_PASS=$SIGNER_ALIAS_PSW \
                 --build-arg BUILD_NUMBER=${versionNumber} \
                 --build-arg BUILD_GOAL=$goal \
-                -t $projectName_$imageSuffix \
+                -t ${projectName}_$imageSuffix \
                 .
                 """
-                        sh "docker run -d --name ctr_$projectName_$imageSuffix $projectName_$imageSuffix"
-                        sh "docker cp ctr_$projectName_$imageSuffix:/src/. $workspace/results/"
+                        sh "docker run -d --name ctr_${projectName}_$imageSuffix ${projectName}_$imageSuffix"
+                        sh "docker cp ctr_${projectName}_$imageSuffix:/src/. $workspace/results/"
 
                         // Clean up our leftovers out of the Docker Daemon.
-                        sh "docker container rm --force ctr_$projectName_$imageSuffix || true"
+                        sh "docker container rm --force ctr_${projectName}_$imageSuffix || true"
                     }
 
 
@@ -86,14 +86,14 @@ pipeline {
                         // Note: Container version should be kept in sync with pom version.
                         //       Could automate reading/trimming pom version in the future
                         tag = "${APP_VERSION}_${versionNumber}"
-                        imageName = "dig-grid-artifactory.apps.ge.com/ngem-docker/$projectName-build-base:${tag}"
+                        imageName = "dig-grid-artifactory.apps.ge.com/ngem-docker/${projectName}-build-base:${tag}"
                         echo "Pushing build container $imageName"
-                        sh "docker tag $projectName_$imageSuffix $imageName"
+                        sh "docker tag ${projectName}_$imageSuffix $imageName"
                         sh "docker push $imageName"
                     }
 
                     // Clean up our leftovers out of the Docker Daemon.
-                    sh "docker image rm --force $projectName_$imageSuffix || true"
+                    sh "docker image rm --force ${projectName}_$imageSuffix || true"
 
                 }
             }
