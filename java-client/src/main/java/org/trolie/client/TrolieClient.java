@@ -1,5 +1,12 @@
 package org.trolie.client;
 
+import java.util.Iterator;
+
+import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
+import org.trolie.client.model.ratingproposals.ForecastRating;
+import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
+import org.trolie.client.ratingproposals.ForcastRatingProposalUpdate;
+
 /**
  * Primary TROLIE client access interface.  Represents configured access to a single
  * TROLIE server.  Should be used as a singleton within applications, at least for each
@@ -16,7 +23,7 @@ public interface TrolieClient {
 
     void subscribeToInUseLimitForecastUpdates();
 
-    void updateForecastProposal();
+    ForcastRatingProposalUpdate createForecastProposalUpdate();
 
     void getInUseLimits();
 
