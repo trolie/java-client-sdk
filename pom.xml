@@ -11,7 +11,8 @@
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Parent POM for the TROLIE Java client SDK, implementing
-      an opinionated idiomatic Java API to access TROLIE servers.</description>
+        an opinionated idiomatic Java API to access TROLIE servers.
+    </description>
     <url>https://trolie.energy</url>
 
     <licenses>
@@ -21,16 +22,16 @@
         </license>
     </licenses>
 
-  <distributionManagement>
-    <repository>
-      <id>ARTIFACTORY-RELEASE</id>
-      <url>https://dig-grid-artifactory.apps.ge.com/artifactory/ngem-mvn-release</url>
-    </repository>
-    <snapshotRepository>
-      <id>ARTIFACTORY-SNAPSHOT</id>
-      <url>https://dig-grid-artifactory.apps.ge.com/artifactory/ngem-mvn-snapshot</url>
-    </snapshotRepository>
-  </distributionManagement>
+    <distributionManagement>
+        <repository>
+            <id>ARTIFACTORY-RELEASE</id>
+            <url>https://dig-grid-artifactory.apps.ge.com/artifactory/ngem-mvn-release</url>
+        </repository>
+        <snapshotRepository>
+            <id>ARTIFACTORY-SNAPSHOT</id>
+            <url>https://dig-grid-artifactory.apps.ge.com/artifactory/ngem-mvn-snapshot</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <modules>
         <module>java-client</module>
@@ -61,9 +62,10 @@
 
         <!-- Dependency versions -->
         <version.lombok>1.18.34</version.lombok>
-        
+
         <version.reactor.bom>2023.0.9</version.reactor.bom>
-		<version.jackson>2.15.4</version.jackson>
+        <version.jackson>2.15.4</version.jackson>
+        <version.httpclient5>5.3.1</version.httpclient5>
 
     </properties>
 
@@ -76,29 +78,27 @@
                 <version>${version.lombok}</version>
                 <scope>provided</scope>
             </dependency>
-	        <dependency>
-	            <groupId>io.projectreactor</groupId>
-	            <artifactId>reactor-bom</artifactId>
-	            <version>${version.reactor.bom}</version> 
-	            <type>pom</type>
-	            <scope>import</scope>
-	        </dependency>            
-	        <dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-  				<artifactId>jackson-core</artifactId>
-  				<version>${version.jackson}</version>
-			</dependency>        
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-    			<artifactId>jackson-databind</artifactId>
-    			<version>${version.jackson}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-    			<artifactId>jackson-annotations</artifactId>
-    			<version>${version.jackson}</version>
-			</dependency>							
-		</dependencies>
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>${version.httpclient5}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
 
     <build>

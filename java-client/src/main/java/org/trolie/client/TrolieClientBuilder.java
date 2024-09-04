@@ -1,9 +1,10 @@
 package org.trolie.client;
 
 
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.trolie.client.impl.TrolieClientImpl;
 
-import reactor.netty.http.client.HttpClient;
 
 public class TrolieClientBuilder {
 
@@ -23,11 +24,11 @@ public class TrolieClientBuilder {
     public TrolieClient build() {
         
     	if (httpClient == null) {
-   			httpClient = HttpClient.create();
+   			httpClient = HttpClients.createDefault();
     	}
-    	
-    	httpClient.baseUrl(baseUrl);
-    	httpClient.compress(true);
-    	return new TrolieClientImpl(httpClient);
+
+		// TODO: Add RequestConfig, HttpHost, and SSL config. Maybe don't make user provide HttpClient?
+
+    	return new TrolieClientImpl(httpClient, baseUrl);
     }
 }

@@ -1,11 +1,7 @@
 package org.trolie.client;
 
-import java.util.Iterator;
+import org.trolie.client.ratingproposals.ForecastRatingProposalUpdate;
 
-import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
-import org.trolie.client.model.ratingproposals.ForecastRating;
-import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
-import org.trolie.client.ratingproposals.ForcastRatingProposalUpdate;
 
 /**
  * Primary TROLIE client access interface.  Represents configured access to a single
@@ -23,7 +19,7 @@ public interface TrolieClient {
 
     void subscribeToInUseLimitForecastUpdates();
 
-    ForcastRatingProposalUpdate createForecastProposalUpdate();
+    ForecastRatingProposalUpdate createForecastProposalUpdate();
 
     void getInUseLimits();
 
@@ -31,5 +27,7 @@ public interface TrolieClient {
 
     void updateRealTimeProposal();
 
-
+    static TrolieClientBuilder builder(String baseUrl) {
+        return new TrolieClientBuilder(baseUrl);
+    }
 }

@@ -1,20 +1,16 @@
 package org.trolie.client.impl;
 
-import java.util.Iterator;
-
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.trolie.client.TrolieClient;
-import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
-import org.trolie.client.model.ratingproposals.ForecastRating;
-import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
-import org.trolie.client.ratingproposals.ForcastRatingProposalUpdate;
+import org.trolie.client.ratingproposals.ForecastRatingProposalUpdate;
 
 import lombok.AllArgsConstructor;
-import reactor.netty.http.client.HttpClient;
 
 @AllArgsConstructor
 public class TrolieClientImpl implements TrolieClient {
 
 	HttpClient httpClient;
+	String baseUrl;
 	
 	@Override
 	public void getInUseLimitForecasts(String monitoringSet) {}
@@ -23,8 +19,8 @@ public class TrolieClientImpl implements TrolieClient {
 	public void subscribeToInUseLimitForecastUpdates() {}
 
 	@Override
-	public ForcastRatingProposalUpdate createForecastProposalUpdate() {
-		return new ForcastRatingProposalUpdate(httpClient);
+	public ForecastRatingProposalUpdate createForecastProposalUpdate() {
+		return new ForecastRatingProposalUpdate(httpClient, baseUrl);
 	}
 
 	@Override
