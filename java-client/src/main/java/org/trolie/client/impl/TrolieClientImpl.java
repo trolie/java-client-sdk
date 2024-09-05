@@ -1,8 +1,14 @@
 package org.trolie.client.impl;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.http.HttpHost;
 import org.trolie.client.TrolieClient;
-import org.trolie.client.ratingproposals.ForecastRatingProposalUpdate;
+import org.trolie.client.request.ratingproposals.ForecastRatingProposalStreamingUpdate;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
 
@@ -10,7 +16,11 @@ import lombok.AllArgsConstructor;
 public class TrolieClientImpl implements TrolieClient {
 
 	HttpClient httpClient;
-	String baseUrl;
+	HttpHost host;
+	RequestConfig requestConfig;
+	int bufferSize;
+	ThreadPoolExecutor threadPoolExecutor;
+	ObjectMapper objectMapper;
 	
 	@Override
 	public void getInUseLimitForecasts(String monitoringSet) {}
@@ -19,8 +29,8 @@ public class TrolieClientImpl implements TrolieClient {
 	public void subscribeToInUseLimitForecastUpdates() {}
 
 	@Override
-	public ForecastRatingProposalUpdate createForecastProposalUpdate() {
-		return new ForecastRatingProposalUpdate(httpClient, baseUrl);
+	public ForecastRatingProposalStreamingUpdate createForecastRatingProposalStreamingUpdate() {
+		return new ForecastRatingProposalStreamingUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
 	}
 
 	@Override

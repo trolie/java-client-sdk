@@ -1,6 +1,7 @@
 package org.trolie.client;
 
-import org.trolie.client.ratingproposals.ForecastRatingProposalUpdate;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.trolie.client.request.ratingproposals.ForecastRatingProposalStreamingUpdate;
 
 
 /**
@@ -19,7 +20,7 @@ public interface TrolieClient {
 
     void subscribeToInUseLimitForecastUpdates();
 
-    ForecastRatingProposalUpdate createForecastProposalUpdate();
+    ForecastRatingProposalStreamingUpdate createForecastRatingProposalStreamingUpdate();
 
     void getInUseLimits();
 
@@ -27,7 +28,7 @@ public interface TrolieClient {
 
     void updateRealTimeProposal();
 
-    static TrolieClientBuilder builder(String baseUrl) {
-        return new TrolieClientBuilder(baseUrl);
+    static TrolieClientBuilder builder(String baseUrl, HttpClientBuilder clientBuilder) {
+        return new TrolieClientBuilder(baseUrl, clientBuilder);
     }
 }
