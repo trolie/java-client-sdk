@@ -92,10 +92,10 @@ public class TrolieClientTest {
 				Thread.sleep(1000);
 			}
 		}
-		
 		if (!started) {
 			throw new IllegalStateException("Test server did not start within timeout");
 		}
+		logger.info("Test server started");
 	}
 	
 	@AfterAll

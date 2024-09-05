@@ -151,7 +151,7 @@ public class ForecastRatingProposalStreamingUpdate extends AbstractStreamingUpda
 			try {
 				jsonGenerator.close();
 			} catch (Exception e) {
-				logger.error("Error closing JSON generator", e);
+				logger.debug("Error closing JSON generator", e);
 			}
 		}
 	}
