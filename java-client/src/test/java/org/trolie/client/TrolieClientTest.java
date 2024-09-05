@@ -2,7 +2,6 @@ package org.trolie.client;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +9,7 @@ import java.util.function.Function;
 
 import javax.net.ServerSocketFactory;
 
+import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
@@ -46,7 +46,8 @@ public class TrolieClientTest {
 	private static Logger logger = LoggerFactory.getLogger(TrolieClientTest.class);
 	
 	private static int PORT = 8181;
-	private static String HOST = "http://localhost:" + PORT;
+	private static String HOST = "http://localhost";
+	private static String BASE_URI = HOST + ":" + PORT;
 
 	static HttpServer httpServer;
 	static Function<ClassicHttpRequest,ClassicHttpResponse> requestHandler;
@@ -83,7 +84,7 @@ public class TrolieClientTest {
 		requestHandler = r -> new BasicClassicHttpResponse(200);
 		while (!started && System.currentTimeMillis() - now < 10000) {
 			try {
-				HttpGet get = new HttpGet(HOST);
+				HttpGet get = new HttpGet(BASE_URI);
 				BasicHttpClientResponseHandler handler = new BasicHttpClientResponseHandler();
 				startupCheckClient.execute(get, handler);
 				started = true;
@@ -142,7 +143,7 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(HOST,builder).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
 
 		try (ForecastRatingProposalStreamingUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
 
@@ -182,7 +183,7 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(HOST,builder).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
 
 		Assertions.assertThrows(TrolieServerException.class, () -> {
 			try (ForecastRatingProposalStreamingUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
@@ -205,7 +206,7 @@ public class TrolieClientTest {
 		String startTime = Instant.now().toString();
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder("no.such.host.exists.com",builder).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(HOST + ":" + 1111,builder).build();
 
 			try (ForecastRatingProposalStreamingUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
 
@@ -230,7 +231,7 @@ public class TrolieClientTest {
 				}
 				update.complete();
 			} catch (TrolieException e) {
-				Assertions.assertEquals(UnknownHostException.class, e.getCause().getClass());
+				Assertions.assertEquals(HttpHostConnectException.class, e.getCause().getClass());
 			}
 	}
 	
