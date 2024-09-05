@@ -46,7 +46,7 @@ public class TrolieClientTest {
 	private static Logger logger = LoggerFactory.getLogger(TrolieClientTest.class);
 	
 	private static int PORT = 8181;
-	private static String HOST = "http://localhost";
+	private static String HOST = "http://127.0.0.1";
 	private static String BASE_URI = HOST + ":" + PORT;
 
 	static HttpServer httpServer;
@@ -68,7 +68,7 @@ public class TrolieClientTest {
 						))
 				.withHttpServerRequestHandler(new TestServerRequestHandler())
 				.build(),
-				InetAddress.getByName("127.0.0.1"), 
+				InetAddress.getLoopbackAddress(), 
 				SocketConfig.DEFAULT, 
 				ServerSocketFactory.getDefault(), 
 				DefaultBHttpServerConnectionFactory.builder().build(), 
