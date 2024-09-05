@@ -205,7 +205,7 @@ public class TrolieClientTest {
 		String startTime = Instant.now().toString();
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder("fakehost.com",builder).build();
+		TrolieClient trolieClient = new TrolieClientBuilder("no.such.host.exists.com",builder).build();
 
 			try (ForecastRatingProposalStreamingUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
 
