@@ -33,7 +33,7 @@ public class ForecastRatingProposalStreamingUpdate extends AbstractStreamingUpda
 	}
 
 	private static final String PATH = "/rating-proposals/forecast";
-	private static final String CONTENT_TYPE = "application/vnd.lep.rating-forecast-proposal.v1+json";
+	private static final String CONTENT_TYPE = "application/vnd.trolie.rating-forecast-proposal.v1+json";
 
 	private enum Scope {
 		BEGIN,
