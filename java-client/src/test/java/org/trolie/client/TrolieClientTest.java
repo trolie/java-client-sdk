@@ -45,7 +45,7 @@ public class TrolieClientTest {
 
 	private static Logger logger = LoggerFactory.getLogger(TrolieClientTest.class);
 	
-	private static int PORT = 8181;
+	private static int PORT = 8080;
 	private static String HOST = "http://127.0.0.1";
 	private static String BASE_URI = HOST + ":" + PORT;
 
