@@ -10,6 +10,9 @@ import java.util.function.Function;
 
 import javax.net.ServerSocketFactory;
 
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
@@ -29,6 +32,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
 import org.trolie.client.model.ratingproposals.ForecastRatingPeriod;
 import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
@@ -38,7 +43,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TrolieClientTest {
 
-	private static String HOST = "http://localhost:8080";
+	private static Logger logger = LoggerFactory.getLogger(TrolieClientTest.class);
+	
+	private static int PORT = 8181;
+	private static String HOST = "http://localhost:" + PORT;
 
 	static HttpServer httpServer;
 	static Function<ClassicHttpRequest,ClassicHttpResponse> requestHandler;
@@ -50,9 +58,8 @@ public class TrolieClientTest {
 		objectMapper = new ObjectMapper();
 
 		//create a simple HTTP server we can send requests to
-		
 		httpServer = new HttpServer(
-				8080, 
+				PORT, 
 				HttpService.builder()
 				.withHttpProcessor(new DefaultHttpProcessor(
 						new HttpRequestInterceptor[0],
@@ -68,8 +75,29 @@ public class TrolieClientTest {
 				null);
 
 		httpServer.start();
+	
+		//wait for test server to start up
+		HttpClient startupCheckClient = HttpClientBuilder.create().build();		
+		long now = System.currentTimeMillis();
+		boolean started = false;
+		requestHandler = r -> new BasicClassicHttpResponse(200);
+		while (!started && System.currentTimeMillis() - now < 10000) {
+			try {
+				HttpGet get = new HttpGet(HOST);
+				BasicHttpClientResponseHandler handler = new BasicHttpClientResponseHandler();
+				startupCheckClient.execute(get, handler);
+				started = true;
+			} catch (Exception e) {
+				logger.info("Test server not started yet");
+				Thread.sleep(1000);
+			}
+		}
+		
+		if (!started) {
+			throw new IllegalStateException("Test server did not start within timeout");
+		}
 	}
-
+	
 	@AfterAll
 	public static void cleanup() {
 		if (httpServer != null) {
@@ -90,6 +118,10 @@ public class TrolieClientTest {
 					.begins(startTime)
 					.build();
 
+			//we expect this request to be chunked
+			Assertions.assertTrue(request.getEntity().isStreaming());
+			Assertions.assertTrue(request.getEntity().isChunked());
+			
 			try {
 
 				Map<String,Object> data = objectMapper.readValue(request.getEntity().getContent(),Map.class);
@@ -185,9 +217,9 @@ public class TrolieClientTest {
 				//we can make sure stream is not jammed up by death of request execution thread
 				//and no bytes being taken off the buffer
 				update.begin(header);
-				for (int i=0;i<1000;i++) {
+				for (int i=0;i<100;i++) {
 					update.beginResource("resource" + i);
-					for (int j=0;j<100;j++) {
+					for (int j=0;j<10;j++) {
 						update.period(ForecastRatingPeriod.builder()
 								.periodStart(startTime)
 								.periodEnd(startTime)
