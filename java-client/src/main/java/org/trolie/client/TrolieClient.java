@@ -1,5 +1,9 @@
 package org.trolie.client;
 
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.trolie.client.request.ratingproposals.ForecastRatingProposalStreamingUpdate;
+
+
 /**
  * Primary TROLIE client access interface.  Represents configured access to a single
  * TROLIE server.  Should be used as a singleton within applications, at least for each
@@ -16,7 +20,7 @@ public interface TrolieClient {
 
     void subscribeToInUseLimitForecastUpdates();
 
-    void updateForecastProposal();
+    ForecastRatingProposalStreamingUpdate createForecastRatingProposalStreamingUpdate();
 
     void getInUseLimits();
 
@@ -24,5 +28,7 @@ public interface TrolieClient {
 
     void updateRealTimeProposal();
 
-
+    static TrolieClientBuilder builder(String baseUrl, HttpClientBuilder clientBuilder) {
+        return new TrolieClientBuilder(baseUrl, clientBuilder);
+    }
 }

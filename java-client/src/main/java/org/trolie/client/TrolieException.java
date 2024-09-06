@@ -5,4 +5,18 @@ package org.trolie.client;
  * users.
  */
 public class TrolieException extends RuntimeException {
+
+	public TrolieException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public TrolieException(String message) {
+		super(message);
+	}
+
+	public TrolieException(Throwable cause) {
+		super(cause);
+	}
+	
+	
 }
