@@ -57,6 +57,11 @@ public class TrolieClientBuilder {
 		return this;
 	}
 	
+	public TrolieClientBuilder etagStore(ETagStore eTagStore) {
+		this.eTagStore = eTagStore;
+		return this;
+	}
+	
     public TrolieClient build() {
 
     	if (threadPoolExecutor == null) {
