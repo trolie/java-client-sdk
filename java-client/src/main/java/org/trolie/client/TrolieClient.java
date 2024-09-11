@@ -27,7 +27,10 @@ public interface TrolieClient {
      * @param pollingRateMillis Interval in millis between polling loops
      * @return
      */
-    ForecastSnapshotSubscription subscribeToInUseLimitForecastUpdates(ForecastSnapshotStreamingReceiver receiver, int pollingRateMillis);
+    ForecastSnapshotSubscription subscribeToInUseLimitForecastUpdates(
+    		ForecastSnapshotStreamingReceiver receiver,
+    		String monitoringSet,
+    		int pollingRateMillis);
 
     /**
      * Create a forecast proposal update that can stream the update submission to the server

@@ -6,6 +6,7 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
 import org.trolie.client.TrolieClient;
+import org.trolie.client.etag.ETagStore;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotStreamingReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscription;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalStreamingUpdate;
@@ -23,12 +24,16 @@ public class TrolieClientImpl implements TrolieClient {
 	int bufferSize;
 	ThreadPoolExecutor threadPoolExecutor;
 	ObjectMapper objectMapper;
+	ETagStore eTagStore;
 	
 	@Override
 	public void getInUseLimitForecasts(String monitoringSet) {}
 
 	@Override
-	public ForecastSnapshotSubscription subscribeToInUseLimitForecastUpdates(ForecastSnapshotStreamingReceiver receiver, int pollingRateMillis) {
+	public ForecastSnapshotSubscription subscribeToInUseLimitForecastUpdates(
+			ForecastSnapshotStreamingReceiver receiver,
+			String monitoringSet,
+			int pollingRateMillis) {
 		
 		ForecastSnapshotSubscription subscription = new ForecastSnapshotSubscription(
 				httpClient, 
@@ -38,7 +43,9 @@ public class TrolieClientImpl implements TrolieClient {
 				threadPoolExecutor, 
 				objectMapper, 
 				pollingRateMillis, 
-				receiver);
+				receiver,
+				eTagStore,
+				monitoringSet);
 		
 		subscription.subscribe();
 		return subscription;

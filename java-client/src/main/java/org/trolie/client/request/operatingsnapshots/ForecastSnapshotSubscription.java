@@ -1,15 +1,23 @@
 package org.trolie.client.request.operatingsnapshots;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.net.URIBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.trolie.client.etag.ETagStore;
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
 import org.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
 import org.trolie.client.request.streaming.AbstractStreamingGetSubscription;
-import org.trolie.client.request.streaming.SubscriberRequestHandlingException;
+import org.trolie.client.request.streaming.exception.SubscriberConnectionException;
+import org.trolie.client.request.streaming.exception.SubscriberHandlingException;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -21,10 +29,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscription<ForecastSnapshotStreamingReceiver> {
 
+	private static final Logger logger = LoggerFactory.getLogger(ForecastSnapshotSubscription.class); 
+	
 	public static final String PATH = "/limits/forecast-snapshot";
 	public static final String CONTENT_TYPE = "application/vnd.trolie.forecast-limits-snapshot.v1+json";
+	public static final String PARAM_MONITORING_SET = "monitoring-set";
 	
 	JsonFactory jsonFactory;
+	String monitoringSet;
 	
 	public ForecastSnapshotSubscription(
 			HttpClient httpClient, 
@@ -34,10 +46,13 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper, 
 			int pollingRateMillis,
-			ForecastSnapshotStreamingReceiver receiver) {
+			ForecastSnapshotStreamingReceiver receiver,
+			ETagStore eTagStore,
+			String monitoringSet) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver, eTagStore);
 		this.jsonFactory = new JsonFactory(objectMapper);
+		this.monitoringSet = monitoringSet;
 	}
 
 	@Override
@@ -49,10 +64,25 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 	protected String getContentType() {
 		return CONTENT_TYPE;
 	}
+
+	@Override
+	protected HttpGet createRequest() throws URISyntaxException {
+		
+		HttpGet get = super.createRequest();
+		
+		if (monitoringSet != null) {
+		
+			//add the monitoring set parameter to the base URI
+			URIBuilder uriBuilder = new URIBuilder(get.getUri())
+					.addParameter(PARAM_MONITORING_SET, monitoringSet);
+			get.setUri(uriBuilder.build());
+		}
+		
+		return get;
+	}
 	
 	@Override
 	protected void handleNewContent(InputStream inputStream) throws Exception {
-		
 		
 		try (JsonParser parser = jsonFactory.createParser(inputStream);) {
 		
@@ -108,8 +138,12 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 			
 			receiver.endSnapshot();
 			
+		} catch (IOException e) {
+			logger.error("I/O error handling response",e);
+			receiver.error(new SubscriberConnectionException(e));
 		} catch (Exception e) {
-			receiver.error(new SubscriberRequestHandlingException(e));
+			logger.error("Error handling response data",e);
+			receiver.error(new SubscriberHandlingException(e));
 		}
 		
 	}

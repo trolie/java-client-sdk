@@ -1,7 +1,9 @@
 package org.trolie.client.request.streaming;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -20,6 +22,10 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.trolie.client.etag.ETagStore;
+import org.trolie.client.request.streaming.exception.SubscriberConnectionException;
+import org.trolie.client.request.streaming.exception.SubscriberInternalException;
+import org.trolie.client.request.streaming.exception.SubscriberResponseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -39,19 +45,25 @@ public abstract class AbstractStreamingGetSubscription<T extends SubscriptionUpd
 	ThreadPoolExecutor threadPoolExecutor;
 	protected ObjectMapper objectMapper;
 	int pollingRateMillis;
-	protected T receiver;
+	ETagStore eTagStore;
+	protected T receiver;	
 
 	AtomicBoolean subscribed = new AtomicBoolean();
-	String etag;
 	Future<Void> requestExecutorFuture;
 	
 	protected abstract String getPath();
 	protected abstract String getContentType();
 	protected abstract void handleNewContent(InputStream inputStream) throws Exception;
 	
-	
-	public AbstractStreamingGetSubscription(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-			int bufferSize, ObjectMapper objectMapper, int pollingRateMillis, T receiver) {
+	public AbstractStreamingGetSubscription(
+			HttpClient httpClient, 
+			HttpHost host, 
+			RequestConfig requestConfig,
+			int bufferSize, 
+			ObjectMapper objectMapper, 
+			int pollingRateMillis, 
+			T receiver,
+			ETagStore eTagStore) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -60,6 +72,7 @@ public abstract class AbstractStreamingGetSubscription<T extends SubscriptionUpd
 		this.objectMapper = objectMapper;
 		this.pollingRateMillis = pollingRateMillis;
 		this.receiver = receiver;
+		this.eTagStore = eTagStore;
 		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,pollingRateMillis,TimeUnit.MILLISECONDS,new LinkedBlockingDeque<Runnable>());
 	}
 	public void subscribe() {
@@ -81,23 +94,43 @@ public abstract class AbstractStreamingGetSubscription<T extends SubscriptionUpd
 			
 			if (response.getCode() == HttpStatus.SC_OK) {
 				//if we have new data, update our ETAG value
-				etag = response.getHeader(HttpHeaders.ETAG).getValue();
+				eTagStore.putETag(getPath(), response.getHeader(HttpHeaders.ETAG).getValue());
 				
 				//create a new thread to consume the response stream to 
 				//allow for a buffer between HTTP I/O and whatever is handling the data
 				try (HttpEntity entity = new GzipDecompressingEntity(response.getEntity())) {
 					threadPoolExecutor.submit(new HandlerExecutor(entity.getContent())).get();
+				} catch (IOException e) {
+					logger.error("I/O error initiating request",e);
+					receiver.error(new SubscriberConnectionException(e));
 				} catch (Exception e) {
-					logger.error("Error handling request", e);
-					receiver.error(new SubscriberRequestHandlingException(e));
+					logger.error("Internal error handling response",e);
+					receiver.error(new SubscriberInternalException(e));
 				}
 			} else if (response.getCode() != HttpStatus.SC_NOT_MODIFIED) {
 				String s = "Server responded with status code " + response.getCode();
 				logger.error(s);
-				receiver.error(new SubscriberRequestExecutionException(s,response.getCode()));			
+				receiver.error(new SubscriberResponseException(s,response.getCode()));			
 			}		
 			return null;
 		};
+	}
+	
+	protected HttpGet createRequest() throws URISyntaxException {
+		HttpGet get = new HttpGet(getPath());
+		get.addHeader(HttpHeaders.ACCEPT, getContentType());
+		
+		//will need to revisit this for brotli support
+		get.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
+		
+		//supply our stored ETAG value if we have one
+		String etag = eTagStore.getETag(getPath());					
+		if (etag != null) {
+			get.addHeader(HttpHeaders.IF_NONE_MATCH, etag);
+		}
+
+		get.setConfig(requestConfig);
+		return get;
 	}
 	
 	private class RequestExecutor implements Callable<Void> {
@@ -113,24 +146,13 @@ public abstract class AbstractStreamingGetSubscription<T extends SubscriptionUpd
 				
 					logger.debug("Polling for update on {}", getPath());
 					
-					HttpGet get = new HttpGet(getPath());
-					get.addHeader(HttpHeaders.ACCEPT, getContentType());
-					
-					//will need to revisit this for brotli support
-					get.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
-					
-					//supply our stored ETAG value if we have one
-					if (etag != null) {
-						get.addHeader(HttpHeaders.IF_NONE_MATCH, etag);
-					}
-
-					get.setConfig(requestConfig);
+					HttpGet get = createRequest();
 					httpClient.execute(host, get, createResponseHandler());
-					
+				
+				} catch (IOException e) {
+					receiver.error(new SubscriberConnectionException(e));
 				} catch (Exception e) {
-					logger.error("Error executing poll request", e);
-					//send the error to the subscription receiver
-					receiver.error(new SubscriberRequestExecutionException(e));
+					receiver.error(new SubscriberInternalException(e));
 				}
 				
 				synchronized (subscribed) {

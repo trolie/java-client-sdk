@@ -55,7 +55,7 @@ import org.trolie.client.request.operatingsnapshots.ForecastSnapshotStreamingRec
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscription;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalStreamingUpdate;
 import org.trolie.client.request.streaming.RequestSubscription;
-import org.trolie.client.request.streaming.SubscriberRequestException;
+import org.trolie.client.request.streaming.exception.SubscriberException;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -273,6 +273,9 @@ public class TrolieClientTest {
 
 			try {
 
+				//we expect to get the configured monitoring set name as a query param
+				Assertions.assertEquals("monitoring-set=abc", request.getUri().getQuery());
+				
 				Header requestEtag = request.getHeader(HttpHeaders.IF_NONE_MATCH);
 
 				//2nd+ request should have an etag header 
@@ -405,7 +408,7 @@ public class TrolieClientTest {
 			}
 
 			@Override
-			public void error(SubscriberRequestException t) {
+			public void error(SubscriberException t) {
 				errorCount.incrementAndGet();
 				subscription.unsubscribe();
 			}
@@ -416,7 +419,7 @@ public class TrolieClientTest {
 			}
 
 
-		}, 1000);
+		}, "abc", 1000);
 
 		while (subscription.isSubscribed()) {
 			Thread.sleep(100);
