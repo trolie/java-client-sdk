@@ -4,6 +4,7 @@ import org.trolie.client.request.streaming.exception.SubscriberConnectionExcepti
 import org.trolie.client.request.streaming.exception.SubscriberException;
 import org.trolie.client.request.streaming.exception.SubscriberHandlingException;
 import org.trolie.client.request.streaming.exception.SubscriberInternalException;
+import org.trolie.client.request.streaming.exception.SubscriberResponseException;
 
 /**
  * Base interface for receiver to be invoked when new data is available for a subscribed pollable GET
