@@ -53,7 +53,13 @@ public abstract class AbstractStreamingGetSubscription<T extends SubscriptionUpd
 	
 	protected abstract String getPath();
 	protected abstract String getContentType();
-	protected abstract void handleNewContent(InputStream inputStream) throws Exception;
+	
+	/**
+	 * Handle new content. This method should not throw exceptions but rather report them to {@link SubscriptionUpdateReceiver#error(org.trolie.client.request.streaming.exception.SubscriberException)}
+	 * 
+	 * @param inputStream
+	 */
+	protected abstract void handleNewContent(InputStream inputStream);
 	
 	public AbstractStreamingGetSubscription(
 			HttpClient httpClient, 
@@ -180,8 +186,10 @@ public abstract class AbstractStreamingGetSubscription<T extends SubscriptionUpd
 		public Void call() throws Exception {
 			try (BufferedInputStream bufferedIn = new BufferedInputStream(inputStream, bufferSize)) {
 				handleNewContent(bufferedIn);
+			} catch (IOException e) {
+				receiver.error(new SubscriberConnectionException(e));
 			} catch (Exception e) {
-				logger.error("Error handling update data", e);
+				receiver.error(new SubscriberInternalException(e));
 			}
 			return null;
 		}

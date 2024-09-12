@@ -82,7 +82,7 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 	}
 	
 	@Override
-	protected void handleNewContent(InputStream inputStream) throws Exception {
+	protected void handleNewContent(InputStream inputStream) {
 		
 		try (JsonParser parser = jsonFactory.createParser(inputStream);) {
 		
