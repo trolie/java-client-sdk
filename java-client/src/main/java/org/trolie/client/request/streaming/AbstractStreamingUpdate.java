@@ -14,6 +14,7 @@ import org.apache.hc.client5.http.HttpResponseException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.entity.GzipCompressingEntity;
 import org.apache.hc.client5.http.impl.classic.AbstractHttpClientResponseHandler;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
@@ -112,7 +113,7 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 		//create a request entity we can write into from a stream
 		PipedOutputStream pipedOutputStream = new PipedOutputStream();
 		PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream, bufferSize);
-		request.setEntity(new InputStreamEntity(pipedInputStream, getContentType()));
+		request.setEntity(new GzipCompressingEntity(new InputStreamEntity(pipedInputStream, getContentType())));
 		this.outputStream = pipedOutputStream;
 
 		//kick of the thread that will consume our stream and send it to the server

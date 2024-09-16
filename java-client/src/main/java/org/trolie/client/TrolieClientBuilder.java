@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.HttpHost;
+import org.trolie.client.etag.ETagStore;
+import org.trolie.client.etag.MemoryETagStore;
 import org.trolie.client.impl.TrolieClientImpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +23,7 @@ public class TrolieClientBuilder {
 	RequestConfig requestConfig;
 	int bufferSize = 4096;
 	ObjectMapper objectMapper;
+	ETagStore eTagStore;
 
 	public TrolieClientBuilder(
 			String baseUrl, 
@@ -54,6 +57,11 @@ public class TrolieClientBuilder {
 		return this;
 	}
 	
+	public TrolieClientBuilder etagStore(ETagStore eTagStore) {
+		this.eTagStore = eTagStore;
+		return this;
+	}
+	
     public TrolieClient build() {
 
     	if (threadPoolExecutor == null) {
@@ -68,6 +76,10 @@ public class TrolieClientBuilder {
     		objectMapper = new ObjectMapper();
     	}
 
-    	return new TrolieClientImpl(httpClientBuilder.build(), host, requestConfig, bufferSize, threadPoolExecutor, objectMapper);
+    	if (eTagStore == null) {
+    		eTagStore = new MemoryETagStore();
+    	}
+    	
+    	return new TrolieClientImpl(httpClientBuilder.build(), host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, eTagStore);
     }
 }

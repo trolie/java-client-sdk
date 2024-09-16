@@ -32,8 +32,8 @@ public class ForecastRatingProposalStreamingUpdate extends AbstractStreamingUpda
 		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
 	}
 
-	private static final String PATH = "/rating-proposals/forecast";
-	private static final String CONTENT_TYPE = "application/vnd.trolie.rating-forecast-proposal.v1+json";
+	public static final String PATH = "/rating-proposals/forecast";
+	public static final String CONTENT_TYPE = "application/vnd.trolie.rating-forecast-proposal.v1+json";
 
 	private enum Scope {
 		BEGIN,

@@ -1,6 +1,8 @@
 package org.trolie.client;
 
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotStreamingReceiver;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscription;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalStreamingUpdate;
 
 
@@ -18,8 +20,23 @@ public interface TrolieClient {
     }
     void getInUseLimitForecasts(String monitoringSet);
 
-    void subscribeToInUseLimitForecastUpdates();
+    /**
+     * Create a polling subscription for forecast snapshot data updates
+     * 
+     * @param receiver Streaming data receiver for snapshot data
+     * @param pollingRateMillis Interval in millis between polling loops
+     * @return
+     */
+    ForecastSnapshotSubscription subscribeToInUseLimitForecastUpdates(
+    		ForecastSnapshotStreamingReceiver receiver,
+    		String monitoringSet,
+    		int pollingRateMillis);
 
+    /**
+     * Create a forecast proposal update that can stream the update submission to the server
+     * 
+     * @return
+     */
     ForecastRatingProposalStreamingUpdate createForecastRatingProposalStreamingUpdate();
 
     void getInUseLimits();
