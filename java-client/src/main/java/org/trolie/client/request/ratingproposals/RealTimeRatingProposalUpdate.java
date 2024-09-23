@@ -9,31 +9,30 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trolie.client.TrolieException;
-import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
-import org.trolie.client.model.ratingproposals.ForecastRatingPeriod;
-import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
+import org.trolie.client.model.ratingproposals.ProposalHeader;
+import org.trolie.client.model.ratingproposals.RealTimeRating;
+import org.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
 import org.trolie.client.request.streaming.AbstractStreamingUpdate;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class ForecastRatingProposalStreamingUpdate extends AbstractStreamingUpdate<ForecastRatingProposalStatus> {
+public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTimeRatingProposalStatus> {
 
-	private static final Logger logger = LoggerFactory.getLogger(ForecastRatingProposalStreamingUpdate.class);
+	private static final Logger logger = LoggerFactory.getLogger(RealTimeRatingProposalUpdate.class);
 
-	public ForecastRatingProposalStreamingUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
+	public RealTimeRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
 			ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper) {
 		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
 	}
 
-	public static final String PATH = "/rating-proposals/forecast";
-	public static final String CONTENT_TYPE = "application/vnd.trolie.rating-forecast-proposal.v1+json";
+	public static final String PATH = "/rating-proposals/realtime";
+	public static final String CONTENT_TYPE = "application/vnd.trolie.rating-realtime-proposal-status.v1+json";
 
 	private enum Scope {
 		BEGIN,
@@ -47,9 +46,8 @@ public class ForecastRatingProposalStreamingUpdate extends AbstractStreamingUpda
 
 	@Override
 	protected HttpUriRequestBase getRequest() {
-		HttpPatch httpPatch = new HttpPatch(PATH);
-		httpPatch.addHeader(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
-		return httpPatch;
+		//only need to establish the HTTP method. headers/params are handled by base class 
+		return new HttpPatch(PATH);
 	}
 
 	@Override
@@ -63,17 +61,17 @@ public class ForecastRatingProposalStreamingUpdate extends AbstractStreamingUpda
 	}
 
 	@Override
-	protected Function<HttpEntity,ForecastRatingProposalStatus> getResponseHandler() {
+	protected Function<HttpEntity,RealTimeRatingProposalStatus> getResponseHandler() {
 		return e -> {
 			try {
-				return objectMapper.readValue(e.getContent(), ForecastRatingProposalStatus.class);
+				return objectMapper.readValue(e.getContent(), RealTimeRatingProposalStatus.class);
 			} catch (Exception e2) {	
 				throw new TrolieException("Failed to parse response",e2);
 			}
 		};
 	}
 
-	public void begin(ForecastProposalHeader header) {
+	public void begin(ProposalHeader header) {
 
 		validateScope(Scope.MAIN, Scope.BEGIN);
 		try {
@@ -96,45 +94,20 @@ public class ForecastRatingProposalStreamingUpdate extends AbstractStreamingUpda
 
 	}
 
-	public void beginResource(String resourceId) {
-
-		checkCanWrite();		
+	public void rating(RealTimeRating rating) {
+		checkCanWrite();
 		try {
-			validateScope(Scope.RATING, Scope.MAIN);
-			jsonGenerator.writeStartObject();
-			jsonGenerator.writeFieldName("resource-id");
-			jsonGenerator.writeString(resourceId);
-			jsonGenerator.writeArrayFieldStart("periods");
+			validateScope(Scope.RATING, Scope.RATING, Scope.MAIN);
+			jsonGenerator.writeObject(rating);
 		} catch (Exception e) {
 			handleWriteError(e);
 		}
 	}
 
-	public void period(ForecastRatingPeriod forecastRatingPeriod) {
+	public RealTimeRatingProposalStatus complete() {
 		checkCanWrite();
 		try {
-			validateScope(Scope.RATING, Scope.RATING);
-			jsonGenerator.writeObject(forecastRatingPeriod);
-		} catch (Exception e) {
-			handleWriteError(e);
-		}
-	}
-
-	public void endResource() {
-		checkCanWrite();
-		try {
-			validateScope(Scope.MAIN, Scope.RATING);
-			jsonGenerator.writeEndArray();
-			jsonGenerator.writeEndObject();
-		} catch (Exception e) {			
-			handleWriteError(e);
-		}
-	}
-
-	public ForecastRatingProposalStatus complete() {
-		checkCanWrite();
-		try {
-			validateScope(Scope.END, Scope.MAIN);
+			validateScope(Scope.END, Scope.MAIN, Scope.RATING);
 			jsonGenerator.writeEndArray();
 			jsonGenerator.writeEndObject();
 			jsonGenerator.close();

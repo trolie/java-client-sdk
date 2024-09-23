@@ -1,9 +1,13 @@
 package org.trolie.client;
 
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.trolie.client.request.operatingsnapshots.ForecastSnapshotStreamingReceiver;
-import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscription;
-import org.trolie.client.request.ratingproposals.ForecastRatingProposalStreamingUpdate;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
+import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
+import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
+import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
+import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 
 
 /**
@@ -24,11 +28,12 @@ public interface TrolieClient {
      * Create a polling subscription for forecast snapshot data updates
      * 
      * @param receiver Streaming data receiver for snapshot data
+     * @param monitoringSet optional filter for monitoring set 
      * @param pollingRateMillis Interval in millis between polling loops
      * @return
      */
-    ForecastSnapshotSubscription subscribeToInUseLimitForecastUpdates(
-    		ForecastSnapshotStreamingReceiver receiver,
+    ForecastSnapshotSubscribedRequest subscribeToInUseLimitForecastUpdates(
+    		ForecastSnapshotReceiver receiver,
     		String monitoringSet,
     		int pollingRateMillis);
 
@@ -37,13 +42,38 @@ public interface TrolieClient {
      * 
      * @return
      */
-    ForecastRatingProposalStreamingUpdate createForecastRatingProposalStreamingUpdate();
+    ForecastRatingProposalUpdate createForecastRatingProposalStreamingUpdate();
 
-    void getInUseLimits();
+    /**
+     * Execute a request for the current real-time limits with a streaming response handler
+     * 
+     * @param receiver
+     * @param monitoringSet
+     * @param transmissionFacility
+     */
+    public void getInUseLimits(RealTimeSnapshotReceiver receiver, String monitoringSet, String transmissionFacility);
 
-    void subscribeToInUseLimits();
+    /**
+     * Create a polling subscription for real-time snapshot data updates
+     * 
+     * @param receiver Streaming data receiver for snapshot data
+     * @param monitoringSet optional filter for monitoring set
+     * @param transmissionFacility optional filter for transmission facility
+     * @param pollingRateMillis Interval in millis between polling loops
+     * @return
+     */
+    RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(
+    		RealTimeSnapshotSubscribedReceiver receiver,
+    		String monitoringSet,
+    		String transmissionFacility,
+    		int pollingRateMillis);
 
-    void updateRealTimeProposal();
+    /**
+     * Create a real-time proposal update that can stream the update submission to the server
+     * 
+     * @return
+     */
+    RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate();
 
     static TrolieClientBuilder builder(String baseUrl, HttpClientBuilder clientBuilder) {
         return new TrolieClientBuilder(baseUrl, clientBuilder);

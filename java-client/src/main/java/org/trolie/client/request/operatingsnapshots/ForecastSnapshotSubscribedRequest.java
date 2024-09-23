@@ -15,9 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.trolie.client.etag.ETagStore;
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
 import org.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
-import org.trolie.client.request.streaming.AbstractStreamingGetSubscription;
-import org.trolie.client.request.streaming.exception.SubscriberConnectionException;
-import org.trolie.client.request.streaming.exception.SubscriberHandlingException;
+import org.trolie.client.request.streaming.AbstractStreamingSubscribedGet;
+import org.trolie.client.request.streaming.exception.StreamingGetConnectionException;
+import org.trolie.client.request.streaming.exception.StreamingGetHandlingException;
+import org.trolie.client.util.TrolieApiConstants;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -27,18 +28,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * subscription for forecast rating snapshots 
  */
-public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscription<ForecastSnapshotStreamingReceiver> {
+public class ForecastSnapshotSubscribedRequest extends AbstractStreamingSubscribedGet<ForecastSnapshotReceiver> {
 
-	private static final Logger logger = LoggerFactory.getLogger(ForecastSnapshotSubscription.class); 
-	
-	public static final String PATH = "/limits/forecast-snapshot";
-	public static final String CONTENT_TYPE = "application/vnd.trolie.forecast-limits-snapshot.v1+json";
-	public static final String PARAM_MONITORING_SET = "monitoring-set";
+	private static final Logger logger = LoggerFactory.getLogger(ForecastSnapshotSubscribedRequest.class); 
 	
 	JsonFactory jsonFactory;
 	String monitoringSet;
 	
-	public ForecastSnapshotSubscription(
+	public ForecastSnapshotSubscribedRequest(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
@@ -46,7 +43,7 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper, 
 			int pollingRateMillis,
-			ForecastSnapshotStreamingReceiver receiver,
+			ForecastSnapshotReceiver receiver,
 			ETagStore eTagStore,
 			String monitoringSet) {
 		
@@ -57,12 +54,12 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 
 	@Override
 	protected String getPath() {
-		return PATH;
+		return TrolieApiConstants.PATH_FORECAST_SNAPSHOT;
 	}
 	
 	@Override
 	protected String getContentType() {
-		return CONTENT_TYPE;
+		return TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT;
 	}
 
 	@Override
@@ -74,7 +71,7 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 		
 			//add the monitoring set parameter to the base URI
 			URIBuilder uriBuilder = new URIBuilder(get.getUri())
-					.addParameter(PARAM_MONITORING_SET, monitoringSet);
+					.addParameter(TrolieApiConstants.PARAM_MONITORING_SET, monitoringSet);
 			get.setUri(uriBuilder.build());
 		}
 		
@@ -82,7 +79,7 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 	}
 	
 	@Override
-	protected void handleNewContent(InputStream inputStream) {
+	protected void handleResponseContent(InputStream inputStream) {
 		
 		try (JsonParser parser = jsonFactory.createParser(inputStream);) {
 		
@@ -140,10 +137,10 @@ public class ForecastSnapshotSubscription extends AbstractStreamingGetSubscripti
 			
 		} catch (IOException e) {
 			logger.error("I/O error handling response",e);
-			receiver.error(new SubscriberConnectionException(e));
+			receiver.error(new StreamingGetConnectionException(e));
 		} catch (Exception e) {
 			logger.error("Error handling response data",e);
-			receiver.error(new SubscriberHandlingException(e));
+			receiver.error(new StreamingGetHandlingException(e));
 		}
 		
 	}
