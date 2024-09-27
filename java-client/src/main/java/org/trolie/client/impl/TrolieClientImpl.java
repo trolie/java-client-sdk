@@ -7,9 +7,14 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
 import org.trolie.client.TrolieClient;
 import org.trolie.client.etag.ETagStore;
-import org.trolie.client.request.operatingsnapshots.ForecastSnapshotStreamingReceiver;
-import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscription;
-import org.trolie.client.request.ratingproposals.ForecastRatingProposalStreamingUpdate;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
+import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
+import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotRequest;
+import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
+import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
+import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -30,12 +35,12 @@ public class TrolieClientImpl implements TrolieClient {
 	public void getInUseLimitForecasts(String monitoringSet) {}
 
 	@Override
-	public ForecastSnapshotSubscription subscribeToInUseLimitForecastUpdates(
-			ForecastSnapshotStreamingReceiver receiver,
+	public ForecastSnapshotSubscribedRequest subscribeToInUseLimitForecastUpdates(
+			ForecastSnapshotReceiver receiver,
 			String monitoringSet,
 			int pollingRateMillis) {
 		
-		ForecastSnapshotSubscription subscription = new ForecastSnapshotSubscription(
+		ForecastSnapshotSubscribedRequest subscription = new ForecastSnapshotSubscribedRequest(
 				httpClient, 
 				host, 
 				requestConfig, 
@@ -53,17 +58,51 @@ public class TrolieClientImpl implements TrolieClient {
 	}
 
 	@Override
-	public ForecastRatingProposalStreamingUpdate createForecastRatingProposalStreamingUpdate() {
-		return new ForecastRatingProposalStreamingUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
+	public ForecastRatingProposalUpdate createForecastRatingProposalStreamingUpdate() {
+		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
 	}
 
 	@Override
-	public void getInUseLimits() {}
+	public RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(RealTimeSnapshotSubscribedReceiver receiver,
+			String monitoringSet, String transmissionFacility, int pollingRateMillis) {
+
+		RealTimeSnapshotSubscribedRequest subscription = new RealTimeSnapshotSubscribedRequest(
+				httpClient, 
+				host, 
+				requestConfig, 
+				bufferSize, 
+				threadPoolExecutor, 
+				objectMapper, 
+				pollingRateMillis, 
+				receiver,
+				eTagStore,
+				monitoringSet,
+				transmissionFacility);
+		
+		subscription.subscribe();
+		return subscription;
+	}
 
 	@Override
-	public void subscribeToInUseLimits() {}
-
+	public RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate() {
+		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
+	}
+	
 	@Override
-	public void updateRealTimeProposal() {}
+	public void getInUseLimits(RealTimeSnapshotReceiver receiver, String monitoringSet, String transmissionFacility) {
+		
+		new RealTimeSnapshotRequest(
+				httpClient, 
+				host, 
+				requestConfig, 
+				bufferSize, 
+				threadPoolExecutor, 
+				objectMapper, 
+				receiver, 
+				monitoringSet, 
+				transmissionFacility).executeRequest();
+		
+	}
+
 
 }

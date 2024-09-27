@@ -2,7 +2,7 @@ package org.trolie.client.request.operatingsnapshots;
 
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
 import org.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
-import org.trolie.client.request.streaming.SubscriptionUpdateReceiver;
+import org.trolie.client.request.streaming.StreamingSubscribedResponseReceiver;
 
 /**
  * Streaming receiver for updated forecast snapshot data and errors from subscriber. 
@@ -12,7 +12,7 @@ import org.trolie.client.request.streaming.SubscriptionUpdateReceiver;
  * Errors originating from the subscriber thread will be sent to {@link #error(org.trolie.client.request.streaming.RequestSubscriberException)}
  * 
  */
-public interface ForecastSnapshotStreamingReceiver extends SubscriptionUpdateReceiver {
+public interface ForecastSnapshotReceiver extends StreamingSubscribedResponseReceiver {
 
 	void beginSnapshot();
 	
