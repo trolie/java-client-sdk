@@ -22,17 +22,6 @@
         </license>
     </licenses>
 
-    <distributionManagement>
-        <repository>
-            <id>ARTIFACTORY-RELEASE</id>
-            <url>https://dig-grid-artifactory.apps.ge.com/artifactory/ngem-mvn-release</url>
-        </repository>
-        <snapshotRepository>
-            <id>ARTIFACTORY-SNAPSHOT</id>
-            <url>https://dig-grid-artifactory.apps.ge.com/artifactory/ngem-mvn-snapshot</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <modules>
         <module>java-client</module>
         <module>java-client-tests</module>
