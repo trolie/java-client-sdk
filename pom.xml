@@ -41,6 +41,20 @@
             <organizationUrl>https://www.gevernova.com</organizationUrl>
             <timezone>America/Los_Angeles</timezone>
         </developer>
+        <developer>
+            <name>Alec Britton</name>
+            <email>alec.britton@ge.com</email>
+            <organization>GE Vernova</organization>
+            <organizationUrl>https://www.gevernova.com</organizationUrl>
+            <timezone>America/Los_Angeles</timezone>
+        </developer>
+        <developer>
+            <name>Aidan Short</name>
+            <email>aidan.short@ge.com</email>
+            <organization>GE Vernova</organization>
+            <organizationUrl>https://www.gevernova.com</organizationUrl>
+            <timezone>America/Los_Angeles</timezone>
+        </developer>
     </developers>
 
     <properties>
