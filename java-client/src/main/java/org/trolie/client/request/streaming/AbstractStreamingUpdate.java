@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -40,12 +41,13 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 	ThreadPoolExecutor threadPoolExecutor;
 	int bufferSize;
 	protected ObjectMapper objectMapper;
-
 	PipedOutputStream outputStream;
 	Future<T> responseFuture;
 
+	Map<String, String> httpHeader;
+	boolean enableCompression;
 	public AbstractStreamingUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-			ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper) {
+								   ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader, boolean enableCompression) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -53,13 +55,14 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 		this.threadPoolExecutor = threadPoolExecutor;
 		this.bufferSize = bufferSize;
 		this.objectMapper = objectMapper;
+		this.httpHeader = httpHeader;
+		this.enableCompression = enableCompression;
 	}
 
 	protected abstract ContentType getContentType();
 	protected abstract String getPath();
 	protected abstract HttpUriRequestBase getRequest();
-	protected abstract Function<HttpEntity,T> getResponseHandler();	
-	
+	protected abstract Function<HttpEntity,T> getResponseHandler();
 	/**
 	 * make sure that the thread running the request exists and has not died 
 	 */
@@ -103,17 +106,26 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 		//they probably already set these parameters, but may as well make sure
 		HttpUriRequestBase request = getRequest();
 		request.addHeader(HttpHeaders.CONTENT_TYPE, getContentType());
+		if (this.httpHeader != null && !this.httpHeader.isEmpty()) {
+			for (Map.Entry<String, String> entry : httpHeader.entrySet()) {
+				request.addHeader(entry.getKey(), entry.getValue());
+			}
+		}
 		request.setPath(getPath());
 		
 		//turn on compression
 		RequestConfig config = RequestConfig.copy(this.requestConfig)
-				.setContentCompressionEnabled(true).build();		
+				.setContentCompressionEnabled(this.enableCompression).build();
 		request.setConfig(config);
 
 		//create a request entity we can write into from a stream
 		PipedOutputStream pipedOutputStream = new PipedOutputStream();
 		PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream, bufferSize);
-		request.setEntity(new GzipCompressingEntity(new InputStreamEntity(pipedInputStream, getContentType())));
+		if (this.enableCompression) {
+			request.setEntity(new GzipCompressingEntity(new InputStreamEntity(pipedInputStream, getContentType())));
+		}else {
+			request.setEntity(new InputStreamEntity(pipedInputStream, getContentType()));
+		}
 		this.outputStream = pipedOutputStream;
 
 		//kick of the thread that will consume our stream and send it to the server

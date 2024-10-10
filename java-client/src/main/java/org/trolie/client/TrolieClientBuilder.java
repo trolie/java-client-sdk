@@ -2,6 +2,8 @@ package org.trolie.client;
 
 
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +26,8 @@ public class TrolieClientBuilder {
 	int bufferSize = 4096;
 	ObjectMapper objectMapper;
 	ETagStore eTagStore;
+	Map<String, String> httpHeader = new HashMap<>();
+	boolean enableCompression = true;
 
 	public TrolieClientBuilder(
 			String baseUrl, 
@@ -61,7 +65,18 @@ public class TrolieClientBuilder {
 		this.eTagStore = eTagStore;
 		return this;
 	}
-	
+
+	public TrolieClientBuilder httpHeader(Map<String, String> httpHeader) {
+		this.httpHeader.clear();
+		this.httpHeader.putAll(httpHeader);
+		return this;
+	}
+
+	public TrolieClientBuilder enableCompression(boolean enableCompression) {
+		this.enableCompression = enableCompression;
+		return this;
+	}
+
     public TrolieClient build() {
 
     	if (threadPoolExecutor == null) {
@@ -79,7 +94,10 @@ public class TrolieClientBuilder {
     	if (eTagStore == null) {
     		eTagStore = new MemoryETagStore();
     	}
-    	
-    	return new TrolieClientImpl(httpClientBuilder.build(), host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, eTagStore);
+		if (httpHeader == null) {
+			httpHeader = new HashMap<>();
+		}
+
+    	return new TrolieClientImpl(httpClientBuilder.build(), host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, eTagStore, httpHeader, enableCompression);
     }
 }
