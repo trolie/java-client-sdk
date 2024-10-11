@@ -1,5 +1,6 @@
 package org.trolie.client.impl;
 
+import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -30,6 +31,8 @@ public class TrolieClientImpl implements TrolieClient {
 	ThreadPoolExecutor threadPoolExecutor;
 	ObjectMapper objectMapper;
 	ETagStore eTagStore;
+	Map<String, String> httpHeader;
+	boolean enableCompression;
 	
 	@Override
 	public void getInUseLimitForecasts(String monitoringSet) {}
@@ -59,7 +62,7 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public ForecastRatingProposalUpdate createForecastRatingProposalStreamingUpdate() {
-		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
+		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader, enableCompression);
 	}
 
 	@Override
@@ -85,7 +88,7 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate() {
-		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
+		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader, enableCompression);
 	}
 	
 	@Override

@@ -1,5 +1,6 @@
 package org.trolie.client.request.ratingproposals;
 
+import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 
@@ -27,9 +28,10 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 
 	private static final Logger logger = LoggerFactory.getLogger(ForecastRatingProposalUpdate.class);
 
+
 	public ForecastRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-			ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper) {
-		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
+										ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader, boolean enableCompression ) {
+		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader, enableCompression);
 	}
 
 	public static final String PATH = "/rating-proposals/forecast";
