@@ -9,34 +9,32 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.net.URIBuilder;
-import org.trolie.client.etag.ETagStore;
-import org.trolie.client.request.streaming.AbstractStreamingSubscribedGet;
+import org.trolie.client.request.streaming.AbstractStreamingGet;
 import org.trolie.client.util.TrolieApiConstants;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * subscription for forecast rating snapshots 
+ * On-demand GET request for real-time limits with no ETAG usage
  */
-public class ForecastSnapshotSubscribedRequest extends AbstractStreamingSubscribedGet<ForecastSnapshotSubscribedReceiver> {
+public class ForecastSnapshotRequest extends AbstractStreamingGet<ForecastSnapshotReceiver> {
 
 	JsonFactory jsonFactory;
 	String monitoringSet;
+	String transmissionFacility;
 	
-	public ForecastSnapshotSubscribedRequest(
+	public ForecastSnapshotRequest(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper, 
-			int pollingRateMillis,
-			ForecastSnapshotSubscribedReceiver receiver,
-			ETagStore eTagStore,
+			ForecastSnapshotReceiver receiver,
 			String monitoringSet) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver, eTagStore);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
 	}
@@ -50,7 +48,7 @@ public class ForecastSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 	protected String getContentType() {
 		return TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT;
 	}
-
+	
 	@Override
 	protected HttpGet createRequest() throws URISyntaxException {
 		
@@ -66,12 +64,11 @@ public class ForecastSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 		
 		return get;
 	}
-	
+
 	@Override
 	protected void handleResponseContent(InputStream inputStream) {
-		
 		new ForecastSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
-		
 	}
+
 	
 }

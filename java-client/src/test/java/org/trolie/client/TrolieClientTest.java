@@ -1,5 +1,6 @@
 package org.trolie.client;
 
+import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.InetAddress;
@@ -57,6 +58,7 @@ import org.trolie.client.model.ratingproposals.ProposalHeader;
 import org.trolie.client.model.ratingproposals.RealTimeRating;
 import org.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
@@ -309,50 +311,19 @@ public class TrolieClientTest {
 					response.setEntity(
 							new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
 
-					ForecastSnapshotHeader header = new ForecastSnapshotHeader(startTime);
-
 					threadPoolExecutor.submit(new Callable<Void>() {
 						@Override
 						public Void call() throws Exception {
 
 							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
-
-								json.writeStartObject();
-
-								json.writeFieldName("snapshot-header");
-								json.writeObject(header);
-
-								json.writeFieldName("ratings");
-								json.writeStartArray();
-
-								for (int i=0;i<100;i++) {
-									json.writeStartObject();
-									json.writeFieldName("resource-id");
-									json.writeString("resource" + i);
-									json.writeFieldName("periods");						
-									json.writeStartArray();
-									for (int j=0;j<24;j++) {
-										ForecastPeriodSnapshot period = new ForecastPeriodSnapshot(
-												startTime,
-												startTime,
-												Map.of("mva",100F),
-												Collections.emptyList()
-												);
-										json.writeObject(period);
-									}
-									json.writeEndArray();
-									json.writeEndObject();
-								}
-
-								json.writeEndArray();
-								json.writeEndObject();
-
+								writeForecastSnapshot(json, startTime);
 								return null;
 							} catch (Exception e) {
 								e.printStackTrace();
 								throw new RuntimeException(e);
 							}
 						}
+
 					});
 
 				} else {
@@ -379,7 +350,7 @@ public class TrolieClientTest {
 		AtomicInteger errorCount = new AtomicInteger(0);
 
 		//subscribe for snapshots and validate they are transmitted correctly
-		ForecastSnapshotSubscribedRequest subscription = trolieClient.subscribeToInUseLimitForecastUpdates(new ForecastSnapshotReceiver() {
+		ForecastSnapshotSubscribedRequest subscription = trolieClient.subscribeToInUseLimitForecastUpdates(new ForecastSnapshotSubscribedReceiver() {
 
 			RequestSubscription subscription;
 			int numResources;
@@ -531,37 +502,18 @@ public class TrolieClientTest {
 					response.setEntity(
 							new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT))));
 
-					RealTimeSnapshotHeader header = new RealTimeSnapshotHeader();
-
 					threadPoolExecutor.submit(new Callable<Void>() {
 						@Override
 						public Void call() throws Exception {
-
 							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
-
-								json.writeStartObject();
-
-								json.writeFieldName("snapshot-header");
-								json.writeObject(header);
-
-								json.writeFieldName("ratings");
-								json.writeStartArray();
-
-								for (int i=0;i<100;i++) {
-									json.writeObject(RealTimeLimit.builder()
-											.resourceId("resource" + i)
-											.continuousOperatingLimit(Map.of("mva",100f)).build());
-								}
-
-								json.writeEndArray();
-								json.writeEndObject();
-
+								writeRealTimeSnapshot(json);
 								return null;
 							} catch (Exception e) {
 								e.printStackTrace();
 								throw new RuntimeException(e);
 							}
 						}
+
 					});
 
 				} else {
@@ -661,30 +613,14 @@ public class TrolieClientTest {
 				response.setEntity(
 						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT))));
 
-				RealTimeSnapshotHeader header = new RealTimeSnapshotHeader();
-
 				threadPoolExecutor.submit(new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
 
 						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
 
-							json.writeStartObject();
-
-							json.writeFieldName("snapshot-header");
-							json.writeObject(header);
-
-							json.writeFieldName("ratings");
-							json.writeStartArray();
-
-							for (int i=0;i<100;i++) {
-								json.writeObject(RealTimeLimit.builder()
-										.resourceId("resource" + i)
-										.continuousOperatingLimit(Map.of("mva",100f)).build());
-							}
-
-							json.writeEndArray();
-							json.writeEndObject();
+							
+							writeRealTimeSnapshot(json);
 
 							return null;
 						} catch (Exception e) {
@@ -746,5 +682,173 @@ public class TrolieClientTest {
 
 		Assertions.assertEquals(1, snapshotsReceived.get());
 		Assertions.assertEquals(0, errorCount.get());
+	}
+	
+	
+	@Test
+	public void testForecastSnapshotGet() throws Exception {
+
+		String startTime = Instant.now().toString();
+		
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				//we expect to get the configured monitoring set name as a query param
+				Assertions.assertEquals(
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc", 
+						request.getUri().getQuery());
+
+				//on 1st and 3rd request, return a new snapshot to indicate an update
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+
+				response.setEntity(
+						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
+
+				threadPoolExecutor.submit(new Callable<Void>() {
+					@Override
+					public Void call() throws Exception {
+
+						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+
+							writeForecastSnapshot(json, startTime);
+
+							return null;
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw new RuntimeException(e);
+						}
+					}
+				});
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+
+			return response;
+		};
+
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
+
+		AtomicInteger snapshotsReceived = new AtomicInteger(0);
+		AtomicInteger errorCount = new AtomicInteger(0);
+
+		//subscribe for snapshots and validate they are transmitted correctly
+		trolieClient.getInUseLimitForecasts(new ForecastSnapshotReceiver() {
+
+			int numResources;
+			int numPeriods;
+
+			@Override
+			public void header(ForecastSnapshotHeader header) {
+				Assertions.assertNotNull(header);
+				Assertions.assertEquals(startTime, header.getBegins());
+			}
+
+
+			@Override
+			public void endSnapshot() {
+				Assertions.assertEquals(100, numResources);
+				numResources = 0;
+			}
+
+			@Override
+			public void beginSnapshot() {
+				snapshotsReceived.incrementAndGet();
+			}
+
+			@Override
+			public void error(StreamingGetException t) {
+				errorCount.incrementAndGet();
+			}
+
+
+			@Override
+			public void beginResource(String resourceId) {
+				numResources++;
+			}
+
+
+			@Override
+			public void period(ForecastPeriodSnapshot period) {
+				numPeriods++;
+			}
+
+
+			@Override
+			public void endResource() {
+				Assertions.assertEquals(24, numPeriods);
+				numPeriods = 0;
+			}
+
+
+		}, "abc");
+
+		Assertions.assertEquals(1, snapshotsReceived.get());
+		Assertions.assertEquals(0, errorCount.get());
+	}
+	
+	
+	private void writeForecastSnapshot(JsonGenerator json, String startTime) throws IOException {
+		
+		ForecastSnapshotHeader header = new ForecastSnapshotHeader(startTime);
+		
+		json.writeStartObject();
+
+		json.writeFieldName("snapshot-header");
+		json.writeObject(header);
+
+		json.writeFieldName("ratings");
+		json.writeStartArray();
+
+		for (int i=0;i<100;i++) {
+			json.writeStartObject();
+			json.writeFieldName("resource-id");
+			json.writeString("resource" + i);
+			json.writeFieldName("periods");						
+			json.writeStartArray();
+			for (int j=0;j<24;j++) {
+				ForecastPeriodSnapshot period = new ForecastPeriodSnapshot(
+						startTime,
+						startTime,
+						Map.of("mva",100F),
+						Collections.emptyList()
+						);
+				json.writeObject(period);
+			}
+			json.writeEndArray();
+			json.writeEndObject();
+		}
+
+		json.writeEndArray();
+		json.writeEndObject();
+
+	}
+	
+	
+	private void writeRealTimeSnapshot(JsonGenerator json) throws IOException {
+		json.writeStartObject();
+
+		RealTimeSnapshotHeader header = new RealTimeSnapshotHeader();
+		json.writeFieldName("snapshot-header");
+		json.writeObject(header);
+
+		json.writeFieldName("ratings");
+		json.writeStartArray();
+
+		for (int i=0;i<100;i++) {
+			json.writeObject(RealTimeLimit.builder()
+					.resourceId("resource" + i)
+					.continuousOperatingLimit(Map.of("mva",100f)).build());
+		}
+
+		json.writeEndArray();
+		json.writeEndObject();
 	}
 }

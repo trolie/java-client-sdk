@@ -9,6 +9,8 @@ import org.apache.hc.core5.http.HttpHost;
 import org.trolie.client.TrolieClient;
 import org.trolie.client.etag.ETagStore;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotRequest;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotRequest;
@@ -35,11 +37,25 @@ public class TrolieClientImpl implements TrolieClient {
 	boolean enableCompression;
 	
 	@Override
-	public void getInUseLimitForecasts(String monitoringSet) {}
+	public void getInUseLimitForecasts(
+			ForecastSnapshotReceiver receiver,
+			String monitoringSet) {
+		
+		new ForecastSnapshotRequest(
+				httpClient, 
+				host, 
+				requestConfig, 
+				bufferSize, 
+				threadPoolExecutor, 
+				objectMapper, 
+				receiver, 
+				monitoringSet).executeRequest();
+		
+	}
 
 	@Override
 	public ForecastSnapshotSubscribedRequest subscribeToInUseLimitForecastUpdates(
-			ForecastSnapshotReceiver receiver,
+			ForecastSnapshotSubscribedReceiver receiver,
 			String monitoringSet,
 			int pollingRateMillis) {
 		

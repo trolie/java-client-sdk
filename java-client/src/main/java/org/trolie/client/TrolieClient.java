@@ -2,6 +2,7 @@ package org.trolie.client;
 
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
@@ -22,7 +23,17 @@ public interface TrolieClient {
     interface ForecastReceiver {
         void accept();
     }
-    void getInUseLimitForecasts(String monitoringSet);
+    
+    /**
+     * Execute a request for the current forecast limits with a streaming response handler
+     * 
+     * @param receiver
+     * @param monitoringSet
+     * @param transmissionFacility
+     */
+    void getInUseLimitForecasts(
+    		ForecastSnapshotReceiver receiver,
+    		String monitoringSet);
 
     /**
      * Create a polling subscription for forecast snapshot data updates
@@ -33,7 +44,7 @@ public interface TrolieClient {
      * @return
      */
     ForecastSnapshotSubscribedRequest subscribeToInUseLimitForecastUpdates(
-    		ForecastSnapshotReceiver receiver,
+    		ForecastSnapshotSubscribedReceiver receiver,
     		String monitoringSet,
     		int pollingRateMillis);
 
