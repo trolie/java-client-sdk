@@ -1,5 +1,7 @@
 package org.trolie.client;
 
+import java.time.Instant;
+
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
@@ -23,22 +25,60 @@ public interface TrolieClient {
     interface ForecastReceiver {
         void accept();
     }
+
+    /**
+     * Execute a request for the current forecast limits with a streaming response handler
+     * 
+     * @param receiver Streaming data receiver for snapshot data
+     */
+    void getInUseLimitForecasts(
+    		ForecastSnapshotReceiver receiver);
     
     /**
      * Execute a request for the current forecast limits with a streaming response handler
      * 
-     * @param receiver
-     * @param monitoringSet
+     * @param receiver Streaming data receiver for snapshot data
+     * @param monitoringSet filter for monitoring set name
      */
     void getInUseLimitForecasts(
     		ForecastSnapshotReceiver receiver,
     		String monitoringSet);
 
     /**
+     * Execute a request for the current forecast limits with a streaming response handler
+     * 
+     * @param receiver Streaming data receiver for snapshot data
+     * @param periodStart If periodEnd is also given, only periods between these 2 dates (start inclusive) will be returned. 
+     * If periodEnd is not given, all available periods starting at or after this date will be returned. 
+     * @param periodEnd If periodStart is also given, only periods between these 2 dates (start inclusive) will be returned. 
+     * If periodStart is not given, all available periods starting before this date will be returned.
+     */
+    void getInUseLimitForecasts(
+    		ForecastSnapshotReceiver receiver,
+    		Instant periodStart,
+    		Instant periodEnd);
+    
+    /**
+     * Execute a request for the current forecast limits with a streaming response handler
+     * 
+     * @param receiver Streaming data receiver for snapshot data
+     * @param monitoringSet filter for monitoring set name
+     * @param periodStart If periodEnd is also given, only periods between these 2 dates (start inclusive) will be returned. 
+     * If periodEnd is not given, all available periods starting at or after this date will be returned. 
+     * @param periodEnd If periodStart is also given, only periods between these 2 dates (start inclusive) will be returned. 
+     * If periodStart is not given, all available periods starting before this date will be returned. 
+     */
+    void getInUseLimitForecasts(
+    		ForecastSnapshotReceiver receiver,
+    		String monitoringSet,
+    		Instant periodStart,
+    		Instant periodEnd);
+    
+    /**
      * Create a polling subscription for forecast snapshot data updates
      * 
      * @param receiver Streaming data receiver for snapshot data
-     * @param monitoringSet optional filter for monitoring set 
+     * @param monitoringSet filter for monitoring set name 
      * @param pollingRateMillis Interval in millis between polling loops
      * @return
      */
@@ -47,6 +87,18 @@ public interface TrolieClient {
     		String monitoringSet,
     		int pollingRateMillis);
 
+    
+    /**
+     * Create a polling subscription for forecast snapshot data updates
+     * 
+     * @param receiver Streaming data receiver for snapshot data
+     * @param pollingRateMillis Interval in millis between polling loops
+     * @return
+     */
+    ForecastSnapshotSubscribedRequest subscribeToInUseLimitForecastUpdates(
+    		ForecastSnapshotSubscribedReceiver receiver,
+    		int pollingRateMillis);
+    
     /**
      * Create a forecast proposal update that can stream the update submission to the server
      * 
@@ -61,8 +113,53 @@ public interface TrolieClient {
      * @param monitoringSet
      * @param transmissionFacility
      */
-    public void getInUseLimits(RealTimeSnapshotReceiver receiver, String monitoringSet, String transmissionFacility);
+    public void getInUseLimits(
+    		RealTimeSnapshotReceiver receiver, 
+    		String monitoringSet, 
+    		String transmissionFacility);
 
+    /**
+     * Execute a request for the current real-time limits with a streaming response handler
+     * 
+     * @param receiver
+     * @param monitoringSet
+     */
+    public void getInUseLimits(
+    		RealTimeSnapshotReceiver receiver, 
+    		String monitoringSet);
+
+    /**
+     * Execute a request for the current real-time limits with a streaming response handler
+     * 
+     * @param receiver
+     */
+    public void getInUseLimits(
+    		RealTimeSnapshotReceiver receiver);
+    
+    /**
+     * Create a polling subscription for real-time snapshot data updates
+     * 
+     * @param receiver Streaming data receiver for snapshot data
+     * @param pollingRateMillis Interval in millis between polling loops
+     * @return
+     */
+    RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(
+    		RealTimeSnapshotSubscribedReceiver receiver,
+    		int pollingRateMillis);
+    
+    /**
+     * Create a polling subscription for real-time snapshot data updates
+     * 
+     * @param receiver Streaming data receiver for snapshot data
+     * @param monitoringSet optional filter for monitoring set
+     * @param pollingRateMillis Interval in millis between polling loops
+     * @return
+     */
+    RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(
+    		RealTimeSnapshotSubscribedReceiver receiver,
+    		String monitoringSet,
+    		int pollingRateMillis);
+    
     /**
      * Create a polling subscription for real-time snapshot data updates
      * 

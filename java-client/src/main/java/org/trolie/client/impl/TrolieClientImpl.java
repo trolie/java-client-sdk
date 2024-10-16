@@ -1,5 +1,6 @@
 package org.trolie.client.impl;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -37,9 +38,26 @@ public class TrolieClientImpl implements TrolieClient {
 	boolean enableCompression;
 	
 	@Override
+	public void getInUseLimitForecasts(ForecastSnapshotReceiver receiver) {
+		getInUseLimitForecasts(receiver,null,null,null);
+	}
+	
+	@Override
+	public void getInUseLimitForecasts(ForecastSnapshotReceiver receiver, String monitoringSet) {
+		getInUseLimitForecasts(receiver,monitoringSet,null,null);
+	}
+	
+	@Override
+	public void getInUseLimitForecasts(ForecastSnapshotReceiver receiver, Instant periodStart, Instant periodEnd) {
+		getInUseLimitForecasts(receiver, null, periodStart, periodEnd);
+	}
+	
+	@Override
 	public void getInUseLimitForecasts(
 			ForecastSnapshotReceiver receiver,
-			String monitoringSet) {
+			String monitoringSet,
+			Instant periodStart,
+			Instant periodEnd) {
 		
 		new ForecastSnapshotRequest(
 				httpClient, 
@@ -49,10 +67,18 @@ public class TrolieClientImpl implements TrolieClient {
 				threadPoolExecutor, 
 				objectMapper, 
 				receiver, 
-				monitoringSet).executeRequest();
+				monitoringSet,
+				periodStart,
+				periodEnd).executeRequest();
 		
 	}
 
+	@Override
+	public ForecastSnapshotSubscribedRequest subscribeToInUseLimitForecastUpdates(
+			ForecastSnapshotSubscribedReceiver receiver, int pollingRateMillis) {
+		return subscribeToInUseLimitForecastUpdates(receiver, null, pollingRateMillis);
+	}
+	
 	@Override
 	public ForecastSnapshotSubscribedRequest subscribeToInUseLimitForecastUpdates(
 			ForecastSnapshotSubscribedReceiver receiver,
@@ -83,6 +109,18 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(RealTimeSnapshotSubscribedReceiver receiver,
+			int pollingRateMillis) {
+		return subscribeToInUseLimits(receiver, null, null, pollingRateMillis);
+	}
+
+	@Override
+	public RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(RealTimeSnapshotSubscribedReceiver receiver,
+			String monitoringSet, int pollingRateMillis) {
+		return subscribeToInUseLimits(receiver, monitoringSet, null, pollingRateMillis);
+	}
+	
+	@Override
+	public RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(RealTimeSnapshotSubscribedReceiver receiver,
 			String monitoringSet, String transmissionFacility, int pollingRateMillis) {
 
 		RealTimeSnapshotSubscribedRequest subscription = new RealTimeSnapshotSubscribedRequest(
@@ -106,6 +144,16 @@ public class TrolieClientImpl implements TrolieClient {
 	public RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate() {
 		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader, enableCompression);
 	}
+
+	@Override
+	public void getInUseLimits(RealTimeSnapshotReceiver receiver) {
+		getInUseLimits(receiver, null, null);
+	}
+	
+	@Override
+	public void getInUseLimits(RealTimeSnapshotReceiver receiver, String monitoringSet) {
+		getInUseLimits(receiver, monitoringSet, null);
+	}
 	
 	@Override
 	public void getInUseLimits(RealTimeSnapshotReceiver receiver, String monitoringSet, String transmissionFacility) {
@@ -114,7 +162,7 @@ public class TrolieClientImpl implements TrolieClient {
 				httpClient, 
 				host, 
 				requestConfig, 
-				bufferSize, 
+				bufferSize,
 				threadPoolExecutor, 
 				objectMapper, 
 				receiver, 
@@ -122,6 +170,5 @@ public class TrolieClientImpl implements TrolieClient {
 				transmissionFacility).executeRequest();
 		
 	}
-
 
 }

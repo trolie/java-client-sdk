@@ -688,7 +688,8 @@ public class TrolieClientTest {
 	@Test
 	public void testForecastSnapshotGet() throws Exception {
 
-		String startTime = Instant.now().toString();
+		Instant startTime = Instant.now();
+		String startTimeString = startTime.toString();
 		
 		requestHandler = request -> {
 
@@ -696,9 +697,11 @@ public class TrolieClientTest {
 
 			try {
 
-				//we expect to get the configured monitoring set name as a query param
+				//we expect to get the monitoring set name and period start/end as a query params
 				Assertions.assertEquals(
-						TrolieApiConstants.PARAM_MONITORING_SET + "=abc", 
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + 
+						TrolieApiConstants.PARAM_PERIOD_START + "=" + startTimeString + "&" + 
+						TrolieApiConstants.PARAM_PERIOD_END + "=" + startTimeString, 
 						request.getUri().getQuery());
 
 				//on 1st and 3rd request, return a new snapshot to indicate an update
@@ -714,7 +717,7 @@ public class TrolieClientTest {
 
 						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
 
-							writeForecastSnapshot(json, startTime);
+							writeForecastSnapshot(json, startTimeString);
 
 							return null;
 						} catch (Exception e) {
@@ -748,7 +751,7 @@ public class TrolieClientTest {
 			@Override
 			public void header(ForecastSnapshotHeader header) {
 				Assertions.assertNotNull(header);
-				Assertions.assertEquals(startTime, header.getBegins());
+				Assertions.assertEquals(startTimeString, header.getBegins());
 			}
 
 
@@ -788,7 +791,7 @@ public class TrolieClientTest {
 			}
 
 
-		}, "abc");
+		}, "abc", startTime, startTime);
 
 		Assertions.assertEquals(1, snapshotsReceived.get());
 		Assertions.assertEquals(0, errorCount.get());

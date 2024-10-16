@@ -2,6 +2,7 @@ package org.trolie.client.request.operatingsnapshots;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -22,6 +23,8 @@ public class ForecastSnapshotRequest extends AbstractStreamingGet<ForecastSnapsh
 
 	JsonFactory jsonFactory;
 	String monitoringSet;
+	Instant periodStart;
+	Instant periodEnd;
 	String transmissionFacility;
 	
 	public ForecastSnapshotRequest(
@@ -32,11 +35,15 @@ public class ForecastSnapshotRequest extends AbstractStreamingGet<ForecastSnapsh
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper, 
 			ForecastSnapshotReceiver receiver,
-			String monitoringSet) {
+			String monitoringSet,
+			Instant periodStart,
+			Instant periodEnd) {
 		
 		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
+		this.periodStart = periodStart;
+		this.periodEnd = periodEnd;
 	}
 
 	@Override
@@ -59,6 +66,28 @@ public class ForecastSnapshotRequest extends AbstractStreamingGet<ForecastSnapsh
 			//add the monitoring set parameter to the base URI
 			URIBuilder uriBuilder = new URIBuilder(get.getUri())
 					.addParameter(TrolieApiConstants.PARAM_MONITORING_SET, monitoringSet);
+			get.setUri(uriBuilder.build());
+		}
+		
+		if (periodStart != null) {
+
+			//add the period-start or offset-period-start parameter to the base URI
+			URIBuilder uriBuilder = new URIBuilder(get.getUri())
+					.addParameter(
+							//if no period-end is given, assume that the date is being used as an offset
+							periodEnd != null ? TrolieApiConstants.PARAM_PERIOD_START : TrolieApiConstants.PARAM_OFFSET_PERIOD_START, 
+							periodStart.toString());
+			get.setUri(uriBuilder.build());
+		}
+
+		if (periodEnd != null) {
+
+			//add the period-end or offset-period-end parameter to the base URI
+			URIBuilder uriBuilder = new URIBuilder(get.getUri())
+					.addParameter(
+							//if no period-start is given, assume that the date is being used as an offset
+							periodStart != null ? TrolieApiConstants.PARAM_PERIOD_END : TrolieApiConstants.PARAM_OFFSET_PERIOD_END, 
+							periodEnd.toString());
 			get.setUri(uriBuilder.build());
 		}
 		
