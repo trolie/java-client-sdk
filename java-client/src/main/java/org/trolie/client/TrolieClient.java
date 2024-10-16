@@ -29,7 +29,6 @@ public interface TrolieClient {
      * 
      * @param receiver
      * @param monitoringSet
-     * @param transmissionFacility
      */
     void getInUseLimitForecasts(
     		ForecastSnapshotReceiver receiver,
