@@ -700,7 +700,7 @@ public class TrolieClientTest {
 				//we expect to get the monitoring set name and period start/end as a query params
 				Assertions.assertEquals(
 						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + 
-						TrolieApiConstants.PARAM_PERIOD_START + "=" + startTimeString + "&" + 
+						TrolieApiConstants.PARAM_OFFSET_PERIOD_START + "=" + startTimeString + "&" + 
 						TrolieApiConstants.PARAM_PERIOD_END + "=" + startTimeString, 
 						request.getUri().getQuery());
 

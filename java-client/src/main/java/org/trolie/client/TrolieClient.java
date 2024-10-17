@@ -48,14 +48,13 @@ public interface TrolieClient {
      * Execute a request for the current forecast limits with a streaming response handler
      * 
      * @param receiver Streaming data receiver for snapshot data
-     * @param periodStart If periodEnd is also given, only periods between these 2 dates (start inclusive) will be returned. 
-     * If periodEnd is not given, all available periods starting at or after this date will be returned. 
-     * @param periodEnd If periodStart is also given, only periods between these 2 dates (start inclusive) will be returned. 
+     * @param offsetPeriodStart Optional. Only periods starting at or after this date will be returned. 
+     * @param periodEnd Optional. Only periods starting before this date will be returns 
      * If periodStart is not given, all available periods starting before this date will be returned.
      */
     void getInUseLimitForecasts(
     		ForecastSnapshotReceiver receiver,
-    		Instant periodStart,
+    		Instant offsetPeriodStart,
     		Instant periodEnd);
     
     /**
@@ -63,15 +62,14 @@ public interface TrolieClient {
      * 
      * @param receiver Streaming data receiver for snapshot data
      * @param monitoringSet filter for monitoring set name
-     * @param periodStart If periodEnd is also given, only periods between these 2 dates (start inclusive) will be returned. 
-     * If periodEnd is not given, all available periods starting at or after this date will be returned. 
-     * @param periodEnd If periodStart is also given, only periods between these 2 dates (start inclusive) will be returned. 
+     * @param offsetPeriodStart Optional. Only periods starting at or after this date will be returned. 
+     * @param periodEnd Optional. Only periods starting before this date will be returns 
      * If periodStart is not given, all available periods starting before this date will be returned. 
      */
     void getInUseLimitForecasts(
     		ForecastSnapshotReceiver receiver,
     		String monitoringSet,
-    		Instant periodStart,
+    		Instant offsetPeriodStart,
     		Instant periodEnd);
     
     /**
