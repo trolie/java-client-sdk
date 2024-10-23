@@ -104,8 +104,8 @@ pipeline {
         success {
             script {
                 tag_git {
-                    gitCredentialsId = "github-markets"
-                    gitRepo = "github.build.ge.com/energy-markets/trolie-java-client-sdk"
+                    gitCredentialsId = "grid-transact"
+                    gitRepo = "github.software.gevernova.com/grid-transact/trolie-java-client-sdk"
                     buildNumber = versionNumber
                 }
                 utils.notifyComplete(currentBuild.currentResult)
