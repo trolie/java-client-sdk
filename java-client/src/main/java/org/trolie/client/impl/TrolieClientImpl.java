@@ -9,6 +9,10 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
 import org.trolie.client.TrolieClient;
 import org.trolie.client.etag.ETagStore;
+import org.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
+import org.trolie.client.request.monitoringsets.MonitoringSetsRequest;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotRequest;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
@@ -169,6 +173,23 @@ public class TrolieClientImpl implements TrolieClient {
 				monitoringSet, 
 				transmissionFacility).executeRequest();
 		
+	}
+
+	@Override
+	public void getMonitoringSet(MonitoringSetsReceiver receiver, String monitoringSet) {
+		new MonitoringSetsRequest(
+				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, receiver, monitoringSet
+				).executeRequest();
+		
+	}
+
+	@Override
+	public MonitoringSetsSubscribedRequest subscribeToMonitoringsetsGet(MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
+			int pollingRateMillis) {
+		MonitoringSetsSubscribedRequest subscription = new MonitoringSetsSubscribedRequest(
+				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper, pollingRateMillis, receiver, eTagStore, monitoringSet);
+		subscription.subscribe();
+		return subscription;
 	}
 
 }
