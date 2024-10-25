@@ -86,7 +86,6 @@ import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
 import static org.trolie.client.util.CommonConstants.TAG_ID;
 import static org.trolie.client.util.CommonConstants.TAG_DESCRIPTION;
 import static org.trolie.client.util.CommonConstants.TAG_POWER_SYSTEM_RESOURCES;
-import static org.trolie.client.util.CommonConstants.TAG_DEFAULT;
 
 @Slf4j
 public class TrolieClientTest {
@@ -864,7 +863,6 @@ public class TrolieClientTest {
 				assertNotNull(monitoringSet.getDescription());
 				assertNotNull(monitoringSet.getSource());
 				assertNotNull(monitoringSet.getPowerSystemResources());
-				assertTrue(monitoringSet.isMonitoringSetDefault());
 			}
 			
 			@Override
@@ -883,7 +881,7 @@ public class TrolieClientTest {
 	private void writeMonitoringSet(JsonGenerator json, String id) throws IOException {
 		var source = DataProvenance.builder().provider(id).lastUpdated(
 				Instant.now().toString()).originId(id).build();
-		MonitoringSet monitoringSet = new MonitoringSet(source, id, "This is test SDK", List.of(), true);
+		MonitoringSet monitoringSet = new MonitoringSet(source, id, "This is test SDK", List.of());
 		json.writeStartObject();
 		try {
 			json.writeFieldName(TAG_SOURCE);
@@ -894,8 +892,6 @@ public class TrolieClientTest {
 			json.writeObject(monitoringSet.getDescription());
 			json.writeFieldName(TAG_POWER_SYSTEM_RESOURCES);
 			json.writeObject(monitoringSet.getPowerSystemResources());
-			json.writeFieldName(TAG_DEFAULT);
-			json.writeObject(monitoringSet.isMonitoringSetDefault());
 		}catch (Exception e) {
 			log.error("writeMonitoringSet.error ", e);
 		}

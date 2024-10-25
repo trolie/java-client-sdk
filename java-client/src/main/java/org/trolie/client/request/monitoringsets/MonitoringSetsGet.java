@@ -27,7 +27,6 @@ import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
 import static org.trolie.client.util.CommonConstants.TAG_ID;
 import static org.trolie.client.util.CommonConstants.TAG_DESCRIPTION;
 import static org.trolie.client.util.CommonConstants.TAG_POWER_SYSTEM_RESOURCES;
-import static org.trolie.client.util.CommonConstants.TAG_DEFAULT;
 
 public class MonitoringSetsGet extends AbstractStreamingUpdate<MonitoringSetsGet> {
 
@@ -100,8 +99,6 @@ public class MonitoringSetsGet extends AbstractStreamingUpdate<MonitoringSetsGet
 			jsonGenerator.writeObject(monitoringSet.getDescription());
 			jsonGenerator.writeFieldName(TAG_POWER_SYSTEM_RESOURCES);
 			jsonGenerator.writeObject(monitoringSet.getPowerSystemResources());
-			jsonGenerator.writeFieldName(TAG_DEFAULT);
-			jsonGenerator.writeObject(monitoringSet.isMonitoringSetDefault());
 		} catch (Exception e) {
 			handleWriteError(e);
 		}

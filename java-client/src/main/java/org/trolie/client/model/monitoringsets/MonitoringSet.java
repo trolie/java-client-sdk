@@ -48,7 +48,4 @@ public class MonitoringSet {
 
     @JsonProperty("power-system-resources")
     private List<PowerSystemResource> powerSystemResources;
-    
-    @JsonProperty("default")
-    boolean monitoringSetDefault;
 }

@@ -57,7 +57,7 @@ public class MonitoringSetsRequest extends AbstractStreamingGet<MonitoringSetsRe
 			uriBuilder.appendPath("/"+monitoringSet);
 			get.setUri(uriBuilder.build());
 		} else {
-			//TODO: throw exception
+			throw new URISyntaxException("", "URISyntaxException cannot be null or empty");
 		}
 		return get;
 	}
