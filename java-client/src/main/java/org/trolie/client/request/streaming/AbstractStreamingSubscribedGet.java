@@ -32,7 +32,7 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 	int pollingRateMillis;
 	ETagStore eTagStore;
 
-	AtomicBoolean subscribed = new AtomicBoolean();
+	AtomicBoolean active = new AtomicBoolean();
 	
 	public AbstractStreamingSubscribedGet(
 			HttpClient httpClient, 
@@ -47,18 +47,31 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 		this.pollingRateMillis = pollingRateMillis;
 		this.eTagStore = eTagStore;
 	}
-	public void subscribe() {
-		subscribed.set(true);
+	
+	public void start() {
+		if (active.get()) {
+			return;
+		}
+		logger.info("Starting request subscription for {}", getPath());
+		active.set(true);
 		requestExecutorFuture = threadPoolExecutor.submit(new RequestExecutor());
 		receiver.setSubscription(this);
 	}
 	
-	public Future<Void> unsubscribe() {		
-		synchronized (subscribed) {
-			subscribed.set(false);
-			subscribed.notify();
+	public Future<Void> stop() {
+		if (!active.get()) {
+			return requestExecutorFuture;
+		}
+		logger.info("Stopping request subscription for {}", getPath());
+		synchronized (active) {
+			active.set(false);
+			active.notify();
 		}
 		return requestExecutorFuture;
+	}
+	
+	public boolean isActive() {
+		return active.get();
 	}
 
 	protected void handleResponse(ClassicHttpResponse response) {
@@ -93,13 +106,13 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 			
 			logger.info("Subscribed to {}", getPath());
 			
-			while (subscribed.get()) {
+			while (active.get()) {
 				
 				logger.debug("Polling for update on {}", getPath());
 				executeRequest();
 				
-				synchronized (subscribed) {
-					subscribed.wait(pollingRateMillis);
+				synchronized (active) {
+					active.wait(pollingRateMillis);
 				}
 			}
 			
@@ -111,6 +124,10 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 	}
 	
 	public boolean isSubscribed() {
-		return subscribed.get() && requestExecutorFuture != null && !requestExecutorFuture.isDone();
+		return active.get() && requestExecutorFuture != null && !requestExecutorFuture.isDone();
+	}
+	
+	public String toString() {
+		return getPath();
 	}
 }

@@ -8,8 +8,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.HttpHost;
 import org.trolie.client.etag.ETagStore;
 import org.trolie.client.etag.MemoryETagStore;
@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class TrolieClientBuilder {
 
 	HttpHost host;
-	HttpClientBuilder httpClientBuilder;
+	HttpClient httpClient;
 	ThreadPoolExecutor threadPoolExecutor;
 	RequestConfig requestConfig;
 	int bufferSize = 4096;
@@ -31,14 +31,14 @@ public class TrolieClientBuilder {
 
 	public TrolieClientBuilder(
 			String baseUrl, 
-			HttpClientBuilder clientBuilder) {
+			HttpClient httpClient) {
 		super();
 		try {
 			this.host = HttpHost.create(baseUrl);
 		} catch (URISyntaxException e) {
 			throw new TrolieException(e);
 		}
-		this.httpClientBuilder = clientBuilder;
+		this.httpClient = httpClient;
 	}
 
 	public TrolieClientBuilder threadPoolExecutor(ThreadPoolExecutor executor) {
@@ -98,6 +98,6 @@ public class TrolieClientBuilder {
 			httpHeader = new HashMap<>();
 		}
 
-    	return new TrolieClientImpl(httpClientBuilder.build(), host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, eTagStore, httpHeader, enableCompression);
+    	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, eTagStore, httpHeader, enableCompression);
     }
 }

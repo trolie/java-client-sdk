@@ -1,8 +1,9 @@
 package org.trolie.client;
 
+import java.io.Closeable;
 import java.time.Instant;
 
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
@@ -11,6 +12,7 @@ import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRe
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
+import org.trolie.client.request.streaming.RequestSubscription;
 
 
 /**
@@ -19,7 +21,7 @@ import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
  * TROLIE endpoint used by a given application.
  * @see TrolieClientBuilder
  */
-public interface TrolieClient {
+public interface TrolieClient extends Closeable {
 
     @FunctionalInterface
     interface ForecastReceiver {
@@ -180,7 +182,21 @@ public interface TrolieClient {
      */
     RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate();
 
-    static TrolieClientBuilder builder(String baseUrl, HttpClientBuilder clientBuilder) {
-        return new TrolieClientBuilder(baseUrl, clientBuilder);
+    /**
+     * Un-subscribe an active polling request
+     * 
+     * @param subscription
+     */
+    void unsubscribe(RequestSubscription subscription);
+    
+    /**
+     * Un-subscribe all active polling requests
+     * 
+     * @param subscription
+     */
+    void unsubscribeAll();
+    
+    static TrolieClientBuilder builder(String baseUrl, HttpClient httpClient) {
+        return new TrolieClientBuilder(baseUrl, httpClient);
     }
 }

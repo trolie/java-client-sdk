@@ -143,7 +143,7 @@ public class TrolieClientTest {
 	}
 
 	@Test
-	public void testForecastRatingProposalStreamingUpdate() {
+	public void testForecastRatingProposalStreamingUpdate() throws IOException {
 
 		//test a roundtrip submission and response 
 
@@ -179,35 +179,37 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
 
-		try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
 
-			ForecastProposalHeader header = ForecastProposalHeader.builder()
-					.begins(startTime)
-					.build();
+			try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
 
-			update.begin(header);
-			for (int i=0;i<3;i++) {
-				update.beginResource("resource" + i);
-				for (int j=0;j<3;j++) {
-					update.period(ForecastRatingPeriod.builder()
-							.periodStart(startTime)
-							.periodEnd(startTime)
-							.continuousOperatingLimit(Map.of("mva",100F))
-							.build());
+				ForecastProposalHeader header = ForecastProposalHeader.builder()
+						.begins(startTime)
+						.build();
+
+				update.begin(header);
+				for (int i=0;i<3;i++) {
+					update.beginResource("resource" + i);
+					for (int j=0;j<3;j++) {
+						update.period(ForecastRatingPeriod.builder()
+								.periodStart(startTime)
+								.periodEnd(startTime)
+								.continuousOperatingLimit(Map.of("mva",100F))
+								.build());
+					}
+					update.endResource();
 				}
-				update.endResource();
+				ForecastRatingProposalStatus status = update.complete();
+
+				Assertions.assertEquals(startTime, status.getBegins());
+
 			}
-			ForecastRatingProposalStatus status = update.complete();
-
-			Assertions.assertEquals(startTime, status.getBegins());
-
 		}
 	}
 
 	@Test
-	public void testForecastRatingProposalStreamingUpdate_ServerError() {
+	public void testForecastRatingProposalStreamingUpdate_ServerError() throws IOException {
 
 		//make sure that server errors are clearly bubbled up with a status code
 
@@ -219,55 +221,57 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
 
-		Assertions.assertThrows(TrolieServerException.class, () -> {
-			try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
+			Assertions.assertThrows(TrolieServerException.class, () -> {
+				try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
 
-				ForecastProposalHeader header = ForecastProposalHeader.builder()
-						.begins(startTime)
-						.build();
+					ForecastProposalHeader header = ForecastProposalHeader.builder()
+							.begins(startTime)
+							.build();
 
-				update.begin(header);
-				update.complete();
-			}
-		});
+					update.begin(header);
+					update.complete();
+				}
+			});
+		}
 	}
 
 	@Test
-	public void testForecastRatingProposalStreamingUpdate_ConnectError() {
+	public void testForecastRatingProposalStreamingUpdate_ConnectError() throws IOException {
 
 		//make sure that client I/O errors are clearly bubbled up
 
 		String startTime = Instant.now().toString();
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(HOST + ":" + 1111,builder).build();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(HOST + ":" + 1111,builder.build()).build();) {
 
-		try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
+			try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
 
-			ForecastProposalHeader header = ForecastProposalHeader.builder()
-					.begins(startTime)
-					.build();
+				ForecastProposalHeader header = ForecastProposalHeader.builder()
+						.begins(startTime)
+						.build();
 
-			//must create enough data to fill the buffer for this to be a good test so 
-			//we can make sure stream is not jammed up by death of request execution thread
-			//and no bytes being taken off the buffer
-			update.begin(header);
-			for (int i=0;i<100;i++) {
-				update.beginResource("resource" + i);
-				for (int j=0;j<10;j++) {
-					update.period(ForecastRatingPeriod.builder()
-							.periodStart(startTime)
-							.periodEnd(startTime)
-							.continuousOperatingLimit(Map.of("mva",100F))
-							.build());
+				//must create enough data to fill the buffer for this to be a good test so 
+				//we can make sure stream is not jammed up by death of request execution thread
+				//and no bytes being taken off the buffer
+				update.begin(header);
+				for (int i=0;i<100;i++) {
+					update.beginResource("resource" + i);
+					for (int j=0;j<10;j++) {
+						update.period(ForecastRatingPeriod.builder()
+								.periodStart(startTime)
+								.periodEnd(startTime)
+								.continuousOperatingLimit(Map.of("mva",100F))
+								.build());
+					}
+					update.endResource();
 				}
-				update.endResource();
+				update.complete();
+			} catch (TrolieException e) {
+				Assertions.assertEquals(HttpHostConnectException.class, e.getCause().getClass());
 			}
-			update.complete();
-		} catch (TrolieException e) {
-			Assertions.assertEquals(HttpHostConnectException.class, e.getCause().getClass());
 		}
 	}
 
@@ -344,76 +348,77 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
 
-		AtomicInteger snapshotsReceived = new AtomicInteger(0);
-		AtomicInteger errorCount = new AtomicInteger(0);
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
 
-		//subscribe for snapshots and validate they are transmitted correctly
-		ForecastSnapshotSubscribedRequest subscription = trolieClient.subscribeToInUseLimitForecastUpdates(new ForecastSnapshotSubscribedReceiver() {
+			//subscribe for snapshots and validate they are transmitted correctly
+			ForecastSnapshotSubscribedRequest subscription = trolieClient.subscribeToInUseLimitForecastUpdates(new ForecastSnapshotSubscribedReceiver() {
 
-			RequestSubscription subscription;
-			int numResources;
-			int numPeriods;
+				RequestSubscription subscription;
+				int numResources;
+				int numPeriods;
 
-			@Override
-			public void period(ForecastPeriodSnapshot period) {
-				numPeriods++;
+				@Override
+				public void period(ForecastPeriodSnapshot period) {
+					numPeriods++;
+				}
+
+				@Override
+				public void header(ForecastSnapshotHeader header) {
+					Assertions.assertEquals(startTime, header.getBegins());
+				}
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void endResource() {
+					Assertions.assertEquals(24, numPeriods);
+					numPeriods = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void beginResource(String resourceId) {
+					numResources++;
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+					subscription.stop();
+				}
+
+				@Override
+				public void setSubscription(RequestSubscription subscription) {
+					this.subscription = subscription;
+				}
+
+
+			}, "abc", 1000);
+
+			while (subscription.isSubscribed()) {
+				Thread.sleep(100);
 			}
 
-			@Override
-			public void header(ForecastSnapshotHeader header) {
-				Assertions.assertEquals(startTime, header.getBegins());
-			}
-
-			@Override
-			public void endSnapshot() {
-				Assertions.assertEquals(100, numResources);
-				numResources = 0;
-			}
-
-			@Override
-			public void endResource() {
-				Assertions.assertEquals(24, numPeriods);
-				numPeriods = 0;
-			}
-
-			@Override
-			public void beginSnapshot() {
-				snapshotsReceived.incrementAndGet();
-			}
-
-			@Override
-			public void beginResource(String resourceId) {
-				numResources++;
-			}
-
-			@Override
-			public void error(StreamingGetException t) {
-				errorCount.incrementAndGet();
-				subscription.unsubscribe();
-			}
-
-			@Override
-			public void setSubscription(RequestSubscription subscription) {
-				this.subscription = subscription;
-			}
-
-
-		}, "abc", 1000);
-
-		while (subscription.isSubscribed()) {
-			Thread.sleep(100);
+			//we should have received 2 snapshots, 1 304 code and 1 500 code
+			Assertions.assertEquals(2, snapshotsReceived.get());
+			Assertions.assertEquals(1, errorCount.get());
 		}
-
-		//we should have received 2 snapshots, 1 304 code and 1 500 code
-		Assertions.assertEquals(2, snapshotsReceived.get());
-		Assertions.assertEquals(1, errorCount.get());
 	}
 
 
 	@Test
-	public void testRealTimeRatingProposalStreamingUpdate() {
+	public void testRealTimeRatingProposalStreamingUpdate() throws IOException {
 
 		//test a roundtrip submission and response 
 
@@ -443,21 +448,22 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
 
-		try (RealTimeRatingProposalUpdate update = trolieClient.createRealTimeRatingProposalStreamingUpdate()) {
+			try (RealTimeRatingProposalUpdate update = trolieClient.createRealTimeRatingProposalStreamingUpdate()) {
 
-			ProposalHeader header = ProposalHeader.builder()
-					.build();
+				ProposalHeader header = ProposalHeader.builder()
+						.build();
 
-			update.begin(header);
-			for (int i=0;i<3;i++) {
-				update.rating(RealTimeRating.builder().continuousOperatingLimit(Map.of("MVA",100f)).build());
+				update.begin(header);
+				for (int i=0;i<3;i++) {
+					update.rating(RealTimeRating.builder().continuousOperatingLimit(Map.of("MVA",100f)).build());
+				}
+				RealTimeRatingProposalStatus status = update.complete();
+
+				Assertions.assertEquals(5, status.getIncompleteObligationCount());
+
 			}
-			RealTimeRatingProposalStatus status = update.complete();
-
-			Assertions.assertEquals(5, status.getIncompleteObligationCount());
-
 		}
 	}
 
@@ -534,60 +540,61 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
 
-		AtomicInteger snapshotsReceived = new AtomicInteger(0);
-		AtomicInteger errorCount = new AtomicInteger(0);
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
 
-		//subscribe for snapshots and validate they are transmitted correctly
-		RealTimeSnapshotSubscribedRequest subscription = trolieClient.subscribeToInUseLimits(new RealTimeSnapshotSubscribedReceiver() {
+			//subscribe for snapshots and validate they are transmitted correctly
+			RealTimeSnapshotSubscribedRequest subscription = trolieClient.subscribeToInUseLimits(new RealTimeSnapshotSubscribedReceiver() {
 
-			RequestSubscription subscription;
-			int numResources;
+				RequestSubscription subscription;
+				int numResources;
 
-			@Override
-			public void header(RealTimeSnapshotHeader header) {
-				Assertions.assertNotNull(header);
+				@Override
+				public void header(RealTimeSnapshotHeader header) {
+					Assertions.assertNotNull(header);
+				}
+
+				@Override
+				public void limit(RealTimeLimit limit) {
+					numResources++;
+				}
+
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+					subscription.stop();
+				}
+
+				@Override
+				public void setSubscription(RequestSubscription subscription) {
+					this.subscription = subscription;
+				}
+
+
+			}, "abc", "xyz", 1000);
+
+			while (subscription.isSubscribed()) {
+				Thread.sleep(100);
 			}
 
-			@Override
-			public void limit(RealTimeLimit limit) {
-				numResources++;
-			}
-
-
-			@Override
-			public void endSnapshot() {
-				Assertions.assertEquals(100, numResources);
-				numResources = 0;
-			}
-
-			@Override
-			public void beginSnapshot() {
-				snapshotsReceived.incrementAndGet();
-			}
-
-			@Override
-			public void error(StreamingGetException t) {
-				errorCount.incrementAndGet();
-				subscription.unsubscribe();
-			}
-
-			@Override
-			public void setSubscription(RequestSubscription subscription) {
-				this.subscription = subscription;
-			}
-
-
-		}, "abc", "xyz", 1000);
-
-		while (subscription.isSubscribed()) {
-			Thread.sleep(100);
+			//we should have received 2 snapshots, 1 304 code and 1 500 code
+			Assertions.assertEquals(2, snapshotsReceived.get());
+			Assertions.assertEquals(1, errorCount.get());
 		}
-
-		//we should have received 2 snapshots, 1 304 code and 1 500 code
-		Assertions.assertEquals(2, snapshotsReceived.get());
-		Assertions.assertEquals(1, errorCount.get());
 	}
 
 
@@ -619,7 +626,7 @@ public class TrolieClientTest {
 
 						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
 
-							
+
 							writeRealTimeSnapshot(json);
 
 							return null;
@@ -640,57 +647,58 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
 
-		AtomicInteger snapshotsReceived = new AtomicInteger(0);
-		AtomicInteger errorCount = new AtomicInteger(0);
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
 
-		//subscribe for snapshots and validate they are transmitted correctly
-		trolieClient.getInUseLimits(new RealTimeSnapshotReceiver() {
+			//subscribe for snapshots and validate they are transmitted correctly
+			trolieClient.getInUseLimits(new RealTimeSnapshotReceiver() {
 
-			int numResources;
+				int numResources;
 
-			@Override
-			public void header(RealTimeSnapshotHeader header) {
-				Assertions.assertNotNull(header);
-			}
+				@Override
+				public void header(RealTimeSnapshotHeader header) {
+					Assertions.assertNotNull(header);
+				}
 
-			@Override
-			public void limit(RealTimeLimit limit) {
-				numResources++;
-			}
-
-
-			@Override
-			public void endSnapshot() {
-				Assertions.assertEquals(100, numResources);
-				numResources = 0;
-			}
-
-			@Override
-			public void beginSnapshot() {
-				snapshotsReceived.incrementAndGet();
-			}
-
-			@Override
-			public void error(StreamingGetException t) {
-				errorCount.incrementAndGet();
-			}
+				@Override
+				public void limit(RealTimeLimit limit) {
+					numResources++;
+				}
 
 
-		}, "abc", "xyz");
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
 
-		Assertions.assertEquals(1, snapshotsReceived.get());
-		Assertions.assertEquals(0, errorCount.get());
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+				}
+
+
+			}, "abc", "xyz");
+
+			Assertions.assertEquals(1, snapshotsReceived.get());
+			Assertions.assertEquals(0, errorCount.get());
+		}
 	}
-	
-	
+
+
 	@Test
 	public void testForecastSnapshotGet() throws Exception {
 
 		Instant startTime = Instant.now();
 		String startTimeString = startTime.toString();
-		
+
 		requestHandler = request -> {
 
 			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
@@ -700,9 +708,9 @@ public class TrolieClientTest {
 				//we expect to get the monitoring set name and period start/end as a query params
 				Assertions.assertEquals(
 						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + 
-						TrolieApiConstants.PARAM_OFFSET_PERIOD_START + "=" + startTimeString + "&" + 
-						TrolieApiConstants.PARAM_PERIOD_END + "=" + startTimeString, 
-						request.getUri().getQuery());
+								TrolieApiConstants.PARAM_OFFSET_PERIOD_START + "=" + startTimeString + "&" + 
+								TrolieApiConstants.PARAM_PERIOD_END + "=" + startTimeString, 
+								request.getUri().getQuery());
 
 				//on 1st and 3rd request, return a new snapshot to indicate an update
 				PipedOutputStream out = new PipedOutputStream();
@@ -737,71 +745,73 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder).build();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
 
-		AtomicInteger snapshotsReceived = new AtomicInteger(0);
-		AtomicInteger errorCount = new AtomicInteger(0);
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
 
-		//subscribe for snapshots and validate they are transmitted correctly
-		trolieClient.getInUseLimitForecasts(new ForecastSnapshotReceiver() {
+			//subscribe for snapshots and validate they are transmitted correctly
+			trolieClient.getInUseLimitForecasts(new ForecastSnapshotReceiver() {
 
-			int numResources;
-			int numPeriods;
+				int numResources;
+				int numPeriods;
 
-			@Override
-			public void header(ForecastSnapshotHeader header) {
-				Assertions.assertNotNull(header);
-				Assertions.assertEquals(startTimeString, header.getBegins());
-			}
-
-
-			@Override
-			public void endSnapshot() {
-				Assertions.assertEquals(100, numResources);
-				numResources = 0;
-			}
-
-			@Override
-			public void beginSnapshot() {
-				snapshotsReceived.incrementAndGet();
-			}
-
-			@Override
-			public void error(StreamingGetException t) {
-				errorCount.incrementAndGet();
-			}
+				@Override
+				public void header(ForecastSnapshotHeader header) {
+					Assertions.assertNotNull(header);
+					Assertions.assertEquals(startTimeString, header.getBegins());
+				}
 
 
-			@Override
-			public void beginResource(String resourceId) {
-				numResources++;
-			}
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+				}
 
 
-			@Override
-			public void period(ForecastPeriodSnapshot period) {
-				numPeriods++;
-			}
+				@Override
+				public void beginResource(String resourceId) {
+					numResources++;
+				}
 
 
-			@Override
-			public void endResource() {
-				Assertions.assertEquals(24, numPeriods);
-				numPeriods = 0;
-			}
+				@Override
+				public void period(ForecastPeriodSnapshot period) {
+					numPeriods++;
+				}
 
 
-		}, "abc", startTime, startTime);
+				@Override
+				public void endResource() {
+					Assertions.assertEquals(24, numPeriods);
+					numPeriods = 0;
+				}
 
-		Assertions.assertEquals(1, snapshotsReceived.get());
-		Assertions.assertEquals(0, errorCount.get());
+
+			}, "abc", startTime, startTime);
+
+			Assertions.assertEquals(1, snapshotsReceived.get());
+			Assertions.assertEquals(0, errorCount.get());
+
+		}
 	}
-	
-	
+
+
 	private void writeForecastSnapshot(JsonGenerator json, String startTime) throws IOException {
-		
+
 		ForecastSnapshotHeader header = new ForecastSnapshotHeader(startTime);
-		
+
 		json.writeStartObject();
 
 		json.writeFieldName("snapshot-header");
@@ -833,8 +843,8 @@ public class TrolieClientTest {
 		json.writeEndObject();
 
 	}
-	
-	
+
+
 	private void writeRealTimeSnapshot(JsonGenerator json) throws IOException {
 		json.writeStartObject();
 
