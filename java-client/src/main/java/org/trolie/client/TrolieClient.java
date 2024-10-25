@@ -188,11 +188,9 @@ public interface TrolieClient extends Closeable {
      * @param subscription
      */
     void unsubscribe(RequestSubscription subscription);
-    
+
     /**
      * Un-subscribe all active polling requests
-     * 
-     * @param subscription
      */
     void unsubscribeAll();
     
