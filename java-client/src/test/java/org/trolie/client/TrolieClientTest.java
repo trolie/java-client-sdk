@@ -2,7 +2,6 @@ package org.trolie.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -815,7 +814,7 @@ public class TrolieClientTest {
 	
 	@Test
 	public void testMonitoringSetsGet() throws Exception {
-		String id = "test-sdk";
+		String id = "monitoring-set";
 		requestHandler = request -> {
 			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
 			try {
@@ -850,6 +849,71 @@ public class TrolieClientTest {
 		AtomicInteger errorCount = new AtomicInteger(0);
 		//subscribe for snapshots and validate they are transmitted correctly
 		trolieClient.getMonitoringSet(new MonitoringSetsReceiver() {
+			
+			@Override
+			public void error(StreamingGetException t) {
+				errorCount.incrementAndGet();
+			}
+			
+			@Override
+			public void header(MonitoringSet monitoringSet) {
+				assertNotNull(monitoringSet);
+				assertEquals(id, monitoringSet.getId());
+				assertNotNull(monitoringSet.getDescription());
+				assertNotNull(monitoringSet.getSource());
+				assertNotNull(monitoringSet.getPowerSystemResources());
+			}
+			
+			@Override
+			public void end() {
+			}
+			
+			@Override
+			public void begin() {
+				receivedCount.incrementAndGet();
+			}
+		}, id);
+		Assertions.assertEquals(1, receivedCount.get());
+		Assertions.assertEquals(0, errorCount.get());
+	}
+	
+	@Test
+	public void testDefaultMonitoringSetsGet() throws Exception {
+		String id = "def-monitoring-set";
+		requestHandler = request -> {
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+			try {
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+				response.setEntity(
+						new GzipCompressingEntity(new InputStreamEntity(in, ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
+				threadPoolExecutor.submit(new Callable<Void>() {
+					@Override
+					public Void call() throws Exception {
+						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+							writeMonitoringSet(json, id);
+							return null;
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw new RuntimeException(e);
+						}
+					}
+				});
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+
+			return response;
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder).build();
+		AtomicInteger receivedCount = new AtomicInteger(0);
+		AtomicInteger errorCount = new AtomicInteger(0);
+		//subscribe for snapshots and validate they are transmitted correctly
+		trolieClient.getDefaultMonitoringSet(new MonitoringSetsReceiver() {
 			
 			@Override
 			public void error(StreamingGetException t) {

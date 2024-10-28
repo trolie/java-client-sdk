@@ -1,5 +1,10 @@
 package org.trolie.client.request.monitoringsets;
 
+import static org.trolie.client.util.CommonConstants.TAG_DESCRIPTION;
+import static org.trolie.client.util.CommonConstants.TAG_ID;
+import static org.trolie.client.util.CommonConstants.TAG_POWER_SYSTEM_RESOURCES;
+import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
+
 import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
@@ -12,8 +17,6 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.trolie.client.TrolieException;
 import org.trolie.client.model.monitoringsets.MonitoringSet;
 import org.trolie.client.request.streaming.AbstractStreamingUpdate;
@@ -23,23 +26,19 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
-import static org.trolie.client.util.CommonConstants.TAG_ID;
-import static org.trolie.client.util.CommonConstants.TAG_DESCRIPTION;
-import static org.trolie.client.util.CommonConstants.TAG_POWER_SYSTEM_RESOURCES;
+import lombok.extern.slf4j.Slf4j;
 
-public class MonitoringSetsGet extends AbstractStreamingUpdate<MonitoringSetsGet> {
+@Slf4j
+public class DefaultMonitoringSetGet extends AbstractStreamingUpdate<DefaultMonitoringSetGet> {
 
-	private static final Logger logger = LoggerFactory.getLogger(MonitoringSetsGet.class);
-
-
-	public MonitoringSetsGet(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
+	public DefaultMonitoringSetGet(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
 										ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper, 
 										Map<String, String> httpHeader, boolean enableCompression ) {
 		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader, enableCompression);
+		log.info("DefaultMonitoringSetGet.Initialized");
 	}
 
-	public static final String PATH = TrolieApiConstants.PATH_MONITORING_SET_ID;
+	public static final String PATH = TrolieApiConstants.PATH_DEFAULT_MONITORING_SET;
 	public static final String CONTENT_TYPE = TrolieApiConstants.CONTENT_TYPE_MONITORING_SET;
 
 	private enum Scope {
@@ -69,10 +68,10 @@ public class MonitoringSetsGet extends AbstractStreamingUpdate<MonitoringSetsGet
 	}
 
 	@Override
-	protected Function<HttpEntity, MonitoringSetsGet> getResponseHandler() {
+	protected Function<HttpEntity, DefaultMonitoringSetGet> getResponseHandler() {
 		return e -> {
 			try {
-				return objectMapper.readValue(e.getContent(), MonitoringSetsGet.class);
+				return objectMapper.readValue(e.getContent(), DefaultMonitoringSetGet.class);
 			} catch (Exception e2) {	
 				throw new TrolieException("Failed to parse response",e2);
 			}
@@ -103,10 +102,9 @@ public class MonitoringSetsGet extends AbstractStreamingUpdate<MonitoringSetsGet
 		} catch (Exception e) {
 			handleWriteError(e);
 		}
-
 	}
 
-	public MonitoringSetsGet complete() {
+	public DefaultMonitoringSetGet complete() {
 		checkCanWrite();
 		try {
 			validateScope(Scope.END, Scope.MAIN);
@@ -126,7 +124,7 @@ public class MonitoringSetsGet extends AbstractStreamingUpdate<MonitoringSetsGet
 			try {
 				jsonGenerator.close();
 			} catch (Exception e) {
-				logger.error("Error closing JSON generator", e);
+				log.error("Error closing JSON generator", e);
 			}
 		}
 	}
