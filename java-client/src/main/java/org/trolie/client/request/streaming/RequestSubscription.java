@@ -7,8 +7,9 @@ import java.util.concurrent.Future;
  */
 public interface RequestSubscription {
 
-	void subscribe();
+	void start();
 	
-	Future<Void> unsubscribe();
+	Future<Void> stop();
 	
+	boolean isActive();
 }

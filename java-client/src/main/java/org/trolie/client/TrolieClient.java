@@ -1,8 +1,6 @@
 package org.trolie.client;
 
-import java.time.Instant;
-
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.trolie.client.request.monitoringsets.DefaultMonitoringSetSubscribedRequest;
 import org.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
@@ -15,6 +13,10 @@ import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRe
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
+import org.trolie.client.request.streaming.RequestSubscription;
+
+import java.io.Closeable;
+import java.time.Instant;
 
 
 /**
@@ -23,7 +25,7 @@ import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
  * TROLIE endpoint used by a given application.
  * @see TrolieClientBuilder
  */
-public interface TrolieClient {
+public interface TrolieClient extends Closeable {
 
     @FunctionalInterface
     interface ForecastReceiver {
@@ -32,16 +34,16 @@ public interface TrolieClient {
 
     /**
      * Get MonitoringSet by Id
-     * 
+     *
      * @param receiver
      * @param monitoringSet
      */
     void getMonitoringSet(
     		MonitoringSetsReceiver receiver, String monitoringSet);
-    
+
     /**
      * Subscribed to Get MonitoringSet by Id
-     * 
+     *
      * @param receiver
      * @param monitoringSet
      * @param pollingRateMillis
@@ -50,19 +52,19 @@ public interface TrolieClient {
     MonitoringSetsSubscribedRequest subscribeToMonitoringsetsGet(
     		MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
     		int pollingRateMillis);
-    
+
     /**
      * Get Default MonitoringSet
-     * 
+     *
      * @param receiver
      * @param monitoringSet
      */
     void getDefaultMonitoringSet(
     		MonitoringSetsReceiver receiver, String monitoringSet);
-    
+
     /**
      * Subscribed to Get Default MonitoringSet
-     * 
+     *
      * @param receiver
      * @param monitoringSet
      * @param pollingRateMillis
@@ -71,7 +73,7 @@ public interface TrolieClient {
     DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringsetGet(
     		MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
     		int pollingRateMillis);
-    
+
     /**
      * Execute a request for the current forecast limits with a streaming response handler
      * 
@@ -226,7 +228,19 @@ public interface TrolieClient {
      */
     RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate();
 
-    static TrolieClientBuilder builder(String baseUrl, HttpClientBuilder clientBuilder) {
-        return new TrolieClientBuilder(baseUrl, clientBuilder);
+    /**
+     * Un-subscribe an active polling request
+     *
+     * @param subscription
+     */
+    void unsubscribe(RequestSubscription subscription);
+
+    /**
+     * Un-subscribe all active polling requests
+     */
+    void unsubscribeAll();
+
+    static TrolieClientBuilder builder(String baseUrl, HttpClient httpClient) {
+        return new TrolieClientBuilder(baseUrl, httpClient);
     }
 }

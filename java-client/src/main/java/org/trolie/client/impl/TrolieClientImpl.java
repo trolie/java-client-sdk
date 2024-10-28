@@ -1,12 +1,11 @@
 package org.trolie.client.impl;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ThreadPoolExecutor;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.trolie.client.TrolieClient;
 import org.trolie.client.etag.ETagStore;
 import org.trolie.client.request.monitoringsets.DefaultMonitoringSetRequest;
@@ -25,13 +24,19 @@ import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRe
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
+import org.trolie.client.request.streaming.RequestSubscription;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 
-import lombok.AllArgsConstructor;
-
-@AllArgsConstructor
 public class TrolieClientImpl implements TrolieClient {
+
+	private static final Logger logger = LoggerFactory.getLogger(TrolieClientImpl.class);
 
 	HttpClient httpClient;
 	HttpHost host;
@@ -42,7 +47,31 @@ public class TrolieClientImpl implements TrolieClient {
 	ETagStore eTagStore;
 	Map<String, String> httpHeader;
 	boolean enableCompression;
-	
+
+	public TrolieClientImpl(HttpClient httpClient, HttpHost host, RequestConfig requestConfig, int bufferSize,
+			ThreadPoolExecutor threadPoolExecutor, ObjectMapper objectMapper, ETagStore eTagStore,
+			Map<String, String> httpHeader, boolean enableCompression) {
+		super();
+		this.httpClient = httpClient;
+		this.host = host;
+		this.requestConfig = requestConfig;
+		this.bufferSize = bufferSize;
+		this.threadPoolExecutor = threadPoolExecutor;
+		this.objectMapper = objectMapper;
+		this.eTagStore = eTagStore;
+		this.httpHeader = httpHeader;
+		this.enableCompression = enableCompression;
+	}
+
+	Set<RequestSubscription> activeSubscriptions = new HashSet<>();
+
+	protected void addSubscription(RequestSubscription subscription) {
+		synchronized (activeSubscriptions) {
+			activeSubscriptions.add(subscription);
+		}
+		subscription.start();
+	}
+
 	@Override
 	public void getInUseLimitForecasts(ForecastSnapshotReceiver receiver) {
 		getInUseLimitForecasts(receiver,null,null,null);
@@ -103,7 +132,7 @@ public class TrolieClientImpl implements TrolieClient {
 				eTagStore,
 				monitoringSet);
 		
-		subscription.subscribe();
+		addSubscription(subscription);
 		return subscription;
 		
 	}
@@ -142,7 +171,7 @@ public class TrolieClientImpl implements TrolieClient {
 				monitoringSet,
 				transmissionFacility);
 		
-		subscription.subscribe();
+		addSubscription(subscription);
 		return subscription;
 	}
 
@@ -182,7 +211,7 @@ public class TrolieClientImpl implements TrolieClient {
 		new MonitoringSetsRequest(
 				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, receiver, monitoringSet
 				).executeRequest();
-		
+
 	}
 
 	@Override
@@ -190,7 +219,7 @@ public class TrolieClientImpl implements TrolieClient {
 			int pollingRateMillis) {
 		MonitoringSetsSubscribedRequest subscription = new MonitoringSetsSubscribedRequest(
 				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper, pollingRateMillis, receiver, eTagStore, monitoringSet);
-		subscription.subscribe();
+		addSubscription(subscription);
 		return subscription;
 	}
 
@@ -206,8 +235,31 @@ public class TrolieClientImpl implements TrolieClient {
 			MonitoringSetsSubscribedReceiver receiver, String monitoringSet, int pollingRateMillis) {
 		var subscription = new DefaultMonitoringSetSubscribedRequest(
 				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper, pollingRateMillis, receiver, eTagStore);
-		subscription.subscribe();
+		addSubscription(subscription);
 		return subscription;
+	}
+
+	@Override
+	public void close() throws IOException {
+		unsubscribeAll();
+	}
+
+	@Override
+	public void unsubscribe(RequestSubscription subscription) {
+		try {
+			subscription.stop().get();
+		} catch (ExecutionException e) {
+			logger.error("Error in request subscription " + subscription, e);
+		} catch (InterruptedException e) {
+			logger.info("Request subscription interrupted " + subscription);
+		}
+	}
+
+	@Override
+	public void unsubscribeAll() {
+		activeSubscriptions.forEach(s -> {
+			unsubscribe(s);
+		});
 	}
 
 }
