@@ -219,7 +219,7 @@ public class TrolieClientImpl implements TrolieClient {
 			int pollingRateMillis) {
 		MonitoringSetsSubscribedRequest subscription = new MonitoringSetsSubscribedRequest(
 				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper, pollingRateMillis, receiver, eTagStore, monitoringSet);
-		subscription.subscribe();
+		addSubscription(subscription);
 		return subscription;
 	}
 
@@ -235,7 +235,7 @@ public class TrolieClientImpl implements TrolieClient {
 			MonitoringSetsSubscribedReceiver receiver, String monitoringSet, int pollingRateMillis) {
 		var subscription = new DefaultMonitoringSetSubscribedRequest(
 				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper, pollingRateMillis, receiver, eTagStore);
-		subscription.subscribe();
+		addSubscription(subscription);
 		return subscription;
 	}
 

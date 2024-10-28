@@ -854,7 +854,7 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder.build()).build();
 		AtomicInteger receivedCount = new AtomicInteger(0);
 		AtomicInteger errorCount = new AtomicInteger(0);
 		//subscribe for snapshots and validate they are transmitted correctly
@@ -919,7 +919,7 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder.build()).build();
 		AtomicInteger receivedCount = new AtomicInteger(0);
 		AtomicInteger errorCount = new AtomicInteger(0);
 		//subscribe for snapshots and validate they are transmitted correctly
