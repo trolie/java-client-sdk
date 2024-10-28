@@ -1,5 +1,8 @@
 package org.trolie.client;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -47,6 +50,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.trolie.client.model.common.DataProvenance;
+import org.trolie.client.model.monitoringsets.MonitoringSet;
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
 import org.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
 import org.trolie.client.model.operatingsnapshots.RealTimeLimit;
@@ -57,6 +62,7 @@ import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
 import org.trolie.client.model.ratingproposals.ProposalHeader;
 import org.trolie.client.model.ratingproposals.RealTimeRating;
 import org.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
+import org.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
@@ -73,6 +79,14 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
+import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
+import static org.trolie.client.util.CommonConstants.TAG_ID;
+import static org.trolie.client.util.CommonConstants.TAG_DESCRIPTION;
+import static org.trolie.client.util.CommonConstants.TAG_POWER_SYSTEM_RESOURCES;
+
+@Slf4j
 public class TrolieClientTest {
 
 	private static Logger logger = LoggerFactory.getLogger(TrolieClientTest.class);
@@ -798,6 +812,156 @@ public class TrolieClientTest {
 	}
 	
 	
+	@Test
+	public void testMonitoringSetsGet() throws Exception {
+		String id = "monitoring-set";
+		requestHandler = request -> {
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+			try {
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+				response.setEntity(
+						new GzipCompressingEntity(new InputStreamEntity(in, ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
+				threadPoolExecutor.submit(new Callable<Void>() {
+					@Override
+					public Void call() throws Exception {
+						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+							writeMonitoringSet(json, id);
+							return null;
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw new RuntimeException(e);
+						}
+					}
+				});
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+
+			return response;
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder).build();
+		AtomicInteger receivedCount = new AtomicInteger(0);
+		AtomicInteger errorCount = new AtomicInteger(0);
+		//subscribe for snapshots and validate they are transmitted correctly
+		trolieClient.getMonitoringSet(new MonitoringSetsReceiver() {
+			
+			@Override
+			public void error(StreamingGetException t) {
+				errorCount.incrementAndGet();
+			}
+			
+			@Override
+			public void header(MonitoringSet monitoringSet) {
+				assertNotNull(monitoringSet);
+				assertEquals(id, monitoringSet.getId());
+				assertNotNull(monitoringSet.getDescription());
+				assertNotNull(monitoringSet.getSource());
+				assertNotNull(monitoringSet.getPowerSystemResources());
+			}
+			
+			@Override
+			public void end() {
+			}
+			
+			@Override
+			public void begin() {
+				receivedCount.incrementAndGet();
+			}
+		}, id);
+		Assertions.assertEquals(1, receivedCount.get());
+		Assertions.assertEquals(0, errorCount.get());
+	}
+	
+	@Test
+	public void testDefaultMonitoringSetsGet() throws Exception {
+		String id = "def-monitoring-set";
+		requestHandler = request -> {
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+			try {
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+				response.setEntity(
+						new GzipCompressingEntity(new InputStreamEntity(in, ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
+				threadPoolExecutor.submit(new Callable<Void>() {
+					@Override
+					public Void call() throws Exception {
+						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+							writeMonitoringSet(json, id);
+							return null;
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw new RuntimeException(e);
+						}
+					}
+				});
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+
+			return response;
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder).build();
+		AtomicInteger receivedCount = new AtomicInteger(0);
+		AtomicInteger errorCount = new AtomicInteger(0);
+		//subscribe for snapshots and validate they are transmitted correctly
+		trolieClient.getDefaultMonitoringSet(new MonitoringSetsReceiver() {
+			
+			@Override
+			public void error(StreamingGetException t) {
+				errorCount.incrementAndGet();
+			}
+			
+			@Override
+			public void header(MonitoringSet monitoringSet) {
+				assertNotNull(monitoringSet);
+				assertEquals(id, monitoringSet.getId());
+				assertNotNull(monitoringSet.getDescription());
+				assertNotNull(monitoringSet.getSource());
+				assertNotNull(monitoringSet.getPowerSystemResources());
+			}
+			
+			@Override
+			public void end() {
+			}
+			
+			@Override
+			public void begin() {
+				receivedCount.incrementAndGet();
+			}
+		}, id);
+		Assertions.assertEquals(1, receivedCount.get());
+		Assertions.assertEquals(0, errorCount.get());
+	}
+	
+	private void writeMonitoringSet(JsonGenerator json, String id) throws IOException {
+		var source = DataProvenance.builder().provider(id).lastUpdated(
+				Instant.now().toString()).originId(id).build();
+		MonitoringSet monitoringSet = new MonitoringSet(source, id, "This is test SDK", List.of());
+		json.writeStartObject();
+		try {
+			json.writeFieldName(TAG_SOURCE);
+			json.writeObject(monitoringSet.getSource());
+			json.writeFieldName(TAG_ID);
+			json.writeObject(monitoringSet.getId());
+			json.writeFieldName(TAG_DESCRIPTION);
+			json.writeObject(monitoringSet.getDescription());
+			json.writeFieldName(TAG_POWER_SYSTEM_RESOURCES);
+			json.writeObject(monitoringSet.getPowerSystemResources());
+		}catch (Exception e) {
+			log.error("writeMonitoringSet.error ", e);
+		}
+		json.writeEndObject();
+	}
+
 	private void writeForecastSnapshot(JsonGenerator json, String startTime) throws IOException {
 		
 		ForecastSnapshotHeader header = new ForecastSnapshotHeader(startTime);

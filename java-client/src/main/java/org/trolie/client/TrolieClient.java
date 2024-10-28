@@ -3,6 +3,10 @@ package org.trolie.client;
 import java.time.Instant;
 
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.trolie.client.request.monitoringsets.DefaultMonitoringSetSubscribedRequest;
+import org.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
@@ -26,6 +30,48 @@ public interface TrolieClient {
         void accept();
     }
 
+    /**
+     * Get MonitoringSet by Id
+     * 
+     * @param receiver
+     * @param monitoringSet
+     */
+    void getMonitoringSet(
+    		MonitoringSetsReceiver receiver, String monitoringSet);
+    
+    /**
+     * Subscribed to Get MonitoringSet by Id
+     * 
+     * @param receiver
+     * @param monitoringSet
+     * @param pollingRateMillis
+     * @return
+     */
+    MonitoringSetsSubscribedRequest subscribeToMonitoringsetsGet(
+    		MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
+    		int pollingRateMillis);
+    
+    /**
+     * Get Default MonitoringSet
+     * 
+     * @param receiver
+     * @param monitoringSet
+     */
+    void getDefaultMonitoringSet(
+    		MonitoringSetsReceiver receiver, String monitoringSet);
+    
+    /**
+     * Subscribed to Get Default MonitoringSet
+     * 
+     * @param receiver
+     * @param monitoringSet
+     * @param pollingRateMillis
+     * @return
+     */
+    DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringsetGet(
+    		MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
+    		int pollingRateMillis);
+    
     /**
      * Execute a request for the current forecast limits with a streaming response handler
      * 
