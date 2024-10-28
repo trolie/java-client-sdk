@@ -1,9 +1,10 @@
 package org.trolie.client;
 
-import java.io.Closeable;
-import java.time.Instant;
-
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.trolie.client.request.monitoringsets.DefaultMonitoringSetSubscribedRequest;
+import org.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
@@ -13,6 +14,9 @@ import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRe
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import org.trolie.client.request.streaming.RequestSubscription;
+
+import java.io.Closeable;
+import java.time.Instant;
 
 
 /**
@@ -27,6 +31,48 @@ public interface TrolieClient extends Closeable {
     interface ForecastReceiver {
         void accept();
     }
+
+    /**
+     * Get MonitoringSet by Id
+     *
+     * @param receiver
+     * @param monitoringSet
+     */
+    void getMonitoringSet(
+    		MonitoringSetsReceiver receiver, String monitoringSet);
+
+    /**
+     * Subscribed to Get MonitoringSet by Id
+     *
+     * @param receiver
+     * @param monitoringSet
+     * @param pollingRateMillis
+     * @return
+     */
+    MonitoringSetsSubscribedRequest subscribeToMonitoringsetsGet(
+    		MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
+    		int pollingRateMillis);
+
+    /**
+     * Get Default MonitoringSet
+     *
+     * @param receiver
+     * @param monitoringSet
+     */
+    void getDefaultMonitoringSet(
+    		MonitoringSetsReceiver receiver, String monitoringSet);
+
+    /**
+     * Subscribed to Get Default MonitoringSet
+     *
+     * @param receiver
+     * @param monitoringSet
+     * @param pollingRateMillis
+     * @return
+     */
+    DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringsetGet(
+    		MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
+    		int pollingRateMillis);
 
     /**
      * Execute a request for the current forecast limits with a streaming response handler
@@ -184,7 +230,7 @@ public interface TrolieClient extends Closeable {
 
     /**
      * Un-subscribe an active polling request
-     * 
+     *
      * @param subscription
      */
     void unsubscribe(RequestSubscription subscription);
@@ -193,7 +239,7 @@ public interface TrolieClient extends Closeable {
      * Un-subscribe all active polling requests
      */
     void unsubscribeAll();
-    
+
     static TrolieClientBuilder builder(String baseUrl, HttpClient httpClient) {
         return new TrolieClientBuilder(baseUrl, httpClient);
     }
