@@ -27,52 +27,47 @@ import java.time.Instant;
  */
 public interface TrolieClient extends Closeable {
 
-    @FunctionalInterface
-    interface ForecastReceiver {
-        void accept();
-    }
-
     /**
-     * Get MonitoringSet by Id
+     * Execute a request for the given monitoring set.
      *
      * @param receiver
      * @param monitoringSet
      */
     void getMonitoringSet(
-    		MonitoringSetsReceiver receiver, String monitoringSet);
+    		MonitoringSetsReceiver receiver,
+            String monitoringSet);
 
     /**
-     * Subscribed to Get MonitoringSet by Id
+     * Create a polling subscription for updates to the given monitoring set.
      *
      * @param receiver
      * @param monitoringSet
      * @param pollingRateMillis
      * @return
      */
-    MonitoringSetsSubscribedRequest subscribeToMonitoringsetsGet(
-    		MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
+    MonitoringSetsSubscribedRequest subscribeToMonitoringSetUpdates(
+    		MonitoringSetsSubscribedReceiver receiver,
+            String monitoringSet,
     		int pollingRateMillis);
 
     /**
-     * Get Default MonitoringSet
+     * Execute a request for the default monitoring set
      *
      * @param receiver
-     * @param monitoringSet
      */
     void getDefaultMonitoringSet(
-    		MonitoringSetsReceiver receiver, String monitoringSet);
+    		MonitoringSetsReceiver receiver);
 
     /**
-     * Subscribed to Get Default MonitoringSet
+     * Create a polling subscription for updates to the default monitoring set
      *
      * @param receiver
-     * @param monitoringSet
      * @param pollingRateMillis
      * @return
      */
-    DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringsetGet(
-    		MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
-    		int pollingRateMillis);
+    DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringSetUpdates(
+    		MonitoringSetsSubscribedReceiver receiver,
+            int pollingRateMillis);
 
     /**
      * Execute a request for the current forecast limits with a streaming response handler
@@ -159,10 +154,10 @@ public interface TrolieClient extends Closeable {
      * @param monitoringSet
      * @param transmissionFacility
      */
-    public void getInUseLimits(
-    		RealTimeSnapshotReceiver receiver, 
-    		String monitoringSet, 
-    		String transmissionFacility);
+    void getInUseLimits(
+            RealTimeSnapshotReceiver receiver,
+            String monitoringSet,
+            String transmissionFacility);
 
     /**
      * Execute a request for the current real-time limits with a streaming response handler
@@ -170,17 +165,17 @@ public interface TrolieClient extends Closeable {
      * @param receiver
      * @param monitoringSet
      */
-    public void getInUseLimits(
-    		RealTimeSnapshotReceiver receiver, 
-    		String monitoringSet);
+    void getInUseLimits(
+            RealTimeSnapshotReceiver receiver,
+            String monitoringSet);
 
     /**
      * Execute a request for the current real-time limits with a streaming response handler
      * 
      * @param receiver
      */
-    public void getInUseLimits(
-    		RealTimeSnapshotReceiver receiver);
+    void getInUseLimits(
+            RealTimeSnapshotReceiver receiver);
     
     /**
      * Create a polling subscription for real-time snapshot data updates
