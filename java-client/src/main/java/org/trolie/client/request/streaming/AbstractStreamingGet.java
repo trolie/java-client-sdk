@@ -1,15 +1,6 @@
 package org.trolie.client.request.streaming;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -26,7 +17,15 @@ import org.trolie.client.request.streaming.exception.StreamingGetConnectionExcep
 import org.trolie.client.request.streaming.exception.StreamingGetResponseException;
 import org.trolie.client.request.streaming.exception.SubscriberInternalException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract base for a polling subscriber to a GET endpoint with conditional GET semantics and compressed response body.
@@ -51,7 +50,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	protected abstract String getContentType();
 	
 	/**
-	 * Handle new content. This method should not throw exceptions but rather report them to {@link StreamingSubscribedResponseReceiver#error(org.trolie.client.request.streaming.exception.SubscriberException)}
+	 * Handle new content. This method should not throw exceptions but rather report them to {@link StreamingSubscribedResponseReceiver#error(org.trolie.client.request.streaming.exception.StreamingGetException)}
 	 * 
 	 * @param inputStream
 	 */

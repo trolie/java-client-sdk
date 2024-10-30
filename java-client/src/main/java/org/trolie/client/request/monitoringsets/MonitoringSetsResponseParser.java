@@ -1,19 +1,17 @@
 package org.trolie.client.request.monitoringsets;
 
-import java.io.IOException;
-import java.io.InputStream;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trolie.client.model.monitoringsets.MonitoringSet;
 import org.trolie.client.request.streaming.exception.StreamingGetConnectionException;
 import org.trolie.client.request.streaming.exception.StreamingGetHandlingException;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Implementation for parsing a real-time snapshot response shared between subscribed and on-demand requests
@@ -30,9 +28,7 @@ public class MonitoringSetsResponseParser {
 		
 		try (JsonParser parser = jsonFactory.createParser(inputStream);) {
 			MonitoringSet monitoringSet = parser.readValueAs(MonitoringSet.class);
-			receiver.begin();
-			receiver.header(monitoringSet);
-			receiver.end();
+			receiver.monitoringSet(monitoringSet);
 		} catch (IOException e) {
 			logger.error("I/O error handling response",e);
 			receiver.error(new StreamingGetConnectionException(e));

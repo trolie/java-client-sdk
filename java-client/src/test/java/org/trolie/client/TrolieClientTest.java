@@ -1,26 +1,9 @@
 package org.trolie.client;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.net.InetAddress;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-
-import javax.net.ServerSocketFactory;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -63,6 +46,8 @@ import org.trolie.client.model.ratingproposals.ProposalHeader;
 import org.trolie.client.model.ratingproposals.RealTimeRating;
 import org.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
 import org.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
@@ -75,16 +60,29 @@ import org.trolie.client.request.streaming.RequestSubscription;
 import org.trolie.client.request.streaming.exception.StreamingGetException;
 import org.trolie.client.util.TrolieApiConstants;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import javax.net.ServerSocketFactory;
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.net.InetAddress;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
-import lombok.extern.slf4j.Slf4j;
-
-import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
-import static org.trolie.client.util.CommonConstants.TAG_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.trolie.client.util.CommonConstants.TAG_DESCRIPTION;
+import static org.trolie.client.util.CommonConstants.TAG_ID;
 import static org.trolie.client.util.CommonConstants.TAG_POWER_SYSTEM_RESOURCES;
+import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
 
 @Slf4j
 public class TrolieClientTest {
@@ -866,21 +864,13 @@ public class TrolieClientTest {
 			}
 
 			@Override
-			public void header(MonitoringSet monitoringSet) {
+			public void monitoringSet(MonitoringSet monitoringSet) {
+				receivedCount.incrementAndGet();
 				assertNotNull(monitoringSet);
 				assertEquals(id, monitoringSet.getId());
 				assertNotNull(monitoringSet.getDescription());
 				assertNotNull(monitoringSet.getSource());
 				assertNotNull(monitoringSet.getPowerSystemResources());
-			}
-
-			@Override
-			public void end() {
-			}
-
-			@Override
-			public void begin() {
-				receivedCount.incrementAndGet();
 			}
 		}, id);
 		Assertions.assertEquals(1, receivedCount.get());
@@ -931,25 +921,121 @@ public class TrolieClientTest {
 			}
 
 			@Override
-			public void header(MonitoringSet monitoringSet) {
+			public void monitoringSet(MonitoringSet monitoringSet) {
+				receivedCount.incrementAndGet();
 				assertNotNull(monitoringSet);
 				assertEquals(id, monitoringSet.getId());
 				assertNotNull(monitoringSet.getDescription());
 				assertNotNull(monitoringSet.getSource());
 				assertNotNull(monitoringSet.getPowerSystemResources());
 			}
-
-			@Override
-			public void end() {
-			}
-
-			@Override
-			public void begin() {
-				receivedCount.incrementAndGet();
-			}
-		}, id);
+		});
 		Assertions.assertEquals(1, receivedCount.get());
 		Assertions.assertEquals(0, errorCount.get());
+	}
+
+	@Test
+	void testMonitoringSetSubscription() throws Exception {
+
+		//we will run the subscription for fixed number of requests
+		AtomicInteger requestCounter = new AtomicInteger(0);
+		String startTime = Instant.now().toString();
+		String etag = UUID.randomUUID().toString();
+
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				Header requestEtag = request.getHeader(HttpHeaders.IF_NONE_MATCH);
+
+				//2nd+ request should have an etag header
+				if (requestCounter.get() > 0) {
+					Assertions.assertNotNull(requestEtag);
+					Assertions.assertEquals(etag, requestEtag.getValue());
+				}
+
+				if (requestCounter.get() == 3) {
+
+					//on 4th request return error to test error propagation to receiver
+					response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+
+				} else if (requestCounter.get() % 2 == 0) {
+
+					//on 1st and 3rd request, return a new snapshot to indicate an update
+					PipedOutputStream out = new PipedOutputStream();
+					PipedInputStream in = new PipedInputStream(out);
+
+					response.setHeader(HttpHeaders.ETAG, etag);
+					response.setEntity(
+							new GzipCompressingEntity(new InputStreamEntity(in, ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
+
+					threadPoolExecutor.submit((Callable<Void>) () -> {
+
+                        try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+                            writeMonitoringSet(json, startTime);
+                            return null;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            throw new RuntimeException(e);
+                        }
+                    });
+
+				} else {
+
+					//on 2nd request, indicate existing etag is valid to test that request is short-circuited
+					response.setCode(HttpStatus.SC_NOT_MODIFIED);
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			} finally {
+				requestCounter.incrementAndGet();
+			}
+
+			return response;
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+
+			AtomicInteger monitoringSetsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			//subscribe for snapshots and validate they are transmitted correctly
+			MonitoringSetsSubscribedRequest subscription = trolieClient.subscribeToMonitoringSetUpdates(new MonitoringSetsSubscribedReceiver() {
+
+				RequestSubscription subscription;
+
+				@Override
+				public void monitoringSet(MonitoringSet monitoringSet) {
+					monitoringSetsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+					subscription.stop();
+				}
+
+				@Override
+				public void setSubscription(RequestSubscription subscription) {
+					this.subscription = subscription;
+				}
+
+
+			}, "abc", 1000);
+
+			while (subscription.isSubscribed()) {
+				Thread.sleep(100);
+			}
+
+			//we should have received 2 monitoring sets, 1 304 code and 1 500 code
+			Assertions.assertEquals(2, monitoringSetsReceived.get());
+			Assertions.assertEquals(1, errorCount.get());
+		}
 	}
 
 	private void writeMonitoringSet(JsonGenerator json, String id) throws IOException {
