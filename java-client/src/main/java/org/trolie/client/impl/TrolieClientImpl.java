@@ -100,7 +100,8 @@ public class TrolieClientImpl implements TrolieClient {
 				requestConfig, 
 				bufferSize, 
 				threadPoolExecutor, 
-				objectMapper, 
+				objectMapper,
+				enableCompression,
 				receiver, 
 				monitoringSet,
 				periodStart,
@@ -127,7 +128,8 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize, 
 				threadPoolExecutor, 
 				objectMapper, 
-				pollingRateMillis, 
+				pollingRateMillis,
+				enableCompression,
 				receiver,
 				eTagStore,
 				monitoringSet);
@@ -165,7 +167,8 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize, 
 				threadPoolExecutor, 
 				objectMapper, 
-				pollingRateMillis, 
+				pollingRateMillis,
+				enableCompression,
 				receiver,
 				eTagStore,
 				monitoringSet,
@@ -199,9 +202,10 @@ public class TrolieClientImpl implements TrolieClient {
 				requestConfig, 
 				bufferSize,
 				threadPoolExecutor, 
-				objectMapper, 
-				receiver, 
-				monitoringSet, 
+				objectMapper,
+				enableCompression,
+				receiver,
+				monitoringSet,
 				transmissionFacility).executeRequest();
 		
 	}
@@ -209,16 +213,18 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getMonitoringSet(MonitoringSetsReceiver receiver, String monitoringSet) {
 		new MonitoringSetsRequest(
-				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, receiver, monitoringSet
-				).executeRequest();
+				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, enableCompression,
+				receiver, monitoringSet).executeRequest();
 
 	}
 
 	@Override
-	public MonitoringSetsSubscribedRequest subscribeToMonitoringSetUpdates(MonitoringSetsSubscribedReceiver receiver, String monitoringSet,
+	public MonitoringSetsSubscribedRequest subscribeToMonitoringSetUpdates(MonitoringSetsSubscribedReceiver receiver,
+																		   String monitoringSet,
 																		   int pollingRateMillis) {
 		MonitoringSetsSubscribedRequest subscription = new MonitoringSetsSubscribedRequest(
-				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper, pollingRateMillis, receiver, eTagStore, monitoringSet);
+				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper,
+				pollingRateMillis, enableCompression, receiver, eTagStore, monitoringSet);
 		addSubscription(subscription);
 		return subscription;
 	}
@@ -226,8 +232,8 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getDefaultMonitoringSet(MonitoringSetsReceiver receiver) {
 		new DefaultMonitoringSetRequest(
-				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, receiver
-				).executeRequest();
+				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, enableCompression,
+				receiver).executeRequest();
 	}
 
 	@Override
@@ -235,7 +241,7 @@ public class TrolieClientImpl implements TrolieClient {
 			MonitoringSetsSubscribedReceiver receiver, int pollingRateMillis) {
 		var subscription = new DefaultMonitoringSetSubscribedRequest(
 				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper, pollingRateMillis,
-				receiver, eTagStore);
+				enableCompression, receiver, eTagStore);
 		addSubscription(subscription);
 		return subscription;
 	}
@@ -250,9 +256,9 @@ public class TrolieClientImpl implements TrolieClient {
 		try {
 			subscription.stop().get();
 		} catch (ExecutionException e) {
-			logger.error("Error in request subscription " + subscription, e);
+			logger.error("Error in request subscription {}", subscription, e);
 		} catch (InterruptedException e) {
-			logger.info("Request subscription interrupted " + subscription);
+			logger.info("Request subscription interrupted {}", subscription);
 		}
 	}
 

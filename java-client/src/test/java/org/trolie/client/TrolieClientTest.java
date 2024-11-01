@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -87,11 +88,10 @@ import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
 @Slf4j
 public class TrolieClientTest {
 
-	private static Logger logger = LoggerFactory.getLogger(TrolieClientTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(TrolieClientTest.class);
 
-	private static int PORT = 8080;
-	private static String HOST = "http://127.0.0.1";
-	private static String BASE_URI = HOST + ":" + PORT;
+	private static final String HOST = "http://127.0.0.1";
+	private static String baseUri;
 
 	static HttpServer httpServer;
 	static Function<ClassicHttpRequest,ClassicHttpResponse> requestHandler;
@@ -104,9 +104,16 @@ public class TrolieClientTest {
 
 		objectMapper = new ObjectMapper();
 
+		int port;
+		try (ServerSocket serverSocket = new ServerSocket(0)) {
+			port = serverSocket.getLocalPort();
+        }
+
+		baseUri = HOST + ":" + port;
+
 		//create a simple HTTP server we can send requests to
 		httpServer = new HttpServer(
-				PORT, 
+				port,
 				HttpService.builder()
 				.withHttpProcessor(new DefaultHttpProcessor(
 						new HttpRequestInterceptor[0],
@@ -132,7 +139,7 @@ public class TrolieClientTest {
 		requestHandler = r -> new BasicClassicHttpResponse(200);
 		while (!started && System.currentTimeMillis() - now < 10000) {
 			try {
-				HttpGet get = new HttpGet(BASE_URI);
+				HttpGet get = new HttpGet(baseUri);
 				BasicHttpClientResponseHandler handler = new BasicHttpClientResponseHandler();
 				startupCheckClient.execute(get, handler);
 				started = true;
@@ -155,7 +162,7 @@ public class TrolieClientTest {
 	}
 
 	@Test
-	public void testForecastRatingProposalStreamingUpdate() throws IOException {
+	void testForecastRatingProposalStreamingUpdate() throws IOException {
 
 		//test a roundtrip submission and response 
 
@@ -192,7 +199,7 @@ public class TrolieClientTest {
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
 
-		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
 
 			try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
 
@@ -221,7 +228,7 @@ public class TrolieClientTest {
 	}
 
 	@Test
-	public void testForecastRatingProposalStreamingUpdate_ServerError() throws IOException {
+	void testForecastRatingProposalStreamingUpdate_ServerError() throws IOException {
 
 		//make sure that server errors are clearly bubbled up with a status code
 
@@ -233,7 +240,7 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
 
 			Assertions.assertThrows(TrolieServerException.class, () -> {
 				try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
@@ -250,7 +257,7 @@ public class TrolieClientTest {
 	}
 
 	@Test
-	public void testForecastRatingProposalStreamingUpdate_ConnectError() throws IOException {
+	void testForecastRatingProposalStreamingUpdate_ConnectError() throws IOException {
 
 		//make sure that client I/O errors are clearly bubbled up
 
@@ -288,7 +295,7 @@ public class TrolieClientTest {
 	}
 
 	@Test
-	public void testForecastSnapshotSubscription() throws Exception {
+	void testForecastSnapshotSubscription() throws Exception {
 
 		//we will run the subscription for fixed number of requests
 		AtomicInteger requestCounter = new AtomicInteger(0);
@@ -326,7 +333,7 @@ public class TrolieClientTest {
 					response.setHeader(HttpHeaders.ETAG, etag);
 					response.setEntity(
 							new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
-
+					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 					threadPoolExecutor.submit(new Callable<Void>() {
 						@Override
 						public Void call() throws Exception {
@@ -360,7 +367,7 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -430,7 +437,7 @@ public class TrolieClientTest {
 
 
 	@Test
-	public void testRealTimeRatingProposalStreamingUpdate() throws IOException {
+	void testRealTimeRatingProposalStreamingUpdate() throws IOException {
 
 		//test a roundtrip submission and response 
 
@@ -460,7 +467,7 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
 
 			try (RealTimeRatingProposalUpdate update = trolieClient.createRealTimeRatingProposalStreamingUpdate()) {
 
@@ -480,7 +487,7 @@ public class TrolieClientTest {
 	}
 
 	@Test
-	public void testRealTimeSnapshotSubscription() throws Exception {
+	void testRealTimeSnapshotSubscription() throws Exception {
 
 		//we will run the subscription for fixed number of requests
 		AtomicInteger requestCounter = new AtomicInteger(0);
@@ -519,7 +526,7 @@ public class TrolieClientTest {
 					response.setHeader(HttpHeaders.ETAG, etag);
 					response.setEntity(
 							new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT))));
-
+					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 					threadPoolExecutor.submit(new Callable<Void>() {
 						@Override
 						public Void call() throws Exception {
@@ -552,7 +559,7 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -612,7 +619,7 @@ public class TrolieClientTest {
 
 
 	@Test
-	public void testRealTimeSnapshotGet() throws Exception {
+	void testRealTimeSnapshotGet() throws Exception {
 
 		requestHandler = request -> {
 
@@ -631,7 +638,7 @@ public class TrolieClientTest {
 
 				response.setEntity(
 						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT))));
-
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 				threadPoolExecutor.submit(new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
@@ -659,7 +666,7 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -706,7 +713,7 @@ public class TrolieClientTest {
 
 
 	@Test
-	public void testForecastSnapshotGet() throws Exception {
+	void testForecastSnapshotGet() throws Exception {
 
 		Instant startTime = Instant.now();
 		String startTimeString = startTime.toString();
@@ -730,7 +737,7 @@ public class TrolieClientTest {
 
 				response.setEntity(
 						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
-
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 				threadPoolExecutor.submit(new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
@@ -757,7 +764,7 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -818,30 +825,27 @@ public class TrolieClientTest {
 
 		}
 	}
-	
 
 	@Test
-	public void testMonitoringSetsGet() throws Exception {
+	void testMonitoringSetsGet() {
 		String id = "monitoring-set";
 		requestHandler = request -> {
 			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
 			try {
 				PipedOutputStream out = new PipedOutputStream();
 				PipedInputStream in = new PipedInputStream(out);
-				response.setEntity(
-						new GzipCompressingEntity(new InputStreamEntity(in, ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
-				threadPoolExecutor.submit(new Callable<Void>() {
-					@Override
-					public Void call() throws Exception {
-						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
-							writeMonitoringSet(json, id);
-							return null;
-						} catch (Exception e) {
-							e.printStackTrace();
-							throw new RuntimeException(e);
-						}
-					}
-				});
+				response.setEntity(new GzipCompressingEntity(new InputStreamEntity(in,
+						ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+				threadPoolExecutor.submit((Callable<Void>) () -> {
+                    try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+                        writeMonitoringSet(json, id);
+                        return null;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                });
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -852,10 +856,10 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder.build()).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build();
 		AtomicInteger receivedCount = new AtomicInteger(0);
 		AtomicInteger errorCount = new AtomicInteger(0);
-		//subscribe for snapshots and validate they are transmitted correctly
+		//subscribe for monitoring sets and validate they are transmitted correctly
 		trolieClient.getMonitoringSet(new MonitoringSetsReceiver() {
 
 			@Override
@@ -878,7 +882,7 @@ public class TrolieClientTest {
 	}
 
 	@Test
-	public void testDefaultMonitoringSetsGet() throws Exception {
+	void testDefaultMonitoringSetsGet() {
 		String id = "def-monitoring-set";
 		requestHandler = request -> {
 			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
@@ -887,6 +891,7 @@ public class TrolieClientTest {
 				PipedInputStream in = new PipedInputStream(out);
 				response.setEntity(
 						new GzipCompressingEntity(new InputStreamEntity(in, ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 				threadPoolExecutor.submit(new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
@@ -909,7 +914,7 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI, builder.build()).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build();
 		AtomicInteger receivedCount = new AtomicInteger(0);
 		AtomicInteger errorCount = new AtomicInteger(0);
 		//subscribe for snapshots and validate they are transmitted correctly
@@ -970,7 +975,7 @@ public class TrolieClientTest {
 					response.setHeader(HttpHeaders.ETAG, etag);
 					response.setEntity(
 							new GzipCompressingEntity(new InputStreamEntity(in, ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
-
+					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 					threadPoolExecutor.submit((Callable<Void>) () -> {
 
                         try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
@@ -999,7 +1004,7 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(BASE_URI,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
 
 			AtomicInteger monitoringSetsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);

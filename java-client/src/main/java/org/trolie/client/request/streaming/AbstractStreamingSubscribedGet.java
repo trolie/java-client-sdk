@@ -1,10 +1,6 @@
 package org.trolie.client.request.streaming;
 
-import java.net.URISyntaxException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -18,7 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.trolie.client.etag.ETagStore;
 import org.trolie.client.request.streaming.exception.StreamingGetHandlingException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Abstract base for a polling subscriber to a GET endpoint with conditional GET semantics and compressed response body.
@@ -40,10 +39,11 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ObjectMapper objectMapper, 
-			int pollingRateMillis, 
+			int pollingRateMillis,
+			boolean enableCompression,
 			T receiver,
 			ETagStore eTagStore) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, enableCompression, receiver);
 		this.pollingRateMillis = pollingRateMillis;
 		this.eTagStore = eTagStore;
 	}
