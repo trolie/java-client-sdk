@@ -29,11 +29,10 @@ public class MonitoringSetsRequest extends AbstractStreamingGet<MonitoringSetsRe
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper,
-			boolean enableCompression,
 			MonitoringSetsReceiver receiver,
 			String monitoringSet) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, enableCompression, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
 	}

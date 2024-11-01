@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.entity.GzipDecompressingEntity;
 import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
@@ -43,7 +41,6 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	ThreadPoolExecutor threadPoolExecutor;
 	protected ObjectMapper objectMapper;
 	protected T receiver;
-	boolean enableCompression;
 
 	Future<Void> requestExecutorFuture;
 	
@@ -57,13 +54,12 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	 */
 	protected abstract void handleResponseContent(InputStream inputStream);
 	
-	public AbstractStreamingGet(
+	protected AbstractStreamingGet(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ObjectMapper objectMapper,
-			boolean enableCompression,
 			T receiver) {
 		super();
 		this.httpClient = httpClient;
@@ -71,9 +67,9 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		this.requestConfig = requestConfig;
 		this.bufferSize = bufferSize;
 		this.objectMapper = objectMapper;
-		this.enableCompression = enableCompression;
 		this.receiver = receiver;
-		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,10,TimeUnit.SECONDS,new LinkedBlockingDeque<Runnable>());
+		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,10,
+				TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 	}
 	
 	protected HttpClientResponseHandler<Void> createResponseHandler() {
@@ -88,14 +84,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			//create a new thread to consume the response stream to 
 			//allow for a buffer between HTTP I/O and whatever is handling the data
 			try {
-				HttpEntity entity;
-				if ("gzip".equals(response.getEntity().getContentEncoding())) {
-					entity = new GzipDecompressingEntity(response.getEntity());
-				} else {
-					entity = response.getEntity();
-				}
-
-				threadPoolExecutor.submit(new HandlerExecutor(entity.getContent())).get();
+				threadPoolExecutor.submit(new HandlerExecutor(response.getEntity().getContent())).get();
 			} catch (IOException e) {
 				logger.error("I/O error initiating request",e);
 				receiver.error(new StreamingGetConnectionException(e));
@@ -115,11 +104,6 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	protected HttpGet createRequest() throws URISyntaxException {
 		HttpGet get = new HttpGet(getPath());
 		get.addHeader(HttpHeaders.ACCEPT, getContentType());
-
-		if (enableCompression) {
-			//will need to revisit this for brotli support
-			get.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
-		}
 		
 		get.setConfig(requestConfig);
 		return get;

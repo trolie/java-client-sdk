@@ -46,11 +46,10 @@ public class TrolieClientImpl implements TrolieClient {
 	ObjectMapper objectMapper;
 	ETagStore eTagStore;
 	Map<String, String> httpHeader;
-	boolean enableCompression;
 
 	public TrolieClientImpl(HttpClient httpClient, HttpHost host, RequestConfig requestConfig, int bufferSize,
 			ThreadPoolExecutor threadPoolExecutor, ObjectMapper objectMapper, ETagStore eTagStore,
-			Map<String, String> httpHeader, boolean enableCompression) {
+			Map<String, String> httpHeader) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -60,7 +59,6 @@ public class TrolieClientImpl implements TrolieClient {
 		this.objectMapper = objectMapper;
 		this.eTagStore = eTagStore;
 		this.httpHeader = httpHeader;
-		this.enableCompression = enableCompression;
 	}
 
 	Set<RequestSubscription> activeSubscriptions = new HashSet<>();
@@ -101,8 +99,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize, 
 				threadPoolExecutor, 
 				objectMapper,
-				enableCompression,
-				receiver, 
+				receiver,
 				monitoringSet,
 				periodStart,
 				periodEnd).executeRequest();
@@ -129,7 +126,6 @@ public class TrolieClientImpl implements TrolieClient {
 				threadPoolExecutor, 
 				objectMapper, 
 				pollingRateMillis,
-				enableCompression,
 				receiver,
 				eTagStore,
 				monitoringSet);
@@ -141,7 +137,8 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public ForecastRatingProposalUpdate createForecastRatingProposalStreamingUpdate() {
-		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader, enableCompression);
+		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize,
+				objectMapper, httpHeader);
 	}
 
 	@Override
@@ -168,7 +165,6 @@ public class TrolieClientImpl implements TrolieClient {
 				threadPoolExecutor, 
 				objectMapper, 
 				pollingRateMillis,
-				enableCompression,
 				receiver,
 				eTagStore,
 				monitoringSet,
@@ -180,7 +176,8 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate() {
-		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader, enableCompression);
+		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize,
+				objectMapper, httpHeader);
 	}
 
 	@Override
@@ -203,7 +200,6 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				threadPoolExecutor, 
 				objectMapper,
-				enableCompression,
 				receiver,
 				monitoringSet,
 				transmissionFacility).executeRequest();
@@ -213,7 +209,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getMonitoringSet(MonitoringSetsReceiver receiver, String monitoringSet) {
 		new MonitoringSetsRequest(
-				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, enableCompression,
+				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper,
 				receiver, monitoringSet).executeRequest();
 
 	}
@@ -224,7 +220,7 @@ public class TrolieClientImpl implements TrolieClient {
 																		   int pollingRateMillis) {
 		MonitoringSetsSubscribedRequest subscription = new MonitoringSetsSubscribedRequest(
 				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper,
-				pollingRateMillis, enableCompression, receiver, eTagStore, monitoringSet);
+				pollingRateMillis, receiver, eTagStore, monitoringSet);
 		addSubscription(subscription);
 		return subscription;
 	}
@@ -232,16 +228,16 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getDefaultMonitoringSet(MonitoringSetsReceiver receiver) {
 		new DefaultMonitoringSetRequest(
-				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, enableCompression,
-				receiver).executeRequest();
+				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, receiver)
+				.executeRequest();
 	}
 
 	@Override
 	public DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringSetUpdates(
 			MonitoringSetsSubscribedReceiver receiver, int pollingRateMillis) {
 		var subscription = new DefaultMonitoringSetSubscribedRequest(
-				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper, pollingRateMillis,
-				enableCompression, receiver, eTagStore);
+				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper,
+				pollingRateMillis, receiver, eTagStore);
 		addSubscription(subscription);
 		return subscription;
 	}
@@ -264,9 +260,7 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public void unsubscribeAll() {
-		activeSubscriptions.forEach(s -> {
-			unsubscribe(s);
-		});
+		activeSubscriptions.forEach(this::unsubscribe);
 	}
 
 }

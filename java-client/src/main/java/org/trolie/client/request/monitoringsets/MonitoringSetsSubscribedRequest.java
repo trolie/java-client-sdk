@@ -31,13 +31,11 @@ public class MonitoringSetsSubscribedRequest extends AbstractStreamingSubscribed
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper, 
 			int pollingRateMillis,
-			boolean enableCompression,
 			MonitoringSetsSubscribedReceiver receiver,
 			ETagStore eTagStore,
 			String monitoringSet) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, enableCompression,
-				receiver, eTagStore);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver, eTagStore);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
 	}

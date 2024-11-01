@@ -33,17 +33,16 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 
 	AtomicBoolean active = new AtomicBoolean();
 	
-	public AbstractStreamingSubscribedGet(
+	protected AbstractStreamingSubscribedGet(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ObjectMapper objectMapper, 
 			int pollingRateMillis,
-			boolean enableCompression,
 			T receiver,
 			ETagStore eTagStore) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, enableCompression, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.pollingRateMillis = pollingRateMillis;
 		this.eTagStore = eTagStore;
 	}

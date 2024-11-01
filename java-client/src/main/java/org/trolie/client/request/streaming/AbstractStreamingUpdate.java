@@ -1,16 +1,7 @@
 package org.trolie.client.request.streaming;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.function.Function;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import org.apache.hc.client5.http.HttpResponseException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -27,9 +18,16 @@ import org.slf4j.LoggerFactory;
 import org.trolie.client.TrolieException;
 import org.trolie.client.TrolieServerException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import lombok.AllArgsConstructor;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Function;
 
 public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 
@@ -45,9 +43,10 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 	Future<T> responseFuture;
 
 	Map<String, String> httpHeader;
-	boolean enableCompression;
-	public AbstractStreamingUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-								   ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader, boolean enableCompression) {
+
+	protected AbstractStreamingUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
+								   ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper,
+								   Map<String, String> httpHeader) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -56,7 +55,6 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 		this.bufferSize = bufferSize;
 		this.objectMapper = objectMapper;
 		this.httpHeader = httpHeader;
-		this.enableCompression = enableCompression;
 	}
 
 	protected abstract ContentType getContentType();
@@ -113,15 +111,12 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 		}
 		request.setPath(getPath());
 		
-		//turn on compression
-		RequestConfig config = RequestConfig.copy(this.requestConfig)
-				.setContentCompressionEnabled(this.enableCompression).build();
-		request.setConfig(config);
+		request.setConfig(this.requestConfig);
 
 		//create a request entity we can write into from a stream
 		PipedOutputStream pipedOutputStream = new PipedOutputStream();
 		PipedInputStream pipedInputStream = new PipedInputStream(pipedOutputStream, bufferSize);
-		if (this.enableCompression) {
+		if (this.requestConfig.isContentCompressionEnabled()) {
 			request.setEntity(new GzipCompressingEntity(new InputStreamEntity(pipedInputStream, getContentType())));
 		}else {
 			request.setEntity(new InputStreamEntity(pipedInputStream, getContentType()));

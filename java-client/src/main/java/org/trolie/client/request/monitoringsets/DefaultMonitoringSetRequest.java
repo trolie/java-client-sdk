@@ -25,10 +25,9 @@ public class DefaultMonitoringSetRequest extends AbstractStreamingGet<Monitoring
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper,
-			boolean enableCompression,
 			MonitoringSetsReceiver receiver) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, enableCompression, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.jsonFactory = new JsonFactory(objectMapper);
 	}
 

@@ -31,8 +31,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.trolie.client.model.common.DataProvenance;
 import org.trolie.client.model.monitoringsets.MonitoringSet;
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
@@ -86,9 +84,8 @@ import static org.trolie.client.util.CommonConstants.TAG_POWER_SYSTEM_RESOURCES;
 import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
 
 @Slf4j
+@SuppressWarnings("unchecked")
 public class TrolieClientTest {
-
-	private static final Logger logger = LoggerFactory.getLogger(TrolieClientTest.class);
 
 	private static final String HOST = "http://127.0.0.1";
 	private static String baseUri;
@@ -144,14 +141,14 @@ public class TrolieClientTest {
 				startupCheckClient.execute(get, handler);
 				started = true;
 			} catch (Exception e) {
-				logger.info("Test server not started yet");
+				log.info("Test server not started yet");
 				Thread.sleep(1000);
 			}
 		}
 		if (!started) {
 			throw new IllegalStateException("Test server did not start within timeout");
 		}
-		logger.info("Test server started");
+		log.info("Test server started");
 	}
 
 	@AfterAll

@@ -27,11 +27,9 @@ public class DefaultMonitoringSetSubscribedRequest extends AbstractStreamingSubs
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper, 
 			int pollingRateMillis,
-			boolean enableCompression,
 			MonitoringSetsSubscribedReceiver receiver,
 			ETagStore eTagStore) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, enableCompression,
-				receiver, eTagStore);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver, eTagStore);
 		this.jsonFactory = new JsonFactory(objectMapper);
 	}
 

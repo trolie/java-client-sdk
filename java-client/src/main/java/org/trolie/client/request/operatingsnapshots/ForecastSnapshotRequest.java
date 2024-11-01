@@ -33,13 +33,12 @@ public class ForecastSnapshotRequest extends AbstractStreamingGet<ForecastSnapsh
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper,
-			boolean enableCompression,
 			ForecastSnapshotReceiver receiver,
 			String monitoringSet,
 			Instant offsetPeriodStart,
 			Instant periodEnd) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, enableCompression, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
 		this.offsetPeriodStart = offsetPeriodStart;

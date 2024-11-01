@@ -32,14 +32,12 @@ public class RealTimeSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper, 
 			int pollingRateMillis,
-			boolean enableCompression,
 			RealTimeSnapshotSubscribedReceiver receiver,
 			ETagStore eTagStore,
 			String monitoringSet,
 			String transmissionFacility) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, enableCompression,
-				receiver, eTagStore);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver, eTagStore);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
 		this.transmissionFacility = transmissionFacility;

@@ -30,12 +30,11 @@ public class RealTimeSnapshotRequest extends AbstractStreamingGet<RealTimeSnapsh
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper,
-			boolean enableCompression,
 			RealTimeSnapshotReceiver receiver,
 			String monitoringSet,
 			String transmissionFacility) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, enableCompression, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
 		this.transmissionFacility = transmissionFacility;
