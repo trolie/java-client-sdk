@@ -1,21 +1,10 @@
 package org.trolie.client.request.streaming;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.entity.GzipDecompressingEntity;
 import org.apache.hc.core5.http.ClassicHttpResponse;
-import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
@@ -26,7 +15,15 @@ import org.trolie.client.request.streaming.exception.StreamingGetConnectionExcep
 import org.trolie.client.request.streaming.exception.StreamingGetResponseException;
 import org.trolie.client.request.streaming.exception.SubscriberInternalException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract base for a polling subscriber to a GET endpoint with conditional GET semantics and compressed response body.
@@ -43,7 +40,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	int bufferSize;
 	ThreadPoolExecutor threadPoolExecutor;
 	protected ObjectMapper objectMapper;
-	protected T receiver;	
+	protected T receiver;
 
 	Future<Void> requestExecutorFuture;
 	
@@ -51,18 +48,18 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	protected abstract String getContentType();
 	
 	/**
-	 * Handle new content. This method should not throw exceptions but rather report them to {@link StreamingSubscribedResponseReceiver#error(org.trolie.client.request.streaming.exception.SubscriberException)}
+	 * Handle new content. This method should not throw exceptions but rather report them to {@link StreamingSubscribedResponseReceiver#error(org.trolie.client.request.streaming.exception.StreamingGetException)}
 	 * 
 	 * @param inputStream
 	 */
 	protected abstract void handleResponseContent(InputStream inputStream);
 	
-	public AbstractStreamingGet(
+	protected AbstractStreamingGet(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ObjectMapper objectMapper, 
+			ObjectMapper objectMapper,
 			T receiver) {
 		super();
 		this.httpClient = httpClient;
@@ -71,7 +68,8 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		this.bufferSize = bufferSize;
 		this.objectMapper = objectMapper;
 		this.receiver = receiver;
-		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,10,TimeUnit.SECONDS,new LinkedBlockingDeque<Runnable>());
+		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,10,
+				TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 	}
 	
 	protected HttpClientResponseHandler<Void> createResponseHandler() {
@@ -85,8 +83,8 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		if (response.getCode() == HttpStatus.SC_OK) {
 			//create a new thread to consume the response stream to 
 			//allow for a buffer between HTTP I/O and whatever is handling the data
-			try (HttpEntity entity = new GzipDecompressingEntity(response.getEntity())) {
-				threadPoolExecutor.submit(new HandlerExecutor(entity.getContent())).get();
+			try {
+				threadPoolExecutor.submit(new HandlerExecutor(response.getEntity().getContent())).get();
 			} catch (IOException e) {
 				logger.error("I/O error initiating request",e);
 				receiver.error(new StreamingGetConnectionException(e));
@@ -94,19 +92,18 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 				logger.error("Internal error handling response",e);
 				receiver.error(new SubscriberInternalException(e));
 			}
-		} else if (response.getCode() != HttpStatus.SC_NOT_MODIFIED) {
+		} else if (response.getCode() == HttpStatus.SC_NOT_MODIFIED) {
+			logger.trace("Server responded with status code 304. The requested resource has not changed.");
+		} else {
 			String s = "Server responded with status code " + response.getCode();
 			logger.error(s);
-			receiver.error(new StreamingGetResponseException(s,response.getCode()));			
-		}		
+			receiver.error(new StreamingGetResponseException(s, response.getCode()));
+		}
 	}
 	
 	protected HttpGet createRequest() throws URISyntaxException {
 		HttpGet get = new HttpGet(getPath());
 		get.addHeader(HttpHeaders.ACCEPT, getContentType());
-		
-		//will need to revisit this for brotli support
-		get.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip");
 		
 		get.setConfig(requestConfig);
 		return get;
@@ -119,6 +116,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			httpClient.execute(host, get, createResponseHandler());
 		
 		} catch (IOException e) {
+			logger.error("I/O error initiating request",e);
 			receiver.error(new StreamingGetConnectionException(e));
 		} catch (Exception e) {
 			receiver.error(new SubscriberInternalException(e));

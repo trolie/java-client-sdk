@@ -7,52 +7,54 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.net.URIBuilder;
-import org.trolie.client.etag.ETagStore;
-import org.trolie.client.request.streaming.AbstractStreamingSubscribedGet;
+import org.trolie.client.request.streaming.AbstractStreamingGet;
 import org.trolie.client.util.TrolieApiConstants;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.time.Instant;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * subscribed request for real-time rating snapshots
+ * On-demand GET request for forecast limits with no ETAG usage
  */
-public class RealTimeSnapshotSubscribedRequest extends AbstractStreamingSubscribedGet<RealTimeSnapshotSubscribedReceiver> {
-	
+public class ForecastSnapshotRequest extends AbstractStreamingGet<ForecastSnapshotReceiver> {
+
 	JsonFactory jsonFactory;
 	String monitoringSet;
+	Instant offsetPeriodStart;
+	Instant periodEnd;
 	String transmissionFacility;
 	
-	public RealTimeSnapshotSubscribedRequest(
+	public ForecastSnapshotRequest(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
-			ObjectMapper objectMapper, 
-			int pollingRateMillis,
-			RealTimeSnapshotSubscribedReceiver receiver,
-			ETagStore eTagStore,
+			ObjectMapper objectMapper,
+			ForecastSnapshotReceiver receiver,
 			String monitoringSet,
-			String transmissionFacility) {
+			Instant offsetPeriodStart,
+			Instant periodEnd) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver, eTagStore);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
-		this.transmissionFacility = transmissionFacility;
+		this.offsetPeriodStart = offsetPeriodStart;
+		this.periodEnd = periodEnd;
 	}
 
 	@Override
 	protected String getPath() {
-		return TrolieApiConstants.PATH_REALTIME_SNAPSHOT;
+		return TrolieApiConstants.PATH_FORECAST_SNAPSHOT;
 	}
 	
 	@Override
 	protected String getContentType() {
-		return TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT;
+		return TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT;
 	}
-
+	
 	@Override
 	protected HttpGet createRequest() throws URISyntaxException {
 		
@@ -66,22 +68,30 @@ public class RealTimeSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 			get.setUri(uriBuilder.build());
 		}
 		
-		if (monitoringSet != null) {
-			
-			//add the transmission facility parameter to the base URI
+		if (offsetPeriodStart != null) {
+
+			//add the offset-period-start parameter to the base URI
 			URIBuilder uriBuilder = new URIBuilder(get.getUri())
-					.addParameter(TrolieApiConstants.PARAM_TRANSMISSION_FACILITY, transmissionFacility);
+					.addParameter(TrolieApiConstants.PARAM_OFFSET_PERIOD_START, 
+							offsetPeriodStart.toString());
+			get.setUri(uriBuilder.build());
+		}
+
+		if (periodEnd != null) {
+
+			//add the period-end parameter to the base URI
+			URIBuilder uriBuilder = new URIBuilder(get.getUri())
+					.addParameter(TrolieApiConstants.PARAM_PERIOD_END, periodEnd.toString());
 			get.setUri(uriBuilder.build());
 		}
 		
 		return get;
 	}
-	
+
 	@Override
 	protected void handleResponseContent(InputStream inputStream) {
-		
-		new RealTimeSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
-		
+		new ForecastSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
 	}
+
 	
 }

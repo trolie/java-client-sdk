@@ -32,6 +32,9 @@ public class AlternateIdentifier {
 
     @JsonProperty("name")
     private String name;
+    
+    @JsonProperty("type")
+    private String type;
 
     @JsonProperty("authority")
     private String authority;

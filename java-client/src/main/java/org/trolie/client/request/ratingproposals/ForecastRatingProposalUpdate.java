@@ -1,8 +1,8 @@
 package org.trolie.client.request.ratingproposals;
 
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.function.Function;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpPatch;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
@@ -19,17 +19,19 @@ import org.trolie.client.model.ratingproposals.ForecastRatingPeriod;
 import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
 import org.trolie.client.request.streaming.AbstractStreamingUpdate;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Function;
 
 public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<ForecastRatingProposalStatus> {
 
 	private static final Logger logger = LoggerFactory.getLogger(ForecastRatingProposalUpdate.class);
 
+
 	public ForecastRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-			ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper) {
-		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper);
+										ThreadPoolExecutor threadPoolExecutor, int bufferSize,
+										ObjectMapper objectMapper, Map<String, String> httpHeader) {
+		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader);
 	}
 
 	public static final String PATH = "/rating-proposals/forecast";

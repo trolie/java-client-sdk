@@ -1,4 +1,4 @@
-package org.trolie.client.request.operatingsnapshots;
+package org.trolie.client.request.monitoringsets;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,68 +15,55 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * On-demand GET request for real-time limits with no ETAG usage
+ * On-demand GET request for forecast limits with no ETAG usage
  */
-public class RealTimeSnapshotRequest extends AbstractStreamingGet<RealTimeSnapshotReceiver> {
+public class MonitoringSetsRequest extends AbstractStreamingGet<MonitoringSetsReceiver> {
 
 	JsonFactory jsonFactory;
 	String monitoringSet;
-	String transmissionFacility;
 	
-	public RealTimeSnapshotRequest(
+	public MonitoringSetsRequest(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper,
-			RealTimeSnapshotReceiver receiver,
-			String monitoringSet,
-			String transmissionFacility) {
+			MonitoringSetsReceiver receiver,
+			String monitoringSet) {
 		
 		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
 		this.jsonFactory = new JsonFactory(objectMapper);
 		this.monitoringSet = monitoringSet;
-		this.transmissionFacility = transmissionFacility;
 	}
 
 	@Override
 	protected String getPath() {
-		return TrolieApiConstants.PATH_REALTIME_SNAPSHOT;
+		return TrolieApiConstants.PATH_MONITORING_SET_ID;
 	}
 	
 	@Override
 	protected String getContentType() {
-		return TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT;
+		return TrolieApiConstants.CONTENT_TYPE_MONITORING_SET;
 	}
 	
 	@Override
 	protected HttpGet createRequest() throws URISyntaxException {
-		
 		HttpGet get = super.createRequest();
-		
-		if (monitoringSet != null) {
-		
+		if (monitoringSet != null && ! monitoringSet.isBlank()) {
 			//add the monitoring set parameter to the base URI
-			URIBuilder uriBuilder = new URIBuilder(get.getUri())
-					.addParameter(TrolieApiConstants.PARAM_MONITORING_SET, monitoringSet);
+			URIBuilder uriBuilder = new URIBuilder(get.getUri());
+			uriBuilder.appendPath("/"+monitoringSet);
 			get.setUri(uriBuilder.build());
+		} else {
+			throw new URISyntaxException("", "Monitoring set cannot be null or empty");
 		}
-		
-		if (monitoringSet != null) {
-			
-			//add the transmission facility parameter to the base URI
-			URIBuilder uriBuilder = new URIBuilder(get.getUri())
-					.addParameter(TrolieApiConstants.PARAM_TRANSMISSION_FACILITY, transmissionFacility);
-			get.setUri(uriBuilder.build());
-		}
-		
 		return get;
 	}
 
 	@Override
 	protected void handleResponseContent(InputStream inputStream) {
-		new RealTimeSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
+		new MonitoringSetsResponseParser(receiver).parseResponse(inputStream, jsonFactory);
 	}
 
 	

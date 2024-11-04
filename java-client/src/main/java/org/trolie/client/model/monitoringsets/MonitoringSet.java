@@ -13,33 +13,39 @@
  *  ==========================================================================
  */
 
-package org.trolie.client.model.operatingsnapshots;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import org.trolie.client.model.common.DataProvenance;
-import org.trolie.client.model.common.EmergencyDuration;
-import org.trolie.client.model.common.PowerSystemResource;
+package org.trolie.client.model.monitoringsets;
 
 import java.util.List;
 
+import org.trolie.client.model.common.DataProvenance;
+import org.trolie.client.model.common.PowerSystemResource;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.NoArgsConstructor;
+
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@Builder
 @Getter
 @EqualsAndHashCode
-public abstract class SnapshotHeader {
+@ToString
+public class MonitoringSet {
 
     @JsonProperty("source")
     private DataProvenance source;
 
+    @JsonProperty("id")
+    private String id;
+
+    @JsonProperty("description")
+    private String description;
+
     @JsonProperty("power-system-resources")
     private List<PowerSystemResource> powerSystemResources;
-
-    @JsonProperty("default-emergency-durations")
-    private List<EmergencyDuration> defaultEmergencyDurations;
 }
