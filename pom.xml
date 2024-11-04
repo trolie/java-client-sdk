@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.trolie.client</groupId>
+    <groupId>energy.trolie</groupId>
     <artifactId>java-client-sdk-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -15,6 +15,17 @@
     </description>
     <url>https://trolie.energy</url>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>central</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>central</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>
@@ -24,7 +35,6 @@
 
     <modules>
         <module>java-client</module>
-        <module>java-client-tests</module>
     </modules>
 
     <scm>
