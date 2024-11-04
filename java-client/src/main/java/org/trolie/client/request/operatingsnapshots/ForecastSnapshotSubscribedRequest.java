@@ -1,9 +1,7 @@
 package org.trolie.client.request.operatingsnapshots;
 
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.util.concurrent.ThreadPoolExecutor;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -13,8 +11,9 @@ import org.trolie.client.etag.ETagStore;
 import org.trolie.client.request.streaming.AbstractStreamingSubscribedGet;
 import org.trolie.client.util.TrolieApiConstants;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * subscription for forecast rating snapshots 

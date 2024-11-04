@@ -1,13 +1,7 @@
 package org.trolie.client;
 
 
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
@@ -15,7 +9,12 @@ import org.trolie.client.etag.ETagStore;
 import org.trolie.client.etag.MemoryETagStore;
 import org.trolie.client.impl.TrolieClientImpl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TrolieClientBuilder {
 
@@ -27,7 +26,6 @@ public class TrolieClientBuilder {
 	ObjectMapper objectMapper;
 	ETagStore eTagStore;
 	Map<String, String> httpHeader = new HashMap<>();
-	boolean enableCompression = true;
 
 	public TrolieClientBuilder(
 			String baseUrl, 
@@ -72,15 +70,11 @@ public class TrolieClientBuilder {
 		return this;
 	}
 
-	public TrolieClientBuilder enableCompression(boolean enableCompression) {
-		this.enableCompression = enableCompression;
-		return this;
-	}
-
     public TrolieClient build() {
 
     	if (threadPoolExecutor == null) {
-    		threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+    		threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1,
+					TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     	}
     	
     	if (requestConfig == null) {
@@ -98,6 +92,7 @@ public class TrolieClientBuilder {
 			httpHeader = new HashMap<>();
 		}
 
-    	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, eTagStore, httpHeader, enableCompression);
+    	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper,
+				eTagStore, httpHeader);
     }
 }

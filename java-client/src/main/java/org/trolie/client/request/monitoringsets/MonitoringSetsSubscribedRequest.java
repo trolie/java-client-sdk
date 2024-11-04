@@ -52,17 +52,16 @@ public class MonitoringSetsSubscribedRequest extends AbstractStreamingSubscribed
 
 	@Override
 	protected HttpGet createRequest() throws URISyntaxException {
-		
+
 		HttpGet get = super.createRequest();
-		
-		if (monitoringSet != null && !monitoringSet.isBlank()) {
-		
+		if (monitoringSet != null && ! monitoringSet.isBlank()) {
 			//add the monitoring set parameter to the base URI
-			URIBuilder uriBuilder = new URIBuilder(get.getUri())
-					.addParameter(TrolieApiConstants.PARAM_MONITORING_SET_ID, monitoringSet);
+			URIBuilder uriBuilder = new URIBuilder(get.getUri());
+			uriBuilder.appendPath("/"+monitoringSet);
 			get.setUri(uriBuilder.build());
+		} else {
+			throw new URISyntaxException("", "Monitoring set cannot be null or empty");
 		}
-		
 		return get;
 	}
 	

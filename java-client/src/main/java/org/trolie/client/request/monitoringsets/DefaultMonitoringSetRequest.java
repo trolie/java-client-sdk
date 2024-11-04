@@ -1,18 +1,15 @@
 package org.trolie.client.request.monitoringsets;
 
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.util.concurrent.ThreadPoolExecutor;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
 import org.trolie.client.request.streaming.AbstractStreamingGet;
 import org.trolie.client.util.TrolieApiConstants;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.InputStream;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * On-demand GET request for forecast limits with no ETAG usage
@@ -27,7 +24,7 @@ public class DefaultMonitoringSetRequest extends AbstractStreamingGet<Monitoring
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
-			ObjectMapper objectMapper, 
+			ObjectMapper objectMapper,
 			MonitoringSetsReceiver receiver) {
 		
 		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
@@ -42,11 +39,6 @@ public class DefaultMonitoringSetRequest extends AbstractStreamingGet<Monitoring
 	@Override
 	protected String getContentType() {
 		return TrolieApiConstants.CONTENT_TYPE_MONITORING_SET;
-	}
-	
-	@Override
-	protected HttpGet createRequest() throws URISyntaxException {
-		return super.createRequest();
 	}
 
 	@Override

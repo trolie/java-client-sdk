@@ -19,6 +19,7 @@ public interface StreamingResponseReceiver {
 	 * 
 	 * @param t
 	 */
-	void error(StreamingGetException t);
+	default void error(StreamingGetException t) {
+	}
 	
 }

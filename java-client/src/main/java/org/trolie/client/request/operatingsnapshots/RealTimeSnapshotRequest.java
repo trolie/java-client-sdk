@@ -1,9 +1,7 @@
 package org.trolie.client.request.operatingsnapshots;
 
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.util.concurrent.ThreadPoolExecutor;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -12,8 +10,9 @@ import org.apache.hc.core5.net.URIBuilder;
 import org.trolie.client.request.streaming.AbstractStreamingGet;
 import org.trolie.client.util.TrolieApiConstants;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * On-demand GET request for real-time limits with no ETAG usage
@@ -30,7 +29,7 @@ public class RealTimeSnapshotRequest extends AbstractStreamingGet<RealTimeSnapsh
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ThreadPoolExecutor threadPoolExecutor, 
-			ObjectMapper objectMapper, 
+			ObjectMapper objectMapper,
 			RealTimeSnapshotReceiver receiver,
 			String monitoringSet,
 			String transmissionFacility) {

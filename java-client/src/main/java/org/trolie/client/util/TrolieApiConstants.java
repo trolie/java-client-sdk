@@ -12,7 +12,6 @@ public class TrolieApiConstants {
 	public static final String CONTENT_TYPE_MONITORING_SET = "application/vnd.trolie.monitoring-set.v1+json";
 	
 	public static final String PARAM_MONITORING_SET = "monitoring-set";
-	public static final String PARAM_MONITORING_SET_ID = "id";
 	public static final String PARAM_TRANSMISSION_FACILITY = "transmission-facility";
 	public static final String PARAM_OFFSET_PERIOD_START = "offset-period-start";
 	public static final String PARAM_PERIOD_END = "period-end";

@@ -10,6 +10,7 @@ public interface StreamingSubscribedResponseReceiver extends StreamingResponseRe
 	 * 
 	 * @param subscription
 	 */
-	void setSubscription(RequestSubscription subscription);
+	default void setSubscription(RequestSubscription subscription) {
+	}
 
 }
