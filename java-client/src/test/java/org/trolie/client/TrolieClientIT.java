@@ -85,7 +85,7 @@ import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
 
 @Slf4j
 @SuppressWarnings("unchecked")
-public class TrolieClientTest {
+public class TrolieClientIT {
 
 	private static final String HOST = "http://127.0.0.1";
 	private static String baseUri;
