@@ -73,18 +73,24 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 		return active.get();
 	}
 
-	protected void handleResponse(ClassicHttpResponse response) {
-		super.handleResponse(response);
-		if (response.getCode() == HttpStatus.SC_OK) {
+	@Override
+	protected Boolean handleResponse(ClassicHttpResponse response) {
+		Boolean success = super.handleResponse(response);
+		// Cache the ETAG if the response was handled successfully and the status is OK
+		if (Boolean.TRUE.equals(success) && response.getCode() == HttpStatus.SC_OK) {
 			try {
 				eTagStore.putETag(getPath(), response.getHeader(HttpHeaders.ETAG).getValue());
 			} catch (ProtocolException e) {
 				logger.error("Error handling server response",e);
 				receiver.error(new StreamingGetHandlingException(e));
+				return false;
 			}	
 		}
+
+		return success;
 	}
-	
+
+	@Override
 	protected HttpGet createRequest() throws URISyntaxException {
 
 		HttpGet request = super.createRequest();

@@ -49,10 +49,11 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	
 	/**
 	 * Handle new content. This method should not throw exceptions but rather report them to {@link StreamingSubscribedResponseReceiver#error(org.trolie.client.request.streaming.exception.StreamingGetException)}
+	 * Method should return true if the response content was handled successfully, false if not.
 	 * 
 	 * @param inputStream
 	 */
-	protected abstract void handleResponseContent(InputStream inputStream);
+	protected abstract Boolean handleResponseContent(InputStream inputStream);
 	
 	protected AbstractStreamingGet(
 			HttpClient httpClient, 
@@ -79,12 +80,17 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		};
 	}
 
-	protected void handleResponse(ClassicHttpResponse response) {
+	/**
+	 * Returns true if the response was handled successfully, or if a 304 was returned.
+	 * @param response
+	 * @return
+	 */
+	protected Boolean handleResponse(ClassicHttpResponse response) {
 		if (response.getCode() == HttpStatus.SC_OK) {
 			//create a new thread to consume the response stream to 
 			//allow for a buffer between HTTP I/O and whatever is handling the data
 			try {
-				threadPoolExecutor.submit(new HandlerExecutor(response.getEntity().getContent())).get();
+				return threadPoolExecutor.submit(new HandlerExecutor(response.getEntity().getContent())).get();
 			} catch (IOException e) {
 				logger.error("I/O error initiating request",e);
 				receiver.error(new StreamingGetConnectionException(e));
@@ -94,11 +100,14 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			}
 		} else if (response.getCode() == HttpStatus.SC_NOT_MODIFIED) {
 			logger.trace("Server responded with status code 304. The requested resource has not changed.");
+			return true;
 		} else {
 			String s = "Server responded with status code " + response.getCode();
 			logger.error(s);
 			receiver.error(new StreamingGetResponseException(s, response.getCode()));
 		}
+
+		return false;
 	}
 	
 	protected HttpGet createRequest() throws URISyntaxException {
@@ -123,7 +132,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		}
 	}
 	
-	private class HandlerExecutor implements Callable<Void> {
+	private class HandlerExecutor implements Callable<Boolean> {
 
 		InputStream inputStream;
 		
@@ -133,15 +142,16 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		}
 
 		@Override
-		public Void call() throws Exception {
+		public Boolean call() throws Exception {
 			try (BufferedInputStream bufferedIn = new BufferedInputStream(inputStream, bufferSize)) {
-				handleResponseContent(bufferedIn);
+				return handleResponseContent(bufferedIn);
 			} catch (IOException e) {
 				receiver.error(new StreamingGetConnectionException(e));
 			} catch (Exception e) {
 				receiver.error(new SubscriberInternalException(e));
 			}
-			return null;
+
+			return false;
 		}
 		
 	}

@@ -67,9 +67,9 @@ public class ForecastSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 	}
 	
 	@Override
-	protected void handleResponseContent(InputStream inputStream) {
+	protected Boolean handleResponseContent(InputStream inputStream) {
 		
-		new ForecastSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
+		return new ForecastSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
 		
 	}
 	

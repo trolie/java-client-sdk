@@ -75,8 +75,8 @@ public class RealTimeSnapshotRequest extends AbstractStreamingGet<RealTimeSnapsh
 	}
 
 	@Override
-	protected void handleResponseContent(InputStream inputStream) {
-		new RealTimeSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
+	protected Boolean handleResponseContent(InputStream inputStream) {
+		return new RealTimeSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
 	}
 
 	
