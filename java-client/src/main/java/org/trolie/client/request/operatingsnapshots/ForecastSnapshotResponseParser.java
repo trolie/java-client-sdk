@@ -1,8 +1,9 @@
 package org.trolie.client.request.operatingsnapshots;
 
-import java.io.IOException;
-import java.io.InputStream;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
@@ -10,11 +11,8 @@ import org.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
 import org.trolie.client.request.streaming.exception.StreamingGetConnectionException;
 import org.trolie.client.request.streaming.exception.StreamingGetHandlingException;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-
-import lombok.AllArgsConstructor;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Implementation for parsing a real-time snapshot response shared between subscribed and on-demand requests
@@ -26,7 +24,7 @@ public class ForecastSnapshotResponseParser {
 	
 	ForecastSnapshotReceiver receiver;
 
-	public void parseResponse(InputStream inputStream, JsonFactory jsonFactory) {
+	public Boolean parseResponse(InputStream inputStream, JsonFactory jsonFactory) {
 		
 		try (JsonParser parser = jsonFactory.createParser(inputStream);) {
 			
@@ -81,7 +79,8 @@ public class ForecastSnapshotResponseParser {
 			//exit loop on END_ARRAY ratings
 			
 			receiver.endSnapshot();
-			
+			return true;
+
 		} catch (IOException e) {
 			logger.error("I/O error handling response",e);
 			receiver.error(new StreamingGetConnectionException(e));
@@ -89,6 +88,8 @@ public class ForecastSnapshotResponseParser {
 			logger.error("Error handling response data",e);
 			receiver.error(new StreamingGetHandlingException(e));
 		}
+
+		return false;
 	}
 	
 }

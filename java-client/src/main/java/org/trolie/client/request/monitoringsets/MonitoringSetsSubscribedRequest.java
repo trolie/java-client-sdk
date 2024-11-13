@@ -66,9 +66,9 @@ public class MonitoringSetsSubscribedRequest extends AbstractStreamingSubscribed
 	}
 	
 	@Override
-	protected void handleResponseContent(InputStream inputStream) {
+	protected Boolean handleResponseContent(InputStream inputStream) {
 		
-		new MonitoringSetsResponseParser(receiver).parseResponse(inputStream, jsonFactory);
+		return new MonitoringSetsResponseParser(receiver).parseResponse(inputStream, jsonFactory);
 		
 	}
 	
