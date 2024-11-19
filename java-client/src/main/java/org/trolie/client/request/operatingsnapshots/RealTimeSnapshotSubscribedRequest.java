@@ -78,9 +78,9 @@ public class RealTimeSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 	}
 	
 	@Override
-	protected void handleResponseContent(InputStream inputStream) {
+	protected Boolean handleResponseContent(InputStream inputStream) {
 		
-		new RealTimeSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
+		return new RealTimeSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
 		
 	}
 	
