@@ -1,6 +1,5 @@
 package org.trolie.client.request.monitoringsets;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -12,14 +11,13 @@ import org.trolie.client.util.TrolieApiConstants;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.Map;
 
 /**
  * On-demand GET request for forecast limits with no ETAG usage
  */
 public class MonitoringSetsRequest extends AbstractStreamingGet<MonitoringSetsReceiver> {
 
-	JsonFactory jsonFactory;
 	String monitoringSet;
 	
 	public MonitoringSetsRequest(
@@ -27,13 +25,16 @@ public class MonitoringSetsRequest extends AbstractStreamingGet<MonitoringSetsRe
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper,
+			Map<String, String> httpHeaders,
 			MonitoringSetsReceiver receiver,
 			String monitoringSet) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
-		this.jsonFactory = new JsonFactory(objectMapper);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver);
+
+		if (monitoringSet == null || monitoringSet.isBlank()) {
+			throw new IllegalArgumentException("Monitoring set name cannot be null or blank");
+		}
 		this.monitoringSet = monitoringSet;
 	}
 
@@ -50,14 +51,10 @@ public class MonitoringSetsRequest extends AbstractStreamingGet<MonitoringSetsRe
 	@Override
 	protected HttpGet createRequest() throws URISyntaxException {
 		HttpGet get = super.createRequest();
-		if (monitoringSet != null && ! monitoringSet.isBlank()) {
-			//add the monitoring set parameter to the base URI
-			URIBuilder uriBuilder = new URIBuilder(get.getUri());
-			uriBuilder.appendPath("/"+monitoringSet);
-			get.setUri(uriBuilder.build());
-		} else {
-			throw new URISyntaxException("", "Monitoring set cannot be null or empty");
-		}
+		//add the monitoring set parameter to the base URI
+		URIBuilder uriBuilder = new URIBuilder(get.getUri());
+		uriBuilder.appendPath(monitoringSet);
+		get.setUri(uriBuilder.build());
 		return get;
 	}
 

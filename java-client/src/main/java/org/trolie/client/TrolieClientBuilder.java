@@ -12,20 +12,16 @@ import org.trolie.client.impl.TrolieClientImpl;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class TrolieClientBuilder {
 
 	HttpHost host;
 	HttpClient httpClient;
-	ThreadPoolExecutor threadPoolExecutor;
 	RequestConfig requestConfig;
 	int bufferSize = 4096;
 	ObjectMapper objectMapper;
 	ETagStore eTagStore;
-	Map<String, String> httpHeader = new HashMap<>();
+	Map<String, String> httpHeaders = new HashMap<>();
 
 	public TrolieClientBuilder(
 			String baseUrl, 
@@ -37,11 +33,6 @@ public class TrolieClientBuilder {
 			throw new TrolieException(e);
 		}
 		this.httpClient = httpClient;
-	}
-
-	public TrolieClientBuilder threadPoolExecutor(ThreadPoolExecutor executor) {
-		this.threadPoolExecutor = executor;
-		return this;
 	}
 	
 	public TrolieClientBuilder requestConfig(RequestConfig config) {
@@ -64,18 +55,13 @@ public class TrolieClientBuilder {
 		return this;
 	}
 
-	public TrolieClientBuilder httpHeader(Map<String, String> httpHeader) {
-		this.httpHeader.clear();
-		this.httpHeader.putAll(httpHeader);
+	public TrolieClientBuilder httpHeaders(Map<String, String> httpHeaders) {
+		this.httpHeaders.clear();
+		this.httpHeaders.putAll(httpHeaders);
 		return this;
 	}
 
     public TrolieClient build() {
-
-    	if (threadPoolExecutor == null) {
-    		threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1,
-					TimeUnit.SECONDS, new LinkedBlockingQueue<>());
-    	}
     	
     	if (requestConfig == null) {
     		requestConfig = RequestConfig.DEFAULT;
@@ -88,11 +74,11 @@ public class TrolieClientBuilder {
     	if (eTagStore == null) {
     		eTagStore = new MemoryETagStore();
     	}
-		if (httpHeader == null) {
-			httpHeader = new HashMap<>();
+
+		if (httpHeaders == null) {
+			httpHeaders = new HashMap<>();
 		}
 
-    	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper,
-				eTagStore, httpHeader);
+    	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize, objectMapper, eTagStore, httpHeaders);
     }
 }

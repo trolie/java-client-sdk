@@ -9,7 +9,6 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +17,9 @@ import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
 import org.trolie.client.model.ratingproposals.ForecastRatingPeriod;
 import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
 import org.trolie.client.request.streaming.AbstractStreamingUpdate;
+import org.trolie.client.util.TrolieApiConstants;
 
 import java.util.Map;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 
 public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<ForecastRatingProposalStatus> {
@@ -29,13 +28,10 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 
 
 	public ForecastRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-										ThreadPoolExecutor threadPoolExecutor, int bufferSize,
-										ObjectMapper objectMapper, Map<String, String> httpHeader) {
-		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader);
+										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders) {
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders);
 	}
 
-	public static final String PATH = "/rating-proposals/forecast";
-	public static final String CONTENT_TYPE = "application/vnd.trolie.rating-forecast-proposal.v1+json";
 
 	private enum Scope {
 		BEGIN,
@@ -49,19 +45,17 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 
 	@Override
 	protected HttpUriRequestBase getRequest() {
-		HttpPatch httpPatch = new HttpPatch(PATH);
-		httpPatch.addHeader(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
-		return httpPatch;
+		return new HttpPatch(getPath());
 	}
 
 	@Override
 	protected ContentType getContentType() {
-		return ContentType.create(CONTENT_TYPE);
+		return ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_PROPOSAL);
 	}
 
 	@Override
 	protected String getPath() {
-		return PATH;
+		return TrolieApiConstants.PATH_FORECAST_PROPOSAL;
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 package org.trolie.client.request.monitoringsets;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -9,26 +8,24 @@ import org.trolie.client.request.streaming.AbstractStreamingGet;
 import org.trolie.client.util.TrolieApiConstants;
 
 import java.io.InputStream;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.Map;
 
 /**
  * On-demand GET request for forecast limits with no ETAG usage
  */
 public class DefaultMonitoringSetRequest extends AbstractStreamingGet<MonitoringSetsReceiver> {
 
-	JsonFactory jsonFactory;
-	
+
 	public DefaultMonitoringSetRequest(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper,
+			Map<String, String> httpHeaders,
 			MonitoringSetsReceiver receiver) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
-		this.jsonFactory = new JsonFactory(objectMapper);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver);
 	}
 
 	@Override

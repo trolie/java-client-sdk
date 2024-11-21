@@ -1,6 +1,5 @@
 package org.trolie.client.request.operatingsnapshots;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -12,32 +11,30 @@ import org.trolie.client.util.TrolieApiConstants;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.Map;
 
 /**
  * On-demand GET request for real-time limits with no ETAG usage
  */
 public class RealTimeSnapshotRequest extends AbstractStreamingGet<RealTimeSnapshotReceiver> {
 
-	JsonFactory jsonFactory;
 	String monitoringSet;
-	String transmissionFacility;
+	String resourceId;
 	
 	public RealTimeSnapshotRequest(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ThreadPoolExecutor threadPoolExecutor, 
 			ObjectMapper objectMapper,
+			Map<String, String> httpHeaders,
 			RealTimeSnapshotReceiver receiver,
 			String monitoringSet,
-			String transmissionFacility) {
+			String resourceId) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
-		this.jsonFactory = new JsonFactory(objectMapper);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver);
 		this.monitoringSet = monitoringSet;
-		this.transmissionFacility = transmissionFacility;
+		this.resourceId = resourceId;
 	}
 
 	@Override
@@ -63,11 +60,11 @@ public class RealTimeSnapshotRequest extends AbstractStreamingGet<RealTimeSnapsh
 			get.setUri(uriBuilder.build());
 		}
 		
-		if (monitoringSet != null) {
+		if (resourceId != null) {
 			
-			//add the transmission facility parameter to the base URI
+			//add the resource ID parameter to the base URI
 			URIBuilder uriBuilder = new URIBuilder(get.getUri())
-					.addParameter(TrolieApiConstants.PARAM_TRANSMISSION_FACILITY, transmissionFacility);
+					.addParameter(TrolieApiConstants.PARAM_RESOURCE_ID, resourceId);
 			get.setUri(uriBuilder.build());
 		}
 		

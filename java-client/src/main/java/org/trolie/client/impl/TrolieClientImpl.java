@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class TrolieClientImpl implements TrolieClient {
 
@@ -42,26 +41,23 @@ public class TrolieClientImpl implements TrolieClient {
 	HttpHost host;
 	RequestConfig requestConfig;
 	int bufferSize;
-	ThreadPoolExecutor threadPoolExecutor;
 	ObjectMapper objectMapper;
 	ETagStore eTagStore;
-	Map<String, String> httpHeader;
+	Map<String, String> httpHeaders;
 
 	public TrolieClientImpl(HttpClient httpClient, HttpHost host, RequestConfig requestConfig, int bufferSize,
-			ThreadPoolExecutor threadPoolExecutor, ObjectMapper objectMapper, ETagStore eTagStore,
-			Map<String, String> httpHeader) {
+							ObjectMapper objectMapper, ETagStore eTagStore, Map<String, String> httpHeaders) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
 		this.requestConfig = requestConfig;
 		this.bufferSize = bufferSize;
-		this.threadPoolExecutor = threadPoolExecutor;
 		this.objectMapper = objectMapper;
 		this.eTagStore = eTagStore;
-		this.httpHeader = httpHeader;
+		this.httpHeaders = httpHeaders;
 	}
 
-	Set<RequestSubscription> activeSubscriptions = new HashSet<>();
+	final Set<RequestSubscription> activeSubscriptions = new HashSet<>();
 
 	protected void addSubscription(RequestSubscription subscription) {
 		synchronized (activeSubscriptions) {
@@ -72,23 +68,24 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public void getInUseLimitForecasts(ForecastSnapshotReceiver receiver) {
-		getInUseLimitForecasts(receiver,null,null,null);
+		getInUseLimitForecasts(receiver, null, null, null, null);
 	}
 	
 	@Override
 	public void getInUseLimitForecasts(ForecastSnapshotReceiver receiver, String monitoringSet) {
-		getInUseLimitForecasts(receiver,monitoringSet,null,null);
+		getInUseLimitForecasts(receiver, monitoringSet, null,null,null);
 	}
 	
 	@Override
 	public void getInUseLimitForecasts(ForecastSnapshotReceiver receiver, Instant periodStart, Instant periodEnd) {
-		getInUseLimitForecasts(receiver, null, periodStart, periodEnd);
+		getInUseLimitForecasts(receiver, null, null, periodStart, periodEnd);
 	}
 	
 	@Override
 	public void getInUseLimitForecasts(
 			ForecastSnapshotReceiver receiver,
 			String monitoringSet,
+			String resourceId,
 			Instant periodStart,
 			Instant periodEnd) {
 		
@@ -97,10 +94,11 @@ public class TrolieClientImpl implements TrolieClient {
 				host, 
 				requestConfig, 
 				bufferSize, 
-				threadPoolExecutor, 
 				objectMapper,
+				httpHeaders,
 				receiver,
 				monitoringSet,
+				resourceId,
 				periodStart,
 				periodEnd).executeRequest();
 		
@@ -123,8 +121,8 @@ public class TrolieClientImpl implements TrolieClient {
 				host, 
 				requestConfig, 
 				bufferSize, 
-				threadPoolExecutor, 
-				objectMapper, 
+				objectMapper,
+				httpHeaders,
 				pollingRateMillis,
 				receiver,
 				eTagStore,
@@ -137,8 +135,7 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public ForecastRatingProposalUpdate createForecastRatingProposalStreamingUpdate() {
-		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize,
-				objectMapper, httpHeader);
+		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders);
 	}
 
 	@Override
@@ -155,20 +152,20 @@ public class TrolieClientImpl implements TrolieClient {
 	
 	@Override
 	public RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(RealTimeSnapshotSubscribedReceiver receiver,
-			String monitoringSet, String transmissionFacility, int pollingRateMillis) {
+			String monitoringSet, String resourceId, int pollingRateMillis) {
 
 		RealTimeSnapshotSubscribedRequest subscription = new RealTimeSnapshotSubscribedRequest(
 				httpClient, 
 				host, 
 				requestConfig, 
 				bufferSize, 
-				threadPoolExecutor, 
-				objectMapper, 
+				objectMapper,
+				httpHeaders,
 				pollingRateMillis,
 				receiver,
 				eTagStore,
 				monitoringSet,
-				transmissionFacility);
+				resourceId);
 		
 		addSubscription(subscription);
 		return subscription;
@@ -176,8 +173,8 @@ public class TrolieClientImpl implements TrolieClient {
 
 	@Override
 	public RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate() {
-		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, threadPoolExecutor, bufferSize,
-				objectMapper, httpHeader);
+		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, bufferSize,
+				objectMapper, httpHeaders);
 	}
 
 	@Override
@@ -191,25 +188,25 @@ public class TrolieClientImpl implements TrolieClient {
 	}
 	
 	@Override
-	public void getInUseLimits(RealTimeSnapshotReceiver receiver, String monitoringSet, String transmissionFacility) {
+	public void getInUseLimits(RealTimeSnapshotReceiver receiver, String monitoringSet, String resourceId) {
 		
 		new RealTimeSnapshotRequest(
 				httpClient, 
 				host, 
 				requestConfig, 
 				bufferSize,
-				threadPoolExecutor, 
 				objectMapper,
+				httpHeaders,
 				receiver,
 				monitoringSet,
-				transmissionFacility).executeRequest();
+				resourceId).executeRequest();
 		
 	}
 
 	@Override
 	public void getMonitoringSet(MonitoringSetsReceiver receiver, String monitoringSet) {
 		new MonitoringSetsRequest(
-				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper,
+				httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders,
 				receiver, monitoringSet).executeRequest();
 
 	}
@@ -219,7 +216,7 @@ public class TrolieClientImpl implements TrolieClient {
 																		   String monitoringSet,
 																		   int pollingRateMillis) {
 		MonitoringSetsSubscribedRequest subscription = new MonitoringSetsSubscribedRequest(
-				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper,
+				httpClient, host, requestConfig, pollingRateMillis, objectMapper, httpHeaders,
 				pollingRateMillis, receiver, eTagStore, monitoringSet);
 		addSubscription(subscription);
 		return subscription;
@@ -228,7 +225,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getDefaultMonitoringSet(MonitoringSetsReceiver receiver) {
 		new DefaultMonitoringSetRequest(
-				httpClient, host, requestConfig, bufferSize, threadPoolExecutor, objectMapper, receiver)
+				httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver)
 				.executeRequest();
 	}
 
@@ -236,7 +233,7 @@ public class TrolieClientImpl implements TrolieClient {
 	public DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringSetUpdates(
 			MonitoringSetsSubscribedReceiver receiver, int pollingRateMillis) {
 		var subscription = new DefaultMonitoringSetSubscribedRequest(
-				httpClient, host, requestConfig, pollingRateMillis, threadPoolExecutor, objectMapper,
+				httpClient, host, requestConfig, pollingRateMillis, objectMapper, httpHeaders,
 				pollingRateMillis, receiver, eTagStore);
 		addSubscription(subscription);
 		return subscription;

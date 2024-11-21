@@ -15,6 +15,7 @@ import org.trolie.client.etag.ETagStore;
 import org.trolie.client.request.streaming.exception.StreamingGetHandlingException;
 
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,18 +32,21 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 	int pollingRateMillis;
 	ETagStore eTagStore;
 
-	AtomicBoolean active = new AtomicBoolean();
+	private final AtomicBoolean active = new AtomicBoolean();
+
+	Future<Void> requestExecutorFuture;
 	
 	protected AbstractStreamingSubscribedGet(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ObjectMapper objectMapper, 
+			ObjectMapper objectMapper,
+			Map<String, String> httpHeaders,
 			int pollingRateMillis,
 			T receiver,
 			ETagStore eTagStore) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver);
 		this.pollingRateMillis = pollingRateMillis;
 		this.eTagStore = eTagStore;
 	}

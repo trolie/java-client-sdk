@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.classic.methods.HttpPatch;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ContentType;
@@ -17,9 +17,9 @@ import org.trolie.client.model.ratingproposals.ProposalHeader;
 import org.trolie.client.model.ratingproposals.RealTimeRating;
 import org.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
 import org.trolie.client.request.streaming.AbstractStreamingUpdate;
+import org.trolie.client.util.TrolieApiConstants;
 
 import java.util.Map;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 
 public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTimeRatingProposalStatus> {
@@ -27,13 +27,9 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 	private static final Logger logger = LoggerFactory.getLogger(RealTimeRatingProposalUpdate.class);
 
 	public RealTimeRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-			ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper,
-										Map<String, String> httpHeader) {
-		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader);
+										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader) {
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeader);
 	}
-
-	public static final String PATH = "/rating-proposals/realtime";
-	public static final String CONTENT_TYPE = "application/vnd.trolie.rating-realtime-proposal-status.v1+json";
 
 	private enum Scope {
 		BEGIN,
@@ -48,17 +44,17 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 	@Override
 	protected HttpUriRequestBase getRequest() {
 		//only need to establish the HTTP method. headers/params are handled by base class 
-		return new HttpPatch(PATH);
+		return new HttpPost(getPath());
 	}
 
 	@Override
 	protected ContentType getContentType() {
-		return ContentType.create(CONTENT_TYPE);
+		return ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_PROPOSAL);
 	}
 
 	@Override
 	protected String getPath() {
-		return PATH;
+		return TrolieApiConstants.PATH_REALTIME_PROPOSAL;
 	}
 
 	@Override

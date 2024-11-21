@@ -105,6 +105,7 @@ public interface TrolieClient extends Closeable {
      * 
      * @param receiver Streaming data receiver for snapshot data
      * @param monitoringSet filter for monitoring set name
+     * @param resourceId Only return limits for this power system resource
      * @param offsetPeriodStart Optional. Only periods starting at or after this date will be returned. 
      * @param periodEnd Optional. Only periods starting before this date will be returns 
      * If periodStart is not given, all available periods starting before this date will be returned. 
@@ -112,6 +113,7 @@ public interface TrolieClient extends Closeable {
     void getInUseLimitForecasts(
     		ForecastSnapshotReceiver receiver,
     		String monitoringSet,
+            String resourceId,
     		Instant offsetPeriodStart,
     		Instant periodEnd);
     
@@ -152,12 +154,12 @@ public interface TrolieClient extends Closeable {
      * 
      * @param receiver
      * @param monitoringSet
-     * @param transmissionFacility
+     * @param resourceId
      */
     void getInUseLimits(
             RealTimeSnapshotReceiver receiver,
             String monitoringSet,
-            String transmissionFacility);
+            String resourceId);
 
     /**
      * Execute a request for the current real-time limits with a streaming response handler
@@ -206,14 +208,14 @@ public interface TrolieClient extends Closeable {
      * 
      * @param receiver Streaming data receiver for snapshot data
      * @param monitoringSet optional filter for monitoring set
-     * @param transmissionFacility optional filter for transmission facility
+     * @param resourceId optional filter for transmission facility
      * @param pollingRateMillis Interval in millis between polling loops
      * @return
      */
     RealTimeSnapshotSubscribedRequest subscribeToInUseLimits(
     		RealTimeSnapshotSubscribedReceiver receiver,
     		String monitoringSet,
-    		String transmissionFacility,
+    		String resourceId,
     		int pollingRateMillis);
 
     /**
