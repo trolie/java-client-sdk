@@ -1,5 +1,6 @@
 package org.trolie.client.request.streaming;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -19,8 +20,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -39,10 +40,10 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	RequestConfig requestConfig;
 	int bufferSize;
 	ThreadPoolExecutor threadPoolExecutor;
-	protected ObjectMapper objectMapper;
-	protected T receiver;
+	Map<String, String> httpHeaders;
 
-	Future<Void> requestExecutorFuture;
+	protected JsonFactory jsonFactory;
+	protected T receiver;
 	
 	protected abstract String getPath();
 	protected abstract String getContentType();
@@ -61,16 +62,18 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ObjectMapper objectMapper,
+			Map<String, String> httpHeaders,
 			T receiver) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
 		this.requestConfig = requestConfig;
 		this.bufferSize = bufferSize;
-		this.objectMapper = objectMapper;
+		this.jsonFactory = new JsonFactory(objectMapper);
 		this.receiver = receiver;
 		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,10,
 				TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+		this.httpHeaders = httpHeaders;
 	}
 	
 	protected HttpClientResponseHandler<Void> createResponseHandler() {
@@ -113,6 +116,9 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	protected HttpGet createRequest() throws URISyntaxException {
 		HttpGet get = new HttpGet(getPath());
 		get.addHeader(HttpHeaders.ACCEPT, getContentType());
+		if (httpHeaders !=  null && !httpHeaders.isEmpty()) {
+			httpHeaders.forEach(get::addHeader);
+		}
 		
 		get.setConfig(requestConfig);
 		return get;

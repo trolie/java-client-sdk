@@ -1,6 +1,5 @@
 package org.trolie.client.request.operatingsnapshots;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -13,14 +12,13 @@ import org.trolie.client.util.TrolieApiConstants;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.Map;
 
 /**
  * subscription for forecast rating snapshots 
  */
 public class ForecastSnapshotSubscribedRequest extends AbstractStreamingSubscribedGet<ForecastSnapshotSubscribedReceiver> {
 
-	JsonFactory jsonFactory;
 	String monitoringSet;
 	
 	public ForecastSnapshotSubscribedRequest(
@@ -28,15 +26,15 @@ public class ForecastSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ThreadPoolExecutor threadPoolExecutor, 
-			ObjectMapper objectMapper, 
+			ObjectMapper objectMapper,
+			Map<String, String> httpHeaders,
 			int pollingRateMillis,
 			ForecastSnapshotSubscribedReceiver receiver,
 			ETagStore eTagStore,
 			String monitoringSet) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver, eTagStore);
-		this.jsonFactory = new JsonFactory(objectMapper);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, pollingRateMillis,
+				receiver, eTagStore);
 		this.monitoringSet = monitoringSet;
 	}
 

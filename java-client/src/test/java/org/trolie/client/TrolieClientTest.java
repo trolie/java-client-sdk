@@ -498,7 +498,7 @@ public class TrolieClientTest {
 
 				//we expect to get the configured monitoring set name as a query param
 				Assertions.assertEquals(
-						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + TrolieApiConstants.PARAM_TRANSMISSION_FACILITY + "=xyz", 
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + TrolieApiConstants.PARAM_RESOURCE_ID + "=xyz",
 						request.getUri().getQuery());
 
 				Header requestEtag = request.getHeader(HttpHeaders.IF_NONE_MATCH);
@@ -626,7 +626,7 @@ public class TrolieClientTest {
 
 				//we expect to get the configured monitoring set name as a query param
 				Assertions.assertEquals(
-						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + TrolieApiConstants.PARAM_TRANSMISSION_FACILITY + "=xyz", 
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + TrolieApiConstants.PARAM_RESOURCE_ID + "=xyz",
 						request.getUri().getQuery());
 
 				//on 1st and 3rd request, return a new snapshot to indicate an update
@@ -815,7 +815,7 @@ public class TrolieClientTest {
 				}
 
 
-			}, "abc", startTime, startTime);
+			}, "abc", null, startTime, startTime);
 
 			Assertions.assertEquals(1, snapshotsReceived.get());
 			Assertions.assertEquals(0, errorCount.get());

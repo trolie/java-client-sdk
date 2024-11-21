@@ -1,6 +1,5 @@
 package org.trolie.client.request.monitoringsets;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -10,27 +9,26 @@ import org.trolie.client.request.streaming.AbstractStreamingSubscribedGet;
 import org.trolie.client.util.TrolieApiConstants;
 
 import java.io.InputStream;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.Map;
 
 /**
  * Subscribed request for default monitoring set updates
  */
 public class DefaultMonitoringSetSubscribedRequest extends AbstractStreamingSubscribedGet<MonitoringSetsSubscribedReceiver> {
 
-	JsonFactory jsonFactory;
-	
+
 	public DefaultMonitoringSetSubscribedRequest(
 			HttpClient httpClient, 
 			HttpHost host, 
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ThreadPoolExecutor threadPoolExecutor, 
-			ObjectMapper objectMapper, 
+			ObjectMapper objectMapper,
+			Map<String, String> httpHeaders,
 			int pollingRateMillis,
 			MonitoringSetsSubscribedReceiver receiver,
 			ETagStore eTagStore) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, pollingRateMillis, receiver, eTagStore);
-		this.jsonFactory = new JsonFactory(objectMapper);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, pollingRateMillis,
+				receiver, eTagStore);
 	}
 
 	@Override

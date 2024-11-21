@@ -26,7 +26,9 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
@@ -42,19 +44,19 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 	PipedOutputStream outputStream;
 	Future<T> responseFuture;
 
-	Map<String, String> httpHeader;
+	Map<String, String> httpHeaders;
 
 	protected AbstractStreamingUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-								   ThreadPoolExecutor threadPoolExecutor, int bufferSize, ObjectMapper objectMapper,
-								   Map<String, String> httpHeader) {
+									  int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
 		this.requestConfig = requestConfig;
-		this.threadPoolExecutor = threadPoolExecutor;
+		this.threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1,
+				TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 		this.bufferSize = bufferSize;
 		this.objectMapper = objectMapper;
-		this.httpHeader = httpHeader;
+		this.httpHeaders = httpHeaders;
 	}
 
 	protected abstract ContentType getContentType();
@@ -97,17 +99,14 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 	 * 
 	 * @return
 	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	protected OutputStream createRequestOutputStream() throws IOException,InterruptedException {
+     */
+	protected OutputStream createRequestOutputStream() throws IOException {
 
 		//they probably already set these parameters, but may as well make sure
 		HttpUriRequestBase request = getRequest();
 		request.addHeader(HttpHeaders.CONTENT_TYPE, getContentType());
-		if (this.httpHeader != null && !this.httpHeader.isEmpty()) {
-			for (Map.Entry<String, String> entry : httpHeader.entrySet()) {
-				request.addHeader(entry.getKey(), entry.getValue());
-			}
+		if (this.httpHeaders != null && !this.httpHeaders.isEmpty()) {
+			httpHeaders.forEach(request::addHeader);
 		}
 		request.setPath(getPath());
 		
@@ -145,8 +144,7 @@ public abstract class AbstractStreamingUpdate<T> implements AutoCloseable {
 		} catch (InterruptedException e) {
 			throw new TrolieException("Streaming request thread interrupted",e);
 		} catch (ExecutionException e) {
-			if (e.getCause() != null && e.getCause() instanceof HttpResponseException) {
-				HttpResponseException httpEx = (HttpResponseException)e.getCause();
+			if (e.getCause() instanceof HttpResponseException httpEx) {
 				throw new TrolieServerException(
 						httpEx.getStatusCode(),
 						"Trolie server returned error status code " + httpEx.getStatusCode(), 
