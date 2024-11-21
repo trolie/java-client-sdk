@@ -16,14 +16,15 @@
 package org.trolie.client.model.operatingsnapshots;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@EqualsAndHashCode(callSuper = true)
 public class ForecastSnapshotHeader extends SnapshotHeader {
 
     @JsonProperty("begins")

@@ -15,22 +15,20 @@
 
 package org.trolie.client.model.operatingsnapshots;
 
-import java.util.List;
-import java.util.Map;
-
-import org.trolie.client.model.common.LimitValue;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import org.trolie.client.model.common.LimitValue;
+
+import java.util.List;
+import java.util.Map;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@Builder
 @Getter
 @EqualsAndHashCode
 public class ForecastPeriodSnapshot {
