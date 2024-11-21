@@ -14,23 +14,17 @@ WORKDIR /src
 RUN mvn -version
 RUN echo "Build Number ${BUILD_NUMBER}"
 # Set version
-RUN if [ "${BUILD_TARGET}" == "release" ]; then \
-        mvn versions:set -DremoveSnapshot -DartifactoryUsr=${ARTIFACTORY_USR} -DartifactoryPsw=${ARTIFACTORY_PSW} -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2; \
-    fi
-RUN if [ "${BUILD_TARGET}" == "snapshot" ]; then \
-        mvn --batch-mode \
-        com.ge.energy:ge-versions-maven-plugin:convert-snapshot \
-	versions:set \
-	-Dtarget.build.number=${BUILD_NUMBER} \
-        -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 \
-        -DartifactoryUsr=${ARTIFACTORY_USR} \
-        -DartifactoryPsw=${ARTIFACTORY_PSW}; \
-    fi
+RUN mvn \
+    -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 \
+    -DartifactoryUsr=${ARTIFACTORY_USR} \
+    -DartifactoryPsw=${ARTIFACTORY_PSW} \
+	com.eterra.commons:eterra-build-plugin:convert-snapshot \
+	versions:set -Dtarget.build.number=${BUILD_NUMBER}
 
 
 RUN mvn clean ${BUILD_GOAL} \
     -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 \
-	  -Djarsigner.tsa=http://timestamp.digicert.com \
+	-Djarsigner.tsa=http://timestamp.digicert.com \
     -DartifactoryUsr=${ARTIFACTORY_USR} \
     -DartifactoryPsw=${ARTIFACTORY_PSW} \
     -Dstore.path=/src/${SIGNER_KEYSTORE} \

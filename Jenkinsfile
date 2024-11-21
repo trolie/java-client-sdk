@@ -58,20 +58,19 @@ pipeline {
                         sh "docker login -u $ARTIFACTORY_USR -p $ARTIFACTORY_PSW $DOCKER_REGISTRY"
                         sh "cp $SIGNER_KEYSTORE ./codesigner.p12"
                         sh """docker build \
-                            --pull \
-                            --no-cache \
-                            --build-arg ARTIFACTORY_USR=$ARTIFACTORY_USR \
-                            --build-arg ARTIFACTORY_PSW=$ARTIFACTORY_PSW \
-                            --build-arg SIGNER_KEYSTORE=codesigner.p12 \
-                            --build-arg SIGNER_STORE_PASS=$SIGNER_STORE_PASS \
-                            --build-arg SIGNER_ALIAS=$SIGNER_ALIAS_USR \
-                            --build-arg SIGNER_KEY_PASS=$SIGNER_ALIAS_PSW \
-                            --build-arg BUILD_NUMBER=${versionNumber} \
-                            --build-arg BUILD_GOAL=$goal \
-                            --build-arg BUILD_TARGET=$buildTarget \
-                            -t ${projectName}_$imageSuffix \
-                            .
-                            """
+                --pull \
+                --no-cache \
+                --build-arg ARTIFACTORY_USR=$ARTIFACTORY_USR \
+                --build-arg ARTIFACTORY_PSW=$ARTIFACTORY_PSW \
+                --build-arg SIGNER_KEYSTORE=codesigner.p12 \
+                --build-arg SIGNER_STORE_PASS=$SIGNER_STORE_PASS \
+                --build-arg SIGNER_ALIAS=$SIGNER_ALIAS_USR \
+                --build-arg SIGNER_KEY_PASS=$SIGNER_ALIAS_PSW \
+                --build-arg BUILD_NUMBER=${versionNumber} \
+                --build-arg BUILD_GOAL=$goal \
+                -t ${projectName}_$imageSuffix \
+                .
+                """
                         sh "docker run -d --name ctr_${projectName}_$imageSuffix ${projectName}_$imageSuffix"
                         sh "docker cp ctr_${projectName}_$imageSuffix:/src/. $workspace/results/"
 
