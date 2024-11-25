@@ -10,11 +10,11 @@ import org.trolie.client.util.TrolieApiConstants;
 import java.util.Map;
 
 /**
- * Subscribed request for regional real-time rating snapshots
+ * Subscription for regional forecast rating snapshots
  */
-public class RegionalRealTimeSnapshotSubscribedRequest extends RealTimeSnapshotSubscribedRequest {
+public class RegionalForecastSubscribedSnapshotRequest extends ForecastSnapshotSubscribedRequest {
 
-    public RegionalRealTimeSnapshotSubscribedRequest(
+    public RegionalForecastSubscribedSnapshotRequest(
             HttpClient httpClient,
             HttpHost host,
             RequestConfig requestConfig,
@@ -22,17 +22,17 @@ public class RegionalRealTimeSnapshotSubscribedRequest extends RealTimeSnapshotS
             ObjectMapper objectMapper,
             Map<String, String> httpHeaders,
             int pollingRateMillis,
-            RealTimeSnapshotSubscribedReceiver receiver,
+            ForecastSnapshotSubscribedReceiver receiver,
             ETagStore eTagStore,
             String monitoringSet) {
 
         super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, pollingRateMillis, receiver,
-                eTagStore, monitoringSet, null);
+                eTagStore, monitoringSet);
     }
 
     @Override
     protected String getPath() {
-        return TrolieApiConstants.PATH_REGIONAL_REALTIME_SNAPSHOT;
+        return TrolieApiConstants.PATH_REGIONAL_FORECAST_SNAPSHOT;
     }
 
 }

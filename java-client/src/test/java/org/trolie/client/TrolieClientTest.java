@@ -52,6 +52,7 @@ import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRe
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
+import org.trolie.client.request.operatingsnapshots.RegionalForecastSubscribedSnapshotRequest;
 import org.trolie.client.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
@@ -293,6 +294,120 @@ public class TrolieClientTest {
 	}
 
 	@Test
+	void testForecastSnapshotGet() throws Exception {
+
+		Instant startTime = Instant.now();
+		String startTimeString = startTime.toString();
+
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				//we expect to get the monitoring set name and period start/end as a query params
+				Assertions.assertEquals(
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" +
+								TrolieApiConstants.PARAM_OFFSET_PERIOD_START + "=" + startTimeString + "&" +
+								TrolieApiConstants.PARAM_PERIOD_END + "=" + startTimeString,
+						request.getUri().getQuery());
+
+				//on 1st and 3rd request, return a new snapshot to indicate an update
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+
+				response.setEntity(
+						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+				threadPoolExecutor.submit(new Callable<Void>() {
+					@Override
+					public Void call() throws Exception {
+
+						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+
+							writeForecastSnapshot(json, startTimeString);
+
+							return null;
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw new RuntimeException(e);
+						}
+					}
+				});
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+
+			return response;
+		};
+
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			//subscribe for snapshots and validate they are transmitted correctly
+			trolieClient.getInUseLimitForecasts(new ForecastSnapshotReceiver() {
+
+				int numResources;
+				int numPeriods;
+
+				@Override
+				public void header(ForecastSnapshotHeader header) {
+					Assertions.assertNotNull(header);
+					Assertions.assertEquals(startTimeString, header.getBegins());
+				}
+
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+				}
+
+
+				@Override
+				public void beginResource(String resourceId) {
+					numResources++;
+				}
+
+
+				@Override
+				public void period(ForecastPeriodSnapshot period) {
+					numPeriods++;
+				}
+
+
+				@Override
+				public void endResource() {
+					Assertions.assertEquals(24, numPeriods);
+					numPeriods = 0;
+				}
+
+
+			}, "abc", null, startTime, startTime);
+
+			Assertions.assertEquals(1, snapshotsReceived.get());
+			Assertions.assertEquals(0, errorCount.get());
+
+		}
+	}
+
+	@Test
 	void testForecastSnapshotSubscription() throws Exception {
 
 		//we will run the subscription for fixed number of requests
@@ -433,6 +548,257 @@ public class TrolieClientTest {
 		}
 	}
 
+	@Test
+	void testRegionalForecastSnapshotGet() throws Exception {
+
+		Instant startTime = Instant.now();
+		String startTimeString = startTime.toString();
+
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				//we expect to get the monitoring set name and period start/end as a query params
+				Assertions.assertEquals(
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" +
+								TrolieApiConstants.PARAM_OFFSET_PERIOD_START + "=" + startTimeString + "&" +
+								TrolieApiConstants.PARAM_PERIOD_END + "=" + startTimeString,
+						request.getUri().getQuery());
+
+				//on 1st and 3rd request, return a new snapshot to indicate an update
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+
+				response.setEntity(
+						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+				threadPoolExecutor.submit((Callable<Void>) () -> {
+
+                    try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+
+                        writeForecastSnapshot(json, startTimeString);
+
+                        return null;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                });
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+
+			return response;
+		};
+
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			//subscribe for snapshots and validate they are transmitted correctly
+			trolieClient.getRegionalLimitsForecast(new ForecastSnapshotReceiver() {
+
+				int numResources;
+				int numPeriods;
+
+				@Override
+				public void header(ForecastSnapshotHeader header) {
+					Assertions.assertNotNull(header);
+					Assertions.assertEquals(startTimeString, header.getBegins());
+				}
+
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+				}
+
+
+				@Override
+				public void beginResource(String resourceId) {
+					numResources++;
+				}
+
+
+				@Override
+				public void period(ForecastPeriodSnapshot period) {
+					numPeriods++;
+				}
+
+
+				@Override
+				public void endResource() {
+					Assertions.assertEquals(24, numPeriods);
+					numPeriods = 0;
+				}
+
+
+			}, "abc", null, startTime, startTime);
+
+			Assertions.assertEquals(1, snapshotsReceived.get());
+			Assertions.assertEquals(0, errorCount.get());
+
+		}
+	}
+
+	@Test
+	void testRegionalForecastSnapshotSubscription() throws Exception {
+
+		//we will run the subscription for fixed number of requests
+		AtomicInteger requestCounter = new AtomicInteger(0);
+		String startTime = Instant.now().toString();
+		String etag = UUID.randomUUID().toString();
+
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				//we expect to get the configured monitoring set name as a query param
+				Assertions.assertEquals("monitoring-set=abc", request.getUri().getQuery());
+
+				Header requestEtag = request.getHeader(HttpHeaders.IF_NONE_MATCH);
+
+				//2nd+ request should have an etag header
+				if (requestCounter.get() > 0) {
+					Assertions.assertNotNull(requestEtag);
+					Assertions.assertEquals(etag, requestEtag.getValue());
+				}
+
+				if (requestCounter.get() == 3) {
+
+					//on 4th request return error to test error propagation to receiver
+					response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+
+				} else if (requestCounter.get() % 2 == 0) {
+
+					//on 1st and 3rd request, return a new snapshot to indicate an update
+					PipedOutputStream out = new PipedOutputStream();
+					PipedInputStream in = new PipedInputStream(out);
+
+					response.setHeader(HttpHeaders.ETAG, etag);
+					response.setEntity(
+							new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
+					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+					threadPoolExecutor.submit(new Callable<Void>() {
+						@Override
+						public Void call() throws Exception {
+
+							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+								writeForecastSnapshot(json, startTime);
+								return null;
+							} catch (Exception e) {
+								e.printStackTrace();
+								throw new RuntimeException(e);
+							}
+						}
+
+					});
+
+				} else {
+
+					//on 2nd request, indicate existing etag is valid to test that request is short-circuited
+					response.setCode(HttpStatus.SC_NOT_MODIFIED);
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			} finally {
+				requestCounter.incrementAndGet();
+			}
+
+			return response;
+		};
+
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			//subscribe for snapshots and validate they are transmitted correctly
+			RegionalForecastSubscribedSnapshotRequest subscription = trolieClient.subscribeToRegionalLimitsForecast(new ForecastSnapshotSubscribedReceiver() {
+
+				RequestSubscription subscription;
+				int numResources;
+				int numPeriods;
+
+				@Override
+				public void period(ForecastPeriodSnapshot period) {
+					numPeriods++;
+				}
+
+				@Override
+				public void header(ForecastSnapshotHeader header) {
+					Assertions.assertEquals(startTime, header.getBegins());
+				}
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void endResource() {
+					Assertions.assertEquals(24, numPeriods);
+					numPeriods = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void beginResource(String resourceId) {
+					numResources++;
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+					subscription.stop();
+				}
+
+				@Override
+				public void setSubscription(RequestSubscription subscription) {
+					this.subscription = subscription;
+				}
+
+
+			}, "abc", 1000);
+
+			while (subscription.isSubscribed()) {
+				Thread.sleep(100);
+			}
+
+			//we should have received 2 snapshots, 1 304 code and 1 500 code
+			Assertions.assertEquals(2, snapshotsReceived.get());
+			Assertions.assertEquals(1, errorCount.get());
+		}
+	}
 
 	@Test
 	void testRealTimeRatingProposalStreamingUpdate() throws IOException {
@@ -722,7 +1088,7 @@ public class TrolieClientTest {
 
 				//we expect to get the configured monitoring set name as a query param
 				Assertions.assertEquals(
-						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + TrolieApiConstants.PARAM_RESOURCE_ID + "=xyz",
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc",
 						request.getUri().getQuery());
 
 				Header requestEtag = request.getHeader(HttpHeaders.IF_NONE_MATCH);
@@ -821,7 +1187,7 @@ public class TrolieClientTest {
 				}
 
 
-			}, "abc", "xyz", 1000);
+			}, "abc", 1000);
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -920,121 +1286,6 @@ public class TrolieClientTest {
 
 			Assertions.assertEquals(1, snapshotsReceived.get());
 			Assertions.assertEquals(0, errorCount.get());
-		}
-	}
-
-
-	@Test
-	void testForecastSnapshotGet() throws Exception {
-
-		Instant startTime = Instant.now();
-		String startTimeString = startTime.toString();
-
-		requestHandler = request -> {
-
-			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
-
-			try {
-
-				//we expect to get the monitoring set name and period start/end as a query params
-				Assertions.assertEquals(
-						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + 
-								TrolieApiConstants.PARAM_OFFSET_PERIOD_START + "=" + startTimeString + "&" +
-								TrolieApiConstants.PARAM_PERIOD_END + "=" + startTimeString,
-								request.getUri().getQuery());
-
-				//on 1st and 3rd request, return a new snapshot to indicate an update
-				PipedOutputStream out = new PipedOutputStream();
-				PipedInputStream in = new PipedInputStream(out);
-
-				response.setEntity(
-						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
-				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
-				threadPoolExecutor.submit(new Callable<Void>() {
-					@Override
-					public Void call() throws Exception {
-
-						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
-
-							writeForecastSnapshot(json, startTimeString);
-
-							return null;
-						} catch (Exception e) {
-							e.printStackTrace();
-							throw new RuntimeException(e);
-						}
-					}
-				});
-
-			} catch (Exception e) {
-				e.printStackTrace();
-				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-			}
-
-			return response;
-		};
-
-
-		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
-
-			AtomicInteger snapshotsReceived = new AtomicInteger(0);
-			AtomicInteger errorCount = new AtomicInteger(0);
-
-			//subscribe for snapshots and validate they are transmitted correctly
-			trolieClient.getInUseLimitForecasts(new ForecastSnapshotReceiver() {
-
-				int numResources;
-				int numPeriods;
-
-				@Override
-				public void header(ForecastSnapshotHeader header) {
-					Assertions.assertNotNull(header);
-					Assertions.assertEquals(startTimeString, header.getBegins());
-				}
-
-
-				@Override
-				public void endSnapshot() {
-					Assertions.assertEquals(100, numResources);
-					numResources = 0;
-				}
-
-				@Override
-				public void beginSnapshot() {
-					snapshotsReceived.incrementAndGet();
-				}
-
-				@Override
-				public void error(StreamingGetException t) {
-					errorCount.incrementAndGet();
-				}
-
-
-				@Override
-				public void beginResource(String resourceId) {
-					numResources++;
-				}
-
-
-				@Override
-				public void period(ForecastPeriodSnapshot period) {
-					numPeriods++;
-				}
-
-
-				@Override
-				public void endResource() {
-					Assertions.assertEquals(24, numPeriods);
-					numPeriods = 0;
-				}
-
-
-			}, "abc", null, startTime, startTime);
-
-			Assertions.assertEquals(1, snapshotsReceived.get());
-			Assertions.assertEquals(0, errorCount.get());
-
 		}
 	}
 
