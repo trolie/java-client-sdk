@@ -22,6 +22,8 @@ import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotRequest;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
+import org.trolie.client.request.operatingsnapshots.RegionalRealTimeSnapshotRequest;
+import org.trolie.client.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import org.trolie.client.request.streaming.RequestSubscription;
@@ -201,6 +203,67 @@ public class TrolieClientImpl implements TrolieClient {
 				monitoringSet,
 				resourceId).executeRequest();
 		
+	}
+
+	@Override
+	public void getRegionalRealTimeLimits(RealTimeSnapshotReceiver receiver) {
+		getRegionalRealTimeLimits(receiver, null, null);
+	}
+
+	@Override
+	public void getRegionalRealTimeLimits(RealTimeSnapshotReceiver receiver, String monitoringSet) {
+		getRegionalRealTimeLimits(receiver, monitoringSet, null);
+	}
+
+	@Override
+	public void getRegionalRealTimeLimits(RealTimeSnapshotReceiver receiver, String monitoringSet, String resourceId) {
+
+		new RegionalRealTimeSnapshotRequest(
+				httpClient,
+				host,
+				requestConfig,
+				bufferSize,
+				objectMapper,
+				httpHeaders,
+				receiver,
+				monitoringSet,
+				resourceId).executeRequest();
+	}
+
+	@Override
+	public RegionalRealTimeSnapshotSubscribedRequest subscribeToRegionalRealTimeLimits(RealTimeSnapshotSubscribedReceiver receiver,
+																					int pollingRateMillis) {
+		return subscribeToRegionalRealTimeLimits(receiver, null, null, pollingRateMillis);
+	}
+
+	@Override
+	public RegionalRealTimeSnapshotSubscribedRequest subscribeToRegionalRealTimeLimits(RealTimeSnapshotSubscribedReceiver receiver,
+																					String monitoringSet,
+																					int pollingRateMillis) {
+		return subscribeToRegionalRealTimeLimits(receiver, monitoringSet, null, pollingRateMillis);
+	}
+
+	@Override
+	public RegionalRealTimeSnapshotSubscribedRequest subscribeToRegionalRealTimeLimits(RealTimeSnapshotSubscribedReceiver receiver,
+																					String monitoringSet,
+																					String resourceId,
+																					int pollingRateMillis) {
+
+		RegionalRealTimeSnapshotSubscribedRequest subscription = new RegionalRealTimeSnapshotSubscribedRequest(
+				httpClient,
+				host,
+				requestConfig,
+				bufferSize,
+				objectMapper,
+				httpHeaders,
+				pollingRateMillis,
+				receiver,
+				eTagStore,
+				monitoringSet,
+				resourceId);
+
+		addSubscription(subscription);
+		return subscription;
 	}
 
 	@Override

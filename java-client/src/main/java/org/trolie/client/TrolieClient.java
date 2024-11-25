@@ -11,6 +11,7 @@ import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRe
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
+import org.trolie.client.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import org.trolie.client.request.streaming.RequestSubscription;
@@ -217,6 +218,75 @@ public interface TrolieClient extends Closeable {
     		String monitoringSet,
     		String resourceId,
     		int pollingRateMillis);
+
+    /**
+     * Execute a request for the regional real-time limits with a streaming response handler
+     *
+     * @param receiver
+     */
+    void getRegionalRealTimeLimits(
+            RealTimeSnapshotReceiver receiver);
+
+    /**
+     * Execute a request for the regional real-time limits with a streaming response handler
+     *
+     * @param receiver
+     * @param monitoringSet
+     */
+    void getRegionalRealTimeLimits(
+            RealTimeSnapshotReceiver receiver,
+            String monitoringSet);
+
+    /**
+     * Execute a request for the regional real-time limits with a streaming response handler
+     *
+     * @param receiver
+     * @param monitoringSet
+     * @param resourceId
+     */
+    void getRegionalRealTimeLimits(
+            RealTimeSnapshotReceiver receiver,
+            String monitoringSet,
+            String resourceId);
+
+    /**
+     * Create a polling subscription regional real-time snapshot data updates
+     *
+     * @param receiver Streaming data receiver for regional snapshot data
+     * @param pollingRateMillis Interval in millis between polling loops
+     * @return
+     */
+    RegionalRealTimeSnapshotSubscribedRequest subscribeToRegionalRealTimeLimits(
+            RealTimeSnapshotSubscribedReceiver receiver,
+            int pollingRateMillis);
+
+    /**
+     * Create a polling subscription for regional real-time snapshot data updates
+     *
+     * @param receiver Streaming data receiver for regional snapshot data
+     * @param monitoringSet optional filter for monitoring set
+     * @param pollingRateMillis Interval in millis between polling loops
+     * @return
+     */
+    RegionalRealTimeSnapshotSubscribedRequest subscribeToRegionalRealTimeLimits(
+            RealTimeSnapshotSubscribedReceiver receiver,
+            String monitoringSet,
+            int pollingRateMillis);
+
+    /**
+     * Create a polling subscription for regional real-time snapshot data updates
+     *
+     * @param receiver Streaming data receiver for regional snapshot data
+     * @param monitoringSet optional filter for monitoring set
+     * @param resourceId optional filter for transmission facility
+     * @param pollingRateMillis Interval in millis between polling loops
+     * @return
+     */
+    RegionalRealTimeSnapshotSubscribedRequest subscribeToRegionalRealTimeLimits(
+            RealTimeSnapshotSubscribedReceiver receiver,
+            String monitoringSet,
+            String resourceId,
+            int pollingRateMillis);
 
     /**
      * Create a real-time proposal update that can stream the update submission to the server

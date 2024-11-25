@@ -6,6 +6,7 @@ public class TrolieApiConstants {
 	}
 
 	public static final String PATH_REALTIME_SNAPSHOT = "/limits/realtime-snapshot";
+	public static final String PATH_REGIONAL_REALTIME_SNAPSHOT = "/limits/regional/realtime-snapshot";
 	public static final String PATH_REALTIME_PROPOSAL = "/rating-proposals/realtime";
 	public static final String PATH_FORECAST_SNAPSHOT = "/limits/forecast-snapshot";
 	public static final String PATH_FORECAST_PROPOSAL = "/rating-proposals/forecast";

@@ -52,6 +52,7 @@ import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRe
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
+import org.trolie.client.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import org.trolie.client.request.streaming.RequestSubscription;
@@ -613,8 +614,6 @@ public class TrolieClientTest {
 		}
 	}
 
-
-
 	@Test
 	void testRealTimeSnapshotGet() throws Exception {
 
@@ -670,6 +669,222 @@ public class TrolieClientTest {
 
 			//subscribe for snapshots and validate they are transmitted correctly
 			trolieClient.getInUseLimits(new RealTimeSnapshotReceiver() {
+
+				int numResources;
+
+				@Override
+				public void header(RealTimeSnapshotHeader header) {
+					Assertions.assertNotNull(header);
+				}
+
+				@Override
+				public void limit(RealTimeLimit limit) {
+					numResources++;
+				}
+
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+				}
+
+
+			}, "abc", "xyz");
+
+			Assertions.assertEquals(1, snapshotsReceived.get());
+			Assertions.assertEquals(0, errorCount.get());
+		}
+	}
+
+	@Test
+	void testRegionalRealTimeSnapshotSubscription() throws Exception {
+
+		//we will run the subscription for fixed number of requests
+		AtomicInteger requestCounter = new AtomicInteger(0);
+		String etag = UUID.randomUUID().toString();
+
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				//we expect to get the configured monitoring set name as a query param
+				Assertions.assertEquals(
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + TrolieApiConstants.PARAM_RESOURCE_ID + "=xyz",
+						request.getUri().getQuery());
+
+				Header requestEtag = request.getHeader(HttpHeaders.IF_NONE_MATCH);
+
+				//2nd+ request should have an etag header
+				if (requestCounter.get() > 0) {
+					Assertions.assertNotNull(requestEtag);
+					Assertions.assertEquals(etag, requestEtag.getValue());
+				}
+
+				if (requestCounter.get() == 3) {
+
+					//on 4th request return error to test error propagation to receiver
+					response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+
+				} else if (requestCounter.get() % 2 == 0) {
+
+					//on 1st and 3rd request, return a new snapshot to indicate an update
+					PipedOutputStream out = new PipedOutputStream();
+					PipedInputStream in = new PipedInputStream(out);
+
+					response.setHeader(HttpHeaders.ETAG, etag);
+					response.setEntity(
+							new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT))));
+					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+					threadPoolExecutor.submit((Callable<Void>) () -> {
+                        try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+                            writeRealTimeSnapshot(json);
+                            return null;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            throw new RuntimeException(e);
+                        }
+                    });
+
+				} else {
+
+					//on 2nd request, indicate existing etag is valid to test that request is short-circuited
+					response.setCode(HttpStatus.SC_NOT_MODIFIED);
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			} finally {
+				requestCounter.incrementAndGet();
+			}
+
+			return response;
+		};
+
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			//subscribe for snapshots and validate they are transmitted correctly
+			RegionalRealTimeSnapshotSubscribedRequest subscription = trolieClient.subscribeToRegionalRealTimeLimits(new RealTimeSnapshotSubscribedReceiver() {
+
+				RequestSubscription subscription;
+				int numResources;
+
+				@Override
+				public void header(RealTimeSnapshotHeader header) {
+					Assertions.assertNotNull(header);
+				}
+
+				@Override
+				public void limit(RealTimeLimit limit) {
+					numResources++;
+				}
+
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+					subscription.stop();
+				}
+
+				@Override
+				public void setSubscription(RequestSubscription subscription) {
+					this.subscription = subscription;
+				}
+
+
+			}, "abc", "xyz", 1000);
+
+			while (subscription.isSubscribed()) {
+				Thread.sleep(100);
+			}
+
+			//we should have received 2 snapshots, 1 304 code and 1 500 code
+			Assertions.assertEquals(2, snapshotsReceived.get());
+			Assertions.assertEquals(1, errorCount.get());
+		}
+	}
+
+	@Test
+	void testRegionalRealTimeSnapshotGet() throws Exception {
+
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				//we expect to get the configured monitoring set name as a query param
+				Assertions.assertEquals(
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc&" + TrolieApiConstants.PARAM_RESOURCE_ID + "=xyz",
+						request.getUri().getQuery());
+
+				//on 1st and 3rd request, return a new snapshot to indicate an update
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+
+				response.setEntity(
+						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT))));
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+				threadPoolExecutor.submit((Callable<Void>) () -> {
+
+                    try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+
+
+                        writeRealTimeSnapshot(json);
+
+                        return null;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                });
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+
+			return response;
+		};
+
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			// Get a snapshots and validate it is transmitted correctly
+			trolieClient.getRegionalRealTimeLimits(new RealTimeSnapshotReceiver() {
 
 				int numResources;
 
