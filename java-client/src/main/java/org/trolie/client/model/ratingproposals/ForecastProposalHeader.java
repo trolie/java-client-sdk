@@ -23,6 +23,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * {@link ProposalHeader} for forecasts
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder

@@ -31,6 +31,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.trolie.client.exception.StreamingGetException;
+import org.trolie.client.exception.TrolieException;
+import org.trolie.client.exception.TrolieServerException;
+import org.trolie.client.impl.request.RequestSubscriptionInternal;
 import org.trolie.client.model.common.DataProvenance;
 import org.trolie.client.model.monitoringsets.MonitoringSet;
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
@@ -45,20 +49,12 @@ import org.trolie.client.model.ratingproposals.RealTimeRating;
 import org.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
 import org.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
-import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
-import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
-import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
-import org.trolie.client.request.operatingsnapshots.RegionalForecastSubscribedSnapshotRequest;
-import org.trolie.client.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
 import org.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import org.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
-import org.trolie.client.request.streaming.RequestSubscription;
-import org.trolie.client.request.streaming.exception.StreamingGetException;
-import org.trolie.client.util.TrolieApiConstants;
 
 import javax.net.ServerSocketFactory;
 import java.io.IOException;
@@ -80,14 +76,15 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.trolie.client.util.CommonConstants.TAG_DESCRIPTION;
-import static org.trolie.client.util.CommonConstants.TAG_ID;
-import static org.trolie.client.util.CommonConstants.TAG_POWER_SYSTEM_RESOURCES;
-import static org.trolie.client.util.CommonConstants.TAG_SOURCE;
 
 @Slf4j
 @SuppressWarnings("unchecked")
 public class TrolieClientTest {
+
+	public static final String TAG_SOURCE = "source";
+	public static final String TAG_ID = "id";
+	public static final String TAG_DESCRIPTION = "description";
+	public static final String TAG_POWER_SYSTEM_RESOURCES = "power-system-resources";
 
 	private static final String HOST = "http://127.0.0.1";
 	private static String baseUri;
@@ -127,6 +124,7 @@ public class TrolieClientTest {
 				ServerSocketFactory.getDefault(), 
 				DefaultBHttpServerConnectionFactory.builder().build(), 
 				null, 
+				null,
 				null);
 
 		httpServer.start();
@@ -486,7 +484,7 @@ public class TrolieClientTest {
 			AtomicInteger errorCount = new AtomicInteger(0);
 
 			//subscribe for snapshots and validate they are transmitted correctly
-			ForecastSnapshotSubscribedRequest subscription = trolieClient.subscribeToInUseLimitForecastUpdates(new ForecastSnapshotSubscribedReceiver() {
+			var subscription = trolieClient.subscribeToInUseLimitForecastUpdates(new ForecastSnapshotSubscribedReceiver() {
 
 				RequestSubscription subscription;
 				int numResources;
@@ -527,7 +525,7 @@ public class TrolieClientTest {
 				@Override
 				public void error(StreamingGetException t) {
 					errorCount.incrementAndGet();
-					subscription.stop();
+					((RequestSubscriptionInternal)subscription).stop();
 				}
 
 				@Override
@@ -738,7 +736,7 @@ public class TrolieClientTest {
 			AtomicInteger errorCount = new AtomicInteger(0);
 
 			//subscribe for snapshots and validate they are transmitted correctly
-			RegionalForecastSubscribedSnapshotRequest subscription = trolieClient.subscribeToRegionalLimitsForecast(new ForecastSnapshotSubscribedReceiver() {
+			var subscription = trolieClient.subscribeToRegionalLimitsForecast(new ForecastSnapshotSubscribedReceiver() {
 
 				RequestSubscription subscription;
 				int numResources;
@@ -779,7 +777,7 @@ public class TrolieClientTest {
 				@Override
 				public void error(StreamingGetException t) {
 					errorCount.incrementAndGet();
-					subscription.stop();
+					((RequestSubscriptionInternal)subscription).stop();
 				}
 
 				@Override
@@ -929,7 +927,7 @@ public class TrolieClientTest {
 			AtomicInteger errorCount = new AtomicInteger(0);
 
 			//subscribe for snapshots and validate they are transmitted correctly
-			RealTimeSnapshotSubscribedRequest subscription = trolieClient.subscribeToInUseLimits(new RealTimeSnapshotSubscribedReceiver() {
+			var subscription = trolieClient.subscribeToInUseLimits(new RealTimeSnapshotSubscribedReceiver() {
 
 				RequestSubscription subscription;
 				int numResources;
@@ -959,7 +957,7 @@ public class TrolieClientTest {
 				@Override
 				public void error(StreamingGetException t) {
 					errorCount.incrementAndGet();
-					subscription.stop();
+					((RequestSubscriptionInternal)subscription).stop();
 				}
 
 				@Override
@@ -1148,7 +1146,7 @@ public class TrolieClientTest {
 			AtomicInteger errorCount = new AtomicInteger(0);
 
 			//subscribe for snapshots and validate they are transmitted correctly
-			RegionalRealTimeSnapshotSubscribedRequest subscription = trolieClient.subscribeToRegionalRealTimeLimits(new RealTimeSnapshotSubscribedReceiver() {
+			var subscription = trolieClient.subscribeToRegionalRealTimeLimits(new RealTimeSnapshotSubscribedReceiver() {
 
 				RequestSubscription subscription;
 				int numResources;
@@ -1178,7 +1176,7 @@ public class TrolieClientTest {
 				@Override
 				public void error(StreamingGetException t) {
 					errorCount.incrementAndGet();
-					subscription.stop();
+					((RequestSubscriptionInternal)subscription).stop();
 				}
 
 				@Override
@@ -1473,7 +1471,7 @@ public class TrolieClientTest {
 			AtomicInteger errorCount = new AtomicInteger(0);
 
 			//subscribe for snapshots and validate they are transmitted correctly
-			MonitoringSetsSubscribedRequest subscription = trolieClient.subscribeToMonitoringSetUpdates(new MonitoringSetsSubscribedReceiver() {
+			var subscription = trolieClient.subscribeToMonitoringSetUpdates(new MonitoringSetsSubscribedReceiver() {
 
 				RequestSubscription subscription;
 
@@ -1485,7 +1483,7 @@ public class TrolieClientTest {
 				@Override
 				public void error(StreamingGetException t) {
 					errorCount.incrementAndGet();
-					subscription.stop();
+					((RequestSubscriptionInternal)subscription).stop();
 				}
 
 				@Override

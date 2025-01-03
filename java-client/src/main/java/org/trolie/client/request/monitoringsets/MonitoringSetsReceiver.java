@@ -1,8 +1,8 @@
 package org.trolie.client.request.monitoringsets;
 
 import org.trolie.client.model.monitoringsets.MonitoringSet;
-import org.trolie.client.request.streaming.StreamingResponseReceiver;
-import org.trolie.client.request.streaming.exception.StreamingGetException;
+import org.trolie.client.exception.StreamingGetException;
+import org.trolie.client.StreamingResponseReceiver;
 
 /**
  * Streaming receiver for updated monitoring set data and errors from subscriber.
@@ -11,6 +11,10 @@ import org.trolie.client.request.streaming.exception.StreamingGetException;
  */
 public interface MonitoringSetsReceiver extends StreamingResponseReceiver {
 
+    /**
+     * Called when a monitoring set is received successfully
+     * @param monitoringSet received monitoring set
+     */
     void monitoringSet(MonitoringSet monitoringSet);
 
 }

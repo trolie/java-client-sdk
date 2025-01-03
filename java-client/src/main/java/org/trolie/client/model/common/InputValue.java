@@ -23,6 +23,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Generic input value used to compute ratings, attached to proposals.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

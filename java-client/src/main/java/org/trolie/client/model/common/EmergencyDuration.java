@@ -22,6 +22,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Named duration of emergency ratings.
+ */
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Getter

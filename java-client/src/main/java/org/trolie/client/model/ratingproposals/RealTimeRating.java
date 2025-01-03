@@ -29,6 +29,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Real-time rating value set for a given resource
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

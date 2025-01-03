@@ -12,16 +12,25 @@ import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.trolie.client.TrolieException;
+import org.trolie.client.TrolieApiConstants;
+import org.trolie.client.exception.TrolieException;
+import org.trolie.client.impl.request.AbstractStreamingUpdate;
 import org.trolie.client.model.ratingproposals.ProposalHeader;
 import org.trolie.client.model.ratingproposals.RealTimeRating;
 import org.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
-import org.trolie.client.request.streaming.AbstractStreamingUpdate;
-import org.trolie.client.util.TrolieApiConstants;
 
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * <p>Streaming update for real-time rating proposals.  Users stream out proposals by invoking methods
+ * in the following sequence:</p>
+ * <ol>
+ *     <li>{@link #begin(ProposalHeader)} with a completely populated header.</li>
+ *     <li>{@link #rating(RealTimeRating)} for rating value set.</li>
+ *     <li>{@link #complete()} to synchronously finish the request.</li>
+ * </ol>
+ */
 public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTimeRatingProposalStatus> {
 
 	private static final Logger logger = LoggerFactory.getLogger(RealTimeRatingProposalUpdate.class);
@@ -68,6 +77,11 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 		};
 	}
 
+	/**
+	 * Begin the stream, sending a populated header
+	 * @param header populated header.  Must include at least emergency rating durations and
+	 *               power system resources
+	 */
 	public void begin(ProposalHeader header) {
 
 		validateScope(Scope.MAIN, Scope.BEGIN);
@@ -91,6 +105,10 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 
 	}
 
+	/**
+	 * Send a rating value set for a given resource.
+	 * @param rating value set
+	 */
 	public void rating(RealTimeRating rating) {
 		checkCanWrite();
 		try {
@@ -101,6 +119,14 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 		}
 	}
 
+	/**
+	 * Finalize the request.
+	 * @return status of the proposal retrieved from the TROLIE server.
+	 * <b>NOTE: TROLIE allows for partial proposal updates.</b>  Be sure to check
+	 * and appropriately log any validation errors returned with this status, as they will
+	 * indicate that ratings were not sent successfully for those resources.
+	 */
+	@Override
 	public RealTimeRatingProposalStatus complete() {
 		checkCanWrite();
 		try {

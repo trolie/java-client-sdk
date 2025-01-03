@@ -28,6 +28,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Status of a forecast rating proposal
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

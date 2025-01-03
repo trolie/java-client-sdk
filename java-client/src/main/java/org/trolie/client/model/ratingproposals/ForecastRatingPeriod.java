@@ -29,6 +29,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Forecast rating value set for a given period
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

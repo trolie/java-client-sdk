@@ -23,6 +23,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Provenance for a particular data set
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
