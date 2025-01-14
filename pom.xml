@@ -35,6 +35,7 @@
 
     <modules>
         <module>java-client</module>
+        <module>java-client-examples</module>
     </modules>
 
     <scm>
@@ -74,15 +75,15 @@
         <maven.compiler.target>17</maven.compiler.target>
 
         <!-- Dependency versions -->
-        <version.lombok>1.18.34</version.lombok>
+        <version.lombok>1.18.36</version.lombok>
 
-        <version.reactor.bom>2023.0.9</version.reactor.bom>
-        <version.jackson>2.15.4</version.jackson>
-        <version.httpclient5>5.3.1</version.httpclient5>
+        <version.jackson>2.18.2</version.jackson>
+        <version.httpclient5>5.4.1</version.httpclient5>
 
 	    <version.slf4j>2.0.13</version.slf4j>
-	    <version.logback>1.4.14</version.logback>
-		<version.junit>5.9.3</version.junit>
+	    <version.logback>1.5.14</version.logback>
+		<version.junit>5.11.4</version.junit>
+        <version.commons.csv>1.12.0</version.commons.csv>
 
     </properties>
 
@@ -115,23 +116,27 @@
                 <artifactId>jackson-annotations</artifactId>
                 <version>${version.jackson}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-csv</artifactId>
+                <version>${version.commons.csv}</version>
+            </dependency>
 	      <dependency>
 	        <groupId>org.slf4j</groupId>
 	        <artifactId>slf4j-api</artifactId>
 	        <version>${version.slf4j}</version>
-	        <scope>provided</scope>
 	      </dependency>
 	      <dependency>
 	        <groupId>ch.qos.logback</groupId>
 	        <artifactId>logback-classic</artifactId>
 	        <version>${version.logback}</version>
-	        <type>jar</type>
+              <scope>provided</scope>
 	      </dependency>
 	      <dependency>
 	        <groupId>ch.qos.logback</groupId>
 	        <artifactId>logback-core</artifactId>
 	        <version>${version.logback}</version>
-	        <type>jar</type>
+              <scope>provided</scope>
 	      </dependency>            
 		    <dependency>
 				<groupId>org.junit.jupiter</groupId>

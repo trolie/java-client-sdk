@@ -1,7 +1,7 @@
 package org.trolie.client.request.monitoringsets;
 
-import org.trolie.client.request.streaming.StreamingSubscribedResponseReceiver;
-import org.trolie.client.request.streaming.exception.StreamingGetException;
+import org.trolie.client.exception.StreamingGetException;
+import org.trolie.client.StreamingSubscribedResponseReceiver;
 
 /**
  * Streaming receiver for getting Monitoring Set.

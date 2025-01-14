@@ -1,7 +1,7 @@
 package org.trolie.client.request.operatingsnapshots;
 
-import org.trolie.client.request.streaming.StreamingSubscribedResponseReceiver;
-import org.trolie.client.request.streaming.exception.StreamingGetException;
+import org.trolie.client.StreamingSubscribedResponseReceiver;
+import org.trolie.client.exception.StreamingGetException;
 
 /**
  * Streaming receiver for updated real-time snapshot data and errors from subscriber.

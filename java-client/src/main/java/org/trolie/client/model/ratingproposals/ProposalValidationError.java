@@ -22,6 +22,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Validation error for proposal data for a particular power system resource
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

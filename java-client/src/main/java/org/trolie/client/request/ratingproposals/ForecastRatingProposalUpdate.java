@@ -9,33 +9,40 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.trolie.client.TrolieException;
+import org.trolie.client.exception.TrolieException;
 import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
 import org.trolie.client.model.ratingproposals.ForecastRatingPeriod;
 import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
-import org.trolie.client.request.streaming.AbstractStreamingUpdate;
+import org.trolie.client.impl.request.AbstractStreamingUpdate;
+import org.trolie.client.TrolieApiConstants;
 
 import java.util.Map;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 
+/**
+ * <p>Streaming update for forecast rating proposals.  Users stream out proposals by invoking methods
+ * in the following sequence:</p>
+ * <ol>
+ *     <li>{@link #begin(ForecastProposalHeader)} with a completely populated header.</li>
+ *     <li>{@link #beginResource(String)} for each resource.  Then, within that resource,</li>
+ *     <li>{@link #period(ForecastRatingPeriod)} for each period in the forecast window.</li>
+ *     <li>{@link #endResource()} before calling {@link #beginResource(String)} again for a new resource.</li>
+ *     <li>{@link #complete()} to synchronously finish the request.</li>
+ * </ol>
+ */
 public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<ForecastRatingProposalStatus> {
 
 	private static final Logger logger = LoggerFactory.getLogger(ForecastRatingProposalUpdate.class);
 
 
 	public ForecastRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-										ThreadPoolExecutor threadPoolExecutor, int bufferSize,
-										ObjectMapper objectMapper, Map<String, String> httpHeader) {
-		super(httpClient, host, requestConfig, threadPoolExecutor, bufferSize, objectMapper, httpHeader);
+										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders) {
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders);
 	}
 
-	public static final String PATH = "/rating-proposals/forecast";
-	public static final String CONTENT_TYPE = "application/vnd.trolie.rating-forecast-proposal.v1+json";
 
 	private enum Scope {
 		BEGIN,
@@ -44,24 +51,22 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		END
 	}
 
-	JsonGenerator jsonGenerator;
-	Scope scope = Scope.BEGIN;
+	private JsonGenerator jsonGenerator;
+	private Scope scope = Scope.BEGIN;
 
 	@Override
 	protected HttpUriRequestBase getRequest() {
-		HttpPatch httpPatch = new HttpPatch(PATH);
-		httpPatch.addHeader(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
-		return httpPatch;
+		return new HttpPatch(getPath());
 	}
 
 	@Override
 	protected ContentType getContentType() {
-		return ContentType.create(CONTENT_TYPE);
+		return ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_PROPOSAL);
 	}
 
 	@Override
 	protected String getPath() {
-		return PATH;
+		return TrolieApiConstants.PATH_FORECAST_PROPOSAL;
 	}
 
 	@Override
@@ -75,6 +80,11 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		};
 	}
 
+	/**
+	 * Begin the stream, sending a populated header
+	 * @param header populated header.  Must include at least emergency rating durations and
+	 *               power system resources
+	 */
 	public void begin(ForecastProposalHeader header) {
 
 		validateScope(Scope.MAIN, Scope.BEGIN);
@@ -98,6 +108,10 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 
 	}
 
+	/**
+	 * Begin writing a new group of ratings for a particular resource.
+	 * @param resourceId resource ID to write
+	 */
 	public void beginResource(String resourceId) {
 
 		checkCanWrite();		
@@ -112,6 +126,11 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		}
 	}
 
+	/**
+	 * Write out a rating set.
+	 * @param forecastRatingPeriod per-period rating set applying to the last
+	 *                                resource set in {@link #beginResource(String)}.
+	 */
 	public void period(ForecastRatingPeriod forecastRatingPeriod) {
 		checkCanWrite();
 		try {
@@ -122,6 +141,9 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		}
 	}
 
+	/**
+	 * Finish the resource set started with {@link #beginResource(String)}.
+	 */
 	public void endResource() {
 		checkCanWrite();
 		try {
@@ -133,6 +155,14 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		}
 	}
 
+	/**
+	 * Finalize the request.
+	 * @return status of the proposal retrieved from the TROLIE server.
+	 * <b>NOTE: TROLIE allows for partial proposal updates.</b>  Be sure to check
+	 * and appropriately log any validation errors returned with this status, as they will
+	 * indicate that ratings were not sent successfully for those resources.
+	 */
+	@Override
 	public ForecastRatingProposalStatus complete() {
 		checkCanWrite();
 		try {
@@ -146,6 +176,9 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		return completeRequest();
 	}
 
+	/**
+	 * Close underlying resources
+	 */
 	@Override
 	public void close() {
 		super.close();

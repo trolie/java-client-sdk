@@ -15,31 +15,29 @@
 
 package org.trolie.client.model.operatingsnapshots;
 
-import java.util.List;
-import java.util.Map;
-
-import org.trolie.client.model.common.LimitValue;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import org.trolie.client.model.common.LimitValue;
 
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Real-time limit value set for a given resource.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@Builder
 @Getter
 @EqualsAndHashCode
 public class RealTimeLimit {
 
     @JsonProperty("resource-id")
     private String resourceId;
-
-    @JsonProperty("updated-time")
-    private String updatedTime;
 
     @JsonProperty("continuous-operating-limit")
     private Map<String, Float> continuousOperatingLimit;

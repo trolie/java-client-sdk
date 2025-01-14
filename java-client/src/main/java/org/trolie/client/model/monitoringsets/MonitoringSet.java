@@ -29,6 +29,10 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.NoArgsConstructor;
 
+/**
+ * Monitoring set definition and its contents.  See
+ * <a href="https://trolie.energy/concepts.html#monitoring-sets">Monitoring Sets</a>.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

@@ -29,6 +29,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * Header information for rating proposals submitted to TROLIE.  Users must enter at least the assumed emergency
+ * durations and power system resources
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
