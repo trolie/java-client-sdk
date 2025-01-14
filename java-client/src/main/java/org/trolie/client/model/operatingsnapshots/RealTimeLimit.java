@@ -26,6 +26,9 @@ import org.trolie.client.model.common.LimitValue;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Real-time limit value set for a given resource.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

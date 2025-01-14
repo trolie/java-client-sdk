@@ -24,6 +24,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Emergency limit value for a given duration.
+ */
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Getter

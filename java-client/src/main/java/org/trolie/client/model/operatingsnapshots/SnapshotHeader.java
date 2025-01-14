@@ -27,6 +27,11 @@ import org.trolie.client.model.common.PowerSystemResource;
 
 import java.util.List;
 
+/**
+ * Header information for rating snapshots downloaded from TROLIE.  Includes
+ * various metadata on the snapshot itself, the emergency ratings used as well as the included
+ * power system resources.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder

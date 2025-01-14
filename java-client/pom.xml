@@ -11,6 +11,20 @@
 
     <artifactId>java-client</artifactId>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.7.0</version>
+                <configuration>
+                    <excludePackageNames>org.trolie.client.impl:org.trolie.client.impl.*</excludePackageNames>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -35,18 +49,17 @@
 	      <dependency>
 	        <groupId>org.slf4j</groupId>
 	        <artifactId>slf4j-api</artifactId>
-	        <scope>provided</scope>
 	      </dependency>
 	      <dependency>
 	        <groupId>ch.qos.logback</groupId>
 	        <artifactId>logback-classic</artifactId>
-	        <type>jar</type>
+              <scope>provided</scope>
 	      </dependency>
 	      <dependency>
 	        <groupId>ch.qos.logback</groupId>
 	        <artifactId>logback-core</artifactId>
-	        <type>jar</type>
-	      </dependency>             
+	        <scope>provided</scope>
+	      </dependency>
 	    <dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>

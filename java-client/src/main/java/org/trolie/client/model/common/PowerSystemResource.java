@@ -24,6 +24,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.Collection;
 
+/**
+ * Description of a power system resource, along with its list of alternate identifiers.
+ */
 @AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 @Builder

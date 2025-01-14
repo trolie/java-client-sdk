@@ -24,6 +24,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * Alternate identifier for a given power system resource
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

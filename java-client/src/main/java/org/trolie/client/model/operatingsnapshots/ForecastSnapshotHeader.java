@@ -22,6 +22,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * {@link SnapshotHeader} for forecast ratings, which includes a window begin period.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

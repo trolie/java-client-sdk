@@ -24,6 +24,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * Batch real-time proposal.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

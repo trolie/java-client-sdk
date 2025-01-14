@@ -26,6 +26,9 @@ import org.trolie.client.model.common.LimitValue;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * For a given resource, represents a rating value set for a given forecast period.
+ */
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
