@@ -35,6 +35,15 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 
 	private static final Logger logger = LoggerFactory.getLogger(RealTimeRatingProposalUpdate.class);
 
+	/**
+	 * Constructs new update.  Should generally not be called by application code
+	 * @param httpClient client
+	 * @param host host
+	 * @param requestConfig client request config
+	 * @param bufferSize internal buffer size
+	 * @param objectMapper Jackson object mapper
+	 * @param httpHeader mapped header list
+	 */
 	public RealTimeRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
 										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader) {
 		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeader);

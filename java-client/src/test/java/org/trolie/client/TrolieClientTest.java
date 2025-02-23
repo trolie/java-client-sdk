@@ -3,6 +3,7 @@ package org.trolie.client;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -100,6 +101,7 @@ public class TrolieClientTest {
 	public static void createTestServer() throws Exception {
 
 		objectMapper = new ObjectMapper();
+		objectMapper.registerModule(new JavaTimeModule());
 
 		int port;
 		try (ServerSocket serverSocket = new ServerSocket(0)) {
@@ -169,7 +171,7 @@ public class TrolieClientTest {
 		requestHandler = request -> {
 
 			ForecastRatingProposalStatus status = ForecastRatingProposalStatus.builder()
-					.begins(startTime.toString())
+					.begins(startTime)
 					.build();
 
 			//we expect this request to be chunked
@@ -358,7 +360,7 @@ public class TrolieClientTest {
 				@Override
 				public void header(ForecastSnapshotHeader header) {
 					Assertions.assertNotNull(header);
-					Assertions.assertEquals(startTimeString, header.getBegins());
+					Assertions.assertEquals(startTime, header.getBegins());
 				}
 
 
@@ -479,7 +481,9 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.forecastRatingsPollMs(200)
+				.build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -610,7 +614,7 @@ public class TrolieClientTest {
 				@Override
 				public void header(ForecastSnapshotHeader header) {
 					Assertions.assertNotNull(header);
-					Assertions.assertEquals(startTimeString, header.getBegins());
+					Assertions.assertEquals(startTime, header.getBegins());
 				}
 
 
@@ -731,7 +735,8 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.forecastRatingsPollMs(200).build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -922,7 +927,9 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.realTimeRatingsPollMs(200)
+				.build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -1141,7 +1148,9 @@ public class TrolieClientTest {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.realTimeRatingsPollMs(200)
+				.build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -1376,7 +1385,8 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build())
+				.build();
 		AtomicInteger receivedCount = new AtomicInteger(0);
 		AtomicInteger errorCount = new AtomicInteger(0);
 		//subscribe for snapshots and validate they are transmitted correctly
@@ -1466,7 +1476,8 @@ public class TrolieClientTest {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.monitoringSetPollMs(200).build();) {
 
 			AtomicInteger monitoringSetsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);

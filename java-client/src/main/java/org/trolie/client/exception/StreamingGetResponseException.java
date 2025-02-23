@@ -8,6 +8,9 @@ import lombok.Getter;
 @Getter
 public class StreamingGetResponseException extends StreamingGetException {
 
+	/**
+	 * HTTP status code
+	 */
 	private final int httpCode;
 
 	/**

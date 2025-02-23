@@ -87,7 +87,7 @@ public interface TrolieClient extends Closeable {
 
     /**
      * Identical to
-     * {@link #subscribeToMonitoringSetUpdates(MonitoringSetsSubscribedReceiver, String, int)},
+     * {@link #subscribeToMonitoringSetUpdates(MonitoringSetsSubscribedReceiver, String)},
      * but creates a polling subscription for this grid operator's default monitoring
      * set rather than one specified
      * with a particular name.
@@ -403,6 +403,7 @@ public interface TrolieClient extends Closeable {
      * @param httpClient a pre-configured Apache HTTP client.
      *                   The TROLIE client is built on top of the Apache HTTP client, and the full suite
      *                   of configuration options for it are available.  See examples for more detail.
+     * @return new builder
      */
     static TrolieClientBuilder builder(String baseUrl, CloseableHttpClient httpClient) {
         return new TrolieClientBuilder(baseUrl, httpClient);

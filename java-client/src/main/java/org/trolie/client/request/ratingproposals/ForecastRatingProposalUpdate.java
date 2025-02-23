@@ -41,6 +41,16 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 	private static final Logger logger = LoggerFactory.getLogger(ForecastRatingProposalUpdate.class);
 
 
+	/**
+	 * Constructs a new update.  Should not be called by application code.
+	 * @param httpClient client
+	 * @param host host
+	 * @param requestConfig HTTP client request config
+	 * @param bufferSize configure buffer size
+	 * @param objectMapper Jackson object mapper
+	 * @param httpHeaders passed headers
+	 * @param defaultIntervalMinutes forecast interval minutes
+	 */
 	public ForecastRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
 										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders,
 										int defaultIntervalMinutes) {

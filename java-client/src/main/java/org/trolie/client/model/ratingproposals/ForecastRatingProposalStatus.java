@@ -15,6 +15,7 @@
 
 package org.trolie.client.model.ratingproposals;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.trolie.client.model.common.DataProvenance;
@@ -42,7 +43,7 @@ public class ForecastRatingProposalStatus {
     private DataProvenance forecastProvider;
 
     @JsonProperty("begins")
-    private String begins;
+    private Instant begins;
 
     @JsonProperty("incomplete-obligation-count")
     private int incompleteObligationCount;

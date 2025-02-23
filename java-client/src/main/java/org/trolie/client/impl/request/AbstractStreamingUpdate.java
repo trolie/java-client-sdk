@@ -32,6 +32,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+/**
+ * Base class for streaming updaters
+ * @param <T> the raw JSON DTO type associated with the return value from this update.
+ */
 public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractStreamingUpdate.class);
@@ -60,9 +64,28 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		this.httpHeaders = httpHeaders;
 	}
 
+	/**
+	 *
+	 * @return content type associated with this update
+	 */
 	protected abstract ContentType getContentType();
+
+	/**
+	 *
+	 * @return HTTP path associated with this update
+	 */
 	protected abstract String getPath();
+
+	/**
+	 *
+	 * @return Apache HTTP client request associated with this request.
+	 */
 	protected abstract HttpUriRequestBase getRequest();
+
+	/**
+	 *
+	 * @return handler associated with this update.
+	 */
 	protected abstract Function<HttpEntity,T> getResponseHandler();
 	/**
 	 * make sure that the thread running the request exists and has not died 
