@@ -18,7 +18,7 @@ package org.trolie.client.model.ratingproposals;
 import java.util.List;
 
 import org.trolie.client.model.common.DataProvenance;
-import org.trolie.client.model.common.EmergencyDuration;
+import org.trolie.client.model.common.EmergencyRatingDuration;
 import org.trolie.client.model.common.PowerSystemResource;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -44,7 +44,7 @@ public class ProposalHeader {
     private DataProvenance source;
 
     @JsonProperty("default-emergency-durations")
-    private List<EmergencyDuration> defaultEmergencyDurations;
+    private List<EmergencyRatingDuration> defaultEmergencyRatingDurations;
 
     @JsonProperty("power-system-resources")
     private List<PowerSystemResource> powerSystemResources;

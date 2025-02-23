@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Named duration of emergency ratings.
@@ -29,7 +30,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 @EqualsAndHashCode
-public class EmergencyDuration {
+@ToString
+public class EmergencyRatingDuration {
 
     @JsonProperty("name")
     private String name;

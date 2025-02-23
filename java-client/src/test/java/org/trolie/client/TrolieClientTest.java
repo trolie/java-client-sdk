@@ -36,6 +36,7 @@ import org.trolie.client.exception.TrolieException;
 import org.trolie.client.exception.TrolieServerException;
 import org.trolie.client.impl.request.RequestSubscriptionInternal;
 import org.trolie.client.model.common.DataProvenance;
+import org.trolie.client.model.common.RatingValue;
 import org.trolie.client.model.monitoringsets.MonitoringSet;
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
 import org.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
@@ -163,12 +164,12 @@ public class TrolieClientTest {
 
 		//test a roundtrip submission and response 
 
-		String startTime = Instant.now().toString();
+		var startTime = Instant.now();
 
 		requestHandler = request -> {
 
 			ForecastRatingProposalStatus status = ForecastRatingProposalStatus.builder()
-					.begins(startTime)
+					.begins(startTime.toString())
 					.build();
 
 			//we expect this request to be chunked
@@ -211,7 +212,7 @@ public class TrolieClientTest {
 						update.period(ForecastRatingPeriod.builder()
 								.periodStart(startTime)
 								.periodEnd(startTime)
-								.continuousOperatingLimit(Map.of("mva",100F))
+								.continuousOperatingLimit(RatingValue.fromMva(100f))
 								.build());
 					}
 					update.endResource();
@@ -229,7 +230,7 @@ public class TrolieClientTest {
 
 		//make sure that server errors are clearly bubbled up with a status code
 
-		String startTime = Instant.now().toString();
+		var startTime = Instant.now();
 
 		requestHandler = request -> {
 			BasicClassicHttpResponse response = new BasicClassicHttpResponse(500);
@@ -258,7 +259,7 @@ public class TrolieClientTest {
 
 		//make sure that client I/O errors are clearly bubbled up
 
-		String startTime = Instant.now().toString();
+		var startTime = Instant.now();
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
 		try (TrolieClient trolieClient = new TrolieClientBuilder(HOST + ":" + 1111,builder.build()).build();) {
@@ -279,7 +280,7 @@ public class TrolieClientTest {
 						update.period(ForecastRatingPeriod.builder()
 								.periodStart(startTime)
 								.periodEnd(startTime)
-								.continuousOperatingLimit(Map.of("mva",100F))
+								.continuousOperatingLimit(RatingValue.fromMva(100f))
 								.build());
 					}
 					update.endResource();
@@ -323,7 +324,7 @@ public class TrolieClientTest {
 
 						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
 
-							writeForecastSnapshot(json, startTimeString);
+							writeForecastSnapshot(json, startTime);
 
 							return null;
 						} catch (Exception e) {
@@ -410,7 +411,7 @@ public class TrolieClientTest {
 
 		//we will run the subscription for fixed number of requests
 		AtomicInteger requestCounter = new AtomicInteger(0);
-		String startTime = Instant.now().toString();
+		Instant startTime = Instant.now();
 		String etag = UUID.randomUUID().toString();
 
 		requestHandler = request -> {
@@ -534,7 +535,7 @@ public class TrolieClientTest {
 				}
 
 
-			}, "abc", 1000);
+			}, "abc");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -576,7 +577,7 @@ public class TrolieClientTest {
 
                     try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
 
-                        writeForecastSnapshot(json, startTimeString);
+                        writeForecastSnapshot(json, startTime);
 
                         return null;
                     } catch (Exception e) {
@@ -662,7 +663,7 @@ public class TrolieClientTest {
 
 		//we will run the subscription for fixed number of requests
 		AtomicInteger requestCounter = new AtomicInteger(0);
-		String startTime = Instant.now().toString();
+		Instant startTime = Instant.now();
 		String etag = UUID.randomUUID().toString();
 
 		requestHandler = request -> {
@@ -786,7 +787,7 @@ public class TrolieClientTest {
 				}
 
 
-			}, "abc", 1000);
+			}, "abc");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -838,7 +839,7 @@ public class TrolieClientTest {
 
 				update.begin(header);
 				for (int i=0;i<3;i++) {
-					update.rating(RealTimeRating.builder().continuousOperatingLimit(Map.of("MVA",100f)).build());
+					update.rating(RealTimeRating.builder().continuousOperatingLimit(RatingValue.fromMva(100f)).build());
 				}
 				RealTimeRatingProposalStatus status = update.complete();
 
@@ -966,7 +967,7 @@ public class TrolieClientTest {
 				}
 
 
-			}, "abc", "xyz", 1000);
+			}, "abc", "xyz");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -1185,7 +1186,7 @@ public class TrolieClientTest {
 				}
 
 
-			}, "abc", 1000);
+			}, "abc");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -1492,7 +1493,7 @@ public class TrolieClientTest {
 				}
 
 
-			}, "abc", 1000);
+			}, "abc");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -1506,7 +1507,7 @@ public class TrolieClientTest {
 
 	private void writeMonitoringSet(JsonGenerator json, String id) throws IOException {
 		var source = DataProvenance.builder().provider(id).lastUpdated(
-				Instant.now().toString()).originId(id).build();
+				Instant.now()).originId(id).build();
 		MonitoringSet monitoringSet = new MonitoringSet(source, id, "This is test SDK", List.of());
 		json.writeStartObject();
 		try {
@@ -1524,7 +1525,7 @@ public class TrolieClientTest {
 		json.writeEndObject();
 	}
 
-	private void writeForecastSnapshot(JsonGenerator json, String startTime) throws IOException {
+	private void writeForecastSnapshot(JsonGenerator json, Instant startTime) throws IOException {
 
 		ForecastSnapshotHeader header = new ForecastSnapshotHeader(startTime);
 
@@ -1546,7 +1547,7 @@ public class TrolieClientTest {
 				ForecastPeriodSnapshot period = new ForecastPeriodSnapshot(
 						startTime,
 						startTime,
-						Map.of("mva",100F),
+						RatingValue.fromMva(100f),
 						Collections.emptyList()
 						);
 				json.writeObject(period);
@@ -1574,7 +1575,7 @@ public class TrolieClientTest {
 		for (int i=0;i<100;i++) {
 			json.writeObject(RealTimeLimit.builder()
 					.resourceId("resource" + i)
-					.continuousOperatingLimit(Map.of("mva",100f)).build());
+					.continuousOperatingLimit(RatingValue.fromMva(100f)).build());
 		}
 
 		json.writeEndArray();

@@ -21,14 +21,17 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.trolie.client.model.common.LimitValue;
+import lombok.ToString;
+import org.trolie.client.model.common.EmergencyRatingValue;
+import org.trolie.client.model.common.RatingValue;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 /**
  * For a given resource, represents a rating value set for a given forecast period.
  */
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -37,14 +40,16 @@ import java.util.Map;
 public class ForecastPeriodSnapshot {
 
     @JsonProperty("period-start")
-    private String periodStart;
+    private Instant periodStart;
 
     @JsonProperty("period-end")
-    private String periodEnd;
+    private Instant periodEnd;
 
     @JsonProperty("continuous-operating-limit")
-    private Map<String, Float> continuousOperatingLimit;
+    private RatingValue continuousOperatingLimit;
+
+    // Getters for each rating type.
 
     @JsonProperty("emergency-operating-limits")
-    private List<LimitValue> emergencyOperatingLimits;
+    private List<EmergencyRatingValue> emergencyOperatingLimits;
 }

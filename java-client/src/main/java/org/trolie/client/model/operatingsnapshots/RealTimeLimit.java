@@ -21,7 +21,9 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.trolie.client.model.common.LimitValue;
+import lombok.ToString;
+import org.trolie.client.model.common.EmergencyRatingValue;
+import org.trolie.client.model.common.RatingValue;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,7 @@ import java.util.Map;
 @NoArgsConstructor
 @Builder
 @Getter
+@ToString
 @EqualsAndHashCode
 public class RealTimeLimit {
 
@@ -40,9 +43,9 @@ public class RealTimeLimit {
     private String resourceId;
 
     @JsonProperty("continuous-operating-limit")
-    private Map<String, Float> continuousOperatingLimit;
+    private RatingValue continuousOperatingLimit;
 
     @JsonProperty("emergency-operating-limits")
-    private List<LimitValue> emergencyOperatingLimits;
+    private List<EmergencyRatingValue> emergencyOperatingLimits;
 
 }

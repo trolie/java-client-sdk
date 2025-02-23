@@ -69,13 +69,11 @@ public interface TrolieClient extends Closeable {
      *                 so long-running operations will block additional polls for
      *                 data update.
      * @param monitoringSet the monitoring set identifier to poll for
-     * @param pollingRateMillis Polling interval in milliseconds
      * @return handle to the request.
      */
     RequestSubscription subscribeToMonitoringSetUpdates(
     		MonitoringSetsSubscribedReceiver receiver,
-            String monitoringSet,
-    		int pollingRateMillis);
+            String monitoringSet);
 
     /**
      * Identical to {@link #getMonitoringSet(MonitoringSetsReceiver, String)},
@@ -98,12 +96,10 @@ public interface TrolieClient extends Closeable {
      *                 Note that these invocations will be on the polling thread,
      *                 so long-running operations will block additional polls for
      *                 data update.
-     * @param pollingRateMillis Polling interval in milliseconds
      * @return handle to the request.
      */
     RequestSubscription subscribeToDefaultMonitoringSetUpdates(
-    		MonitoringSetsSubscribedReceiver receiver,
-            int pollingRateMillis);
+    		MonitoringSetsSubscribedReceiver receiver);
 
     /**
      * Execute a synchronous
@@ -161,26 +157,22 @@ public interface TrolieClient extends Closeable {
      * Create a polling subscription for forecast snapshot data updates
      * 
      * @param receiver Streaming data receiver for snapshot data
-     * @param monitoringSet filter for monitoring set name 
-     * @param pollingRateMillis Interval in millis between polling loops
+     * @param monitoringSet filter for monitoring set name
      * @return request handle
      */
     RequestSubscription subscribeToInUseLimitForecastUpdates(
     		ForecastSnapshotSubscribedReceiver receiver,
-    		String monitoringSet,
-    		int pollingRateMillis);
+    		String monitoringSet);
 
     
     /**
      * Create a polling subscription for forecast snapshot data updates
      * 
      * @param receiver Streaming data receiver for snapshot data
-     * @param pollingRateMillis Interval in millis between polling loops
      * @return request handle
      */
     RequestSubscription subscribeToInUseLimitForecastUpdates(
-    		ForecastSnapshotSubscribedReceiver receiver,
-    		int pollingRateMillis);
+    		ForecastSnapshotSubscribedReceiver receiver);
 
     /**
      * Execute a request for the current forecast limits with a streaming response handler
@@ -234,25 +226,21 @@ public interface TrolieClient extends Closeable {
      * Create a polling subscription for regionally limiting forecast snapshot data updates
      *
      * @param receiver Streaming data receiver for snapshot data
-     * @param pollingRateMillis Interval in millis between polling loops
      * @return request handle
      */
     RequestSubscription subscribeToRegionalLimitsForecast(
-            ForecastSnapshotSubscribedReceiver receiver,
-            int pollingRateMillis);
+            ForecastSnapshotSubscribedReceiver receiver);
 
     /**
      * Create a polling subscription for regionally limiting forecast snapshot data updates
      *
      * @param receiver Streaming data receiver for snapshot data
      * @param monitoringSet filter for monitoring set name
-     * @param pollingRateMillis Interval in millis between polling loops
      * @return request result handle
      */
     RequestSubscription subscribeToRegionalLimitsForecast(
             ForecastSnapshotSubscribedReceiver receiver,
-            String monitoringSet,
-            int pollingRateMillis);
+            String monitoringSet);
     
     /**
      * Create a forecast proposal update that can stream the update submission to the server
@@ -260,6 +248,8 @@ public interface TrolieClient extends Closeable {
      * @return update handle
      */
     ForecastRatingProposalUpdate createForecastRatingProposalStreamingUpdate();
+
+
 
     /**
      * Execute a request for the current real-time limits with a streaming response handler
@@ -305,25 +295,21 @@ public interface TrolieClient extends Closeable {
      * Create a polling subscription for real-time snapshot data updates
      * 
      * @param receiver Streaming data receiver for snapshot data
-     * @param pollingRateMillis Interval in millis between polling loops
      * @return subscription result
      */
     RequestSubscription subscribeToInUseLimits(
-    		RealTimeSnapshotSubscribedReceiver receiver,
-    		int pollingRateMillis);
+    		RealTimeSnapshotSubscribedReceiver receiver);
     
     /**
      * Create a polling subscription for real-time snapshot data updates
      * 
      * @param receiver Streaming data receiver for snapshot data
      * @param monitoringSet optional filter for monitoring set
-     * @param pollingRateMillis Interval in millis between polling loops
      * @return subscription handle
      */
     RequestSubscription subscribeToInUseLimits(
     		RealTimeSnapshotSubscribedReceiver receiver,
-    		String monitoringSet,
-    		int pollingRateMillis);
+    		String monitoringSet);
     
     /**
      * Create a polling subscription for real-time snapshot data updates
@@ -331,14 +317,12 @@ public interface TrolieClient extends Closeable {
      * @param receiver Streaming data receiver for snapshot data
      * @param monitoringSet optional filter for monitoring set
      * @param resourceId optional filter for transmission facility
-     * @param pollingRateMillis Interval in millis between polling loops
      * @return subscription handle
      */
     RequestSubscription subscribeToInUseLimits(
     		RealTimeSnapshotSubscribedReceiver receiver,
     		String monitoringSet,
-    		String resourceId,
-    		int pollingRateMillis);
+    		String resourceId);
 
     /**
      * Execute a request for the regional real-time limits
@@ -378,25 +362,21 @@ public interface TrolieClient extends Closeable {
      * Create a polling subscription regional real-time snapshot data updates
      *
      * @param receiver Streaming data receiver for regional snapshot data
-     * @param pollingRateMillis Interval in millis between polling loops
      * @return subscription handle.
      */
     RequestSubscription subscribeToRegionalRealTimeLimits(
-            RealTimeSnapshotSubscribedReceiver receiver,
-            int pollingRateMillis);
+            RealTimeSnapshotSubscribedReceiver receiver);
 
     /**
      * Create a polling subscription for regional real-time snapshot data updates
      *
      * @param receiver Streaming data receiver for regional snapshot data
      * @param monitoringSet optional filter for monitoring set
-     * @param pollingRateMillis Interval in millis between polling loops
      * @return subscription handle
      */
     RequestSubscription subscribeToRegionalRealTimeLimits(
             RealTimeSnapshotSubscribedReceiver receiver,
-            String monitoringSet,
-            int pollingRateMillis);
+            String monitoringSet);
 
     /**
      * Create a real-time proposal update that can stream the update submission to the server

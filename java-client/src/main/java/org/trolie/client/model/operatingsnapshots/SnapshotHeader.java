@@ -17,14 +17,17 @@ package org.trolie.client.model.operatingsnapshots;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.trolie.client.model.common.DataProvenance;
-import org.trolie.client.model.common.EmergencyDuration;
+import org.trolie.client.model.common.EmergencyRatingDuration;
 import org.trolie.client.model.common.PowerSystemResource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,6 +35,7 @@ import java.util.List;
  * various metadata on the snapshot itself, the emergency ratings used as well as the included
  * power system resources.
  */
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
@@ -42,9 +46,10 @@ public abstract class SnapshotHeader {
     @JsonProperty("source")
     private DataProvenance source;
 
+    @Builder.Default
     @JsonProperty("power-system-resources")
-    private List<PowerSystemResource> powerSystemResources;
+    private List<PowerSystemResource> powerSystemResources = new ArrayList<>();
 
     @JsonProperty("default-emergency-durations")
-    private List<EmergencyDuration> defaultEmergencyDurations;
+    private List<EmergencyRatingDuration> defaultEmergencyRatingDurations;
 }

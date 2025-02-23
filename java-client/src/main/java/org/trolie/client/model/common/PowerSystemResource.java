@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.Collection;
 
@@ -32,6 +33,7 @@ import java.util.Collection;
 @Builder
 @Getter
 @EqualsAndHashCode
+@ToString
 public class PowerSystemResource {
 
     @JsonProperty("resource-id")

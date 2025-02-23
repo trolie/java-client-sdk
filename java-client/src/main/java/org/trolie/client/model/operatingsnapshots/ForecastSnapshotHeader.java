@@ -20,7 +20,10 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import java.time.Instant;
 
 /**
  * {@link SnapshotHeader} for forecast ratings, which includes a window begin period.
@@ -29,9 +32,10 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Getter
 @SuperBuilder
+@ToString
 @EqualsAndHashCode(callSuper = true)
 public class ForecastSnapshotHeader extends SnapshotHeader {
 
     @JsonProperty("begins")
-    private String begins;
+    private Instant begins;
 }

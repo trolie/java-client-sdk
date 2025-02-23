@@ -9,6 +9,9 @@ import org.apache.hc.core5.http.HttpHost;
 import org.trolie.client.exception.TrolieException;
 import org.trolie.client.impl.MemoryETagStore;
 import org.trolie.client.impl.TrolieClientImpl;
+import org.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
+import org.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
+import org.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -48,6 +51,11 @@ public class TrolieClientBuilder {
 	private ObjectMapper objectMapper;
 	private ETagStore eTagStore;
 	private Map<String, String> httpHeaders = new HashMap<>();
+	private int periodLengthMinutes = 60;
+
+	private int realTimeRatingsPollMs = 10000;
+	private int forecastRatingsPollMs = 30000;
+	private int monitoringSetPollMs = 60000;
 
 	/**
 	 * Initializes a new builder with a preconfigured apache HTTP client
@@ -131,6 +139,52 @@ public class TrolieClientBuilder {
 	}
 
 	/**
+	 * Sets the period length assumed for forecast ratings.  Defaults to 60 minutes.
+	 * @param periodLengthMinutes new assumed period length.
+	 * @return fluent builder
+	 */
+	public TrolieClientBuilder periodLength(int periodLengthMinutes) {
+		this.periodLengthMinutes = periodLengthMinutes;
+		return this;
+	}
+
+	/**
+	 * Sets the period at which
+	 * {@link TrolieClient#subscribeToInUseLimitForecastUpdates(ForecastSnapshotSubscribedReceiver)}
+	 * and similar methods for forecast ratings poll for new ratings.  Defaults to 30 seconds
+	 * @param forecastRatingsPollMs new poll periodicity in milliseconds
+	 * @return fluent builder
+	 */
+	public TrolieClientBuilder forecastRatingsPollMs(int forecastRatingsPollMs) {
+		this.forecastRatingsPollMs = forecastRatingsPollMs;
+		return this;
+	}
+
+	/**
+	 * Sets the period at which
+	 * {@link TrolieClient#subscribeToInUseLimits(RealTimeSnapshotSubscribedReceiver)}
+	 * and similar methods poll for new real-time ratings.  Defaults to 10 seconds
+	 * @param realTimeRatingsPollMs new poll periodicity in milliseconds
+	 * @return fluent builder
+	 */
+	public TrolieClientBuilder realTimeRatingsPollMs(int realTimeRatingsPollMs) {
+		this.realTimeRatingsPollMs = realTimeRatingsPollMs;
+		return this;
+	}
+
+	/**
+	 * Sets the period at which
+	 * {@link TrolieClient#subscribeToDefaultMonitoringSetUpdates(MonitoringSetsSubscribedReceiver)}
+	 * and similar methods poll for monitoring sets.  Defaults to 60 seconds
+	 * @param monitoringSetPollMs new poll periodicity in milliseconds
+	 * @return fluent builder
+	 */
+	public TrolieClientBuilder monitoringSetPollMs(int monitoringSetPollMs) {
+		this.monitoringSetPollMs = monitoringSetPollMs;
+		return this;
+	}
+
+	/**
 	 * Construct a new client
 	 * @return new client
 	 */
@@ -153,6 +207,8 @@ public class TrolieClientBuilder {
 		}
 
     	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize,
-				objectMapper, eTagStore, httpHeaders);
+				objectMapper, eTagStore, httpHeaders, periodLengthMinutes,
+				realTimeRatingsPollMs,
+				forecastRatingsPollMs, monitoringSetPollMs);
     }
 }
