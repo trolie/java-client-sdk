@@ -1,6 +1,5 @@
 package org.trolie.client.request.ratingproposals;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -95,7 +94,7 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 
 		validateScope(Scope.MAIN, Scope.BEGIN);
 		try {
-			jsonGenerator = new JsonFactory().createGenerator(createRequestOutputStream());
+			jsonGenerator = objectMapper.createGenerator(createRequestOutputStream());
 		} catch (Exception e) {
 			throw new TrolieException("Error creating request output stream",e);
 		}

@@ -15,6 +15,7 @@
 
 package org.trolie.client.model.ratingproposals;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -36,6 +37,7 @@ import java.time.Instant;
 public class ForecastProposalHeader extends ProposalHeader {
 
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @JsonProperty("begins")
     private @NonNull Instant begins;
 

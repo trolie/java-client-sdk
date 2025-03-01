@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -36,7 +37,15 @@ public class PublishForecastProposals {
 
     private static TrolieClient initializeClient() {
         return new TrolieClientBuilder("http://localhost:8080",
-                HttpClients.createDefault()).build();
+                HttpClients.createDefault())
+                // If the TROLIE server supports test mode features, then
+                // this may be used to simulate a particular identity in
+                // non-prod environments where test mode is enabled.
+                // The "TO1" user is the rating provider for all
+                // the test data provided in this example.
+                .httpHeaders(Map.of(
+                        "X-TROLIE-Testing-Identity", "TO1"))
+                .build();
     }
 
     private static final String RATINGS_FILE = "/forecast-ratings-out.csv";
@@ -120,7 +129,12 @@ public class PublishForecastProposals {
             for(var ob : status.getIncompleteObligations()) {
                 logger.warn("Outstanding incomplete obligation for {}", ob.getResourceId());
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            System.exit(-1);
         }
+
+        System.exit(0);
 
 
     }
@@ -292,6 +306,9 @@ public class PublishForecastProposals {
                 }
                 pb.complete();
             }
+
+            // End the last resource.
+            proposalSubmission.endResource();
 
 
         }

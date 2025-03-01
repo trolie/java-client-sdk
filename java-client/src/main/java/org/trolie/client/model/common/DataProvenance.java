@@ -15,6 +15,7 @@
 
 package org.trolie.client.model.common;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,6 +41,7 @@ public class DataProvenance {
     @JsonProperty("provider")
     private String provider;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @JsonProperty("last-updated")
     private Instant lastUpdated = Instant.now();
 

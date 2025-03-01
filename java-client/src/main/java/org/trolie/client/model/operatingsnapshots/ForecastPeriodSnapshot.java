@@ -15,6 +15,7 @@
 
 package org.trolie.client.model.operatingsnapshots;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,9 +40,11 @@ import java.util.List;
 @EqualsAndHashCode
 public class ForecastPeriodSnapshot {
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @JsonProperty("period-start")
     private Instant periodStart;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @JsonProperty("period-end")
     private Instant periodEnd;
 

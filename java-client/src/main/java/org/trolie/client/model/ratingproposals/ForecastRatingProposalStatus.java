@@ -18,6 +18,7 @@ package org.trolie.client.model.ratingproposals;
 import java.time.Instant;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import org.trolie.client.model.common.DataProvenance;
 import org.trolie.client.model.common.PowerSystemResource;
 
@@ -42,6 +43,7 @@ public class ForecastRatingProposalStatus {
     @JsonProperty("forecast-provider")
     private DataProvenance forecastProvider;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @JsonProperty("begins")
     private Instant begins;
 

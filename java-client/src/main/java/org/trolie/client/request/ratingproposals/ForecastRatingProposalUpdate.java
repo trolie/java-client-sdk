@@ -1,6 +1,5 @@
 package org.trolie.client.request.ratingproposals;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -12,14 +11,14 @@ import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.trolie.client.TrolieApiConstants;
 import org.trolie.client.exception.TrolieException;
 import org.trolie.client.impl.model.ratingproposals.ForecastPeriodBuilderImpl;
+import org.trolie.client.impl.request.AbstractStreamingUpdate;
 import org.trolie.client.model.ratingproposals.ForecastPeriodBuilder;
 import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
 import org.trolie.client.model.ratingproposals.ForecastRatingPeriod;
 import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
-import org.trolie.client.impl.request.AbstractStreamingUpdate;
-import org.trolie.client.TrolieApiConstants;
 
 import java.time.Instant;
 import java.util.Map;
@@ -107,7 +106,8 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 
 		validateScope(Scope.MAIN, Scope.BEGIN);
 		try {
-			jsonGenerator = new JsonFactory().createGenerator(createRequestOutputStream());
+			jsonGenerator = objectMapper
+					.createGenerator(createRequestOutputStream());
 		} catch (Exception e) {
 			throw new TrolieException("Error creating request output stream",e);
 		}
