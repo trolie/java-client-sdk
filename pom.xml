@@ -17,12 +17,12 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>central</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>${snapshot.repository.id}</id>
+            <url>${snapshot.repository.url}</url>
         </snapshotRepository>
         <repository>
-            <id>central</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>${release.repository.id}</id>
+            <url>${release.repository.url}</url>
         </repository>
     </distributionManagement>
 
@@ -73,6 +73,14 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.release>17</maven.compiler.release>
         <maven.compiler.target>17</maven.compiler.target>
+
+        <!-- Note these are extracted to properties to allow for easy maven deployment to local
+             repos without having to fork the POM.  -->
+        <snapshot.repository.id>central</snapshot.repository.id>
+        <snapshot.repository.url>https://oss.sonatype.org/content/repositories/snapshots</snapshot.repository.url>
+        <release.repository.id>central</release.repository.id>
+        <release.repository.url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</release.repository.url>
+
 
         <!-- Dependency versions -->
         <version.lombok>1.18.36</version.lombok>
