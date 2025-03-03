@@ -9,6 +9,9 @@ import lombok.Getter;
 @Getter
 public class TrolieServerException extends TrolieException {
 
+	/**
+	 * HTTP code returned
+	 */
 	private final int httpCode;
 
 	/**

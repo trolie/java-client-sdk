@@ -69,7 +69,9 @@
 	    <version.slf4j>2.0.13</version.slf4j>
 	    <version.logback>1.5.14</version.logback>
 		<version.junit>5.11.4</version.junit>
+        <version.mockito>5.7.0</version.mockito>
         <version.commons.csv>1.12.0</version.commons.csv>
+        <version.commons.lang>3.17.0</version.commons.lang>
 
     </properties>
 
@@ -103,9 +105,19 @@
                 <version>${version.jackson}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${version.jackson}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-csv</artifactId>
                 <version>${version.commons.csv}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${version.commons.lang}</version>
             </dependency>
 	      <dependency>
 	        <groupId>org.slf4j</groupId>
@@ -130,6 +142,13 @@
 				<version>${version.junit}</version>
 				<scope>test</scope>
 		    </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>${version.mockito}</version>
+                <scope>test</scope>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

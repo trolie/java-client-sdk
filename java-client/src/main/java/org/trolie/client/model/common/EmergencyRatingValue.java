@@ -15,14 +15,12 @@
 
 package org.trolie.client.model.common;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Emergency limit value for a given duration.
@@ -31,12 +29,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 @EqualsAndHashCode
-public class LimitValue {
+@ToString
+public class EmergencyRatingValue {
 
     @JsonProperty("duration-name")
     private String durationName;
 
     @JsonProperty("limit")
-    private Map<String, Float> limit;
+    private RatingValue limit;
 
 }

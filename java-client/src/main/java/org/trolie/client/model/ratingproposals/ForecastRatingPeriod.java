@@ -15,19 +15,19 @@
 
 package org.trolie.client.model.ratingproposals;
 
-import java.util.List;
-import java.util.Map;
-
-import org.trolie.client.model.common.InputValue;
-import org.trolie.client.model.common.LimitValue;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.trolie.client.model.common.EmergencyRatingValue;
+import org.trolie.client.model.common.InputValue;
+import org.trolie.client.model.common.RatingValue;
+
+import java.time.Instant;
+import java.util.List;
 
 /**
  * Forecast rating value set for a given period
@@ -39,17 +39,19 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 public class ForecastRatingPeriod {
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @JsonProperty("period-start")
-    private String periodStart;
+    private Instant periodStart;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @JsonProperty("period-end")
-    private String periodEnd;
+    private Instant periodEnd;
 
     @JsonProperty("continuous-operating-limit")
-    private Map<String, Float> continuousOperatingLimit;
+    private RatingValue continuousOperatingLimit;
 
     @JsonProperty("emergency-operating-limits")
-    private List<LimitValue> emergencyOperatingLimits;
+    private List<EmergencyRatingValue> emergencyOperatingLimits;
 
     @JsonProperty("inputs-used")
     private List<InputValue> inputsUsed;
