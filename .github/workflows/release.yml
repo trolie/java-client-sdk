@@ -53,11 +53,10 @@ jobs:
         MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
     - name: Deploy javadoc to Github Pages
-      uses: dev-vince/actions-publish-javadoc@v1.0.1
-      with:  # Comment
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        java-version: "17" # Replace with your java version. Default is 17
-        java-distribution: "adopt" # The distributor of the target JDK. See https://github.com/actions/setup-java for more information. Default is adopt
-        project: maven # The project type. By default maven
-        branch: "gh-pages" # The branch for the javadoc contents. By default gh-pages        
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: java-client/target/apidocs
+        force_orphan: true
 
