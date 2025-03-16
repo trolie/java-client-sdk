@@ -4,12 +4,8 @@ permissions:
   contents: write
 
 on:
-  push:
-    branches: [ "release-workflow" ]
-
-#on:
-#  release:
-#    types: [published]
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -24,7 +20,7 @@ jobs:
       id: parser
       uses: johngeorgewright/parse-version-action@v2.0.0
       with:
-        ref: refs/tags/v0.0.1-test01
+        ref: ${{GITHUB_REF}}
         trim-start: v
 
     # Now, build the code.  
