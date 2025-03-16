@@ -15,16 +15,6 @@
     </description>
     <url>https://trolie.energy</url>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>${snapshot.repository.id}</id>
-            <url>${snapshot.repository.url}</url>
-        </snapshotRepository>
-        <repository>
-            <id>${release.repository.id}</id>
-            <url>${release.repository.url}</url>
-        </repository>
-    </distributionManagement>
 
     <licenses>
         <license>
@@ -216,6 +206,20 @@
     </build>
 
     <profiles>
+        <profile>
+            <!-- This profile is for users building the repository one their own and not deploying to Maven central.  -->
+            <id>local-deployment</id>
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>${snapshot.repository.id}</id>
+                    <url>${snapshot.repository.url}</url>
+                </snapshotRepository>
+                <repository>
+                    <id>${release.repository.id}</id>
+                    <url>${release.repository.url}</url>
+                </repository>
+            </distributionManagement>
+        </profile>    
         <profile>
             <!-- Profile that activates plugins specifically needed for publishing to
                  Maven Central.  Not required for general dev workflow -->

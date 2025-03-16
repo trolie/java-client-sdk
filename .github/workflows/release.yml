@@ -46,7 +46,7 @@ jobs:
       run: mvn -B versions:set -DnewVersion=${{ steps.parser.outputs.version }} --file pom.xml
 
     - name: Build and deploy with Maven
-      run: mvn -B deploy --file pom.xml
+      run: mvn -B deploy -Ppublish --file pom.xml
       env:
         MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
         MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
