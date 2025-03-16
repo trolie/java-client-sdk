@@ -19,7 +19,7 @@ jobs:
       id: parser
       uses: johngeorgewright/parse-version-action@v2.0.0
       with:
-        ref: ${{ github.ref }}
+        ref: refs/tags/v1.0.0-test
         trim-start: v
 
     - name: Debug
