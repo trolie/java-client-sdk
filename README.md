@@ -7,6 +7,15 @@ idiomatic Java API to the TROLIE OpenAPI specification, as defined
 at https://trolie.energy/spec.  It also provides extensions for key 
 behaviors of specific ISO/RC implementations, such as authentication.  
 
+## Documentation and Usage
+Users are encouraged to start with usage examples or interacting with a TROLIE server:
+
+* [Submitting Forecast Ratings](java-client-examples/src/main/java/energy/trolie/client/examples/PublishForecastProposals.java)
+* [Subscribing to Forecast Snapshots](java-client-examples/src/main/java/energy/trolie/client/examples/SubscribeToForecastSnapshots.java)
+
+Also see the [JavaDoc](https://trolie.github.io/java-client-sdk/).  
+The [TrolieClient](https://trolie.github.io/java-client-sdk/energy/trolie/client/TrolieClient.html) class is a good starting point.
+
 ## Minimal Footprint
 
 This client SDK is designed with the intent that it is easy to use
