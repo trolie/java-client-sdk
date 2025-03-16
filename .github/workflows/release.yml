@@ -1,5 +1,8 @@
 name: Executes process associated with release.  
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ "release-workflow" ]
@@ -41,10 +44,6 @@ jobs:
 
     - name: Adjust the version to the release
       run: mvn -B versions:set -DnewVersion=${{ steps.parser.outputs.version }} --file pom.xml
-      env:
-        MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
-        MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
-        MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
     - name: Build with Maven
       run: mvn -B install --file pom.xml
@@ -52,4 +51,13 @@ jobs:
         MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
         MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
         MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+
+    - name: Deploy javadoc to Github Pages
+      uses: dev-vince/actions-publish-javadoc@v1.0.1
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        java-version: "17" # Replace with your java version. Default is 17
+        java-distribution: "adopt" # The distributor of the target JDK. See https://github.com/actions/setup-java for more information. Default is adopt
+        project: maven # The project type. By default maven
+        branch: "gh-pages" # The branch for the javadoc contents. By default gh-pages        
 
