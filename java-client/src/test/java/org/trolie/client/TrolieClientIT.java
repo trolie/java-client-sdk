@@ -3,6 +3,7 @@ package org.trolie.client;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -36,6 +37,7 @@ import org.trolie.client.exception.TrolieException;
 import org.trolie.client.exception.TrolieServerException;
 import org.trolie.client.impl.request.RequestSubscriptionInternal;
 import org.trolie.client.model.common.DataProvenance;
+import org.trolie.client.model.common.RatingValue;
 import org.trolie.client.model.monitoringsets.MonitoringSet;
 import org.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
 import org.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
@@ -99,6 +101,7 @@ public class TrolieClientIT {
 	public static void createTestServer() throws Exception {
 
 		objectMapper = new ObjectMapper();
+		objectMapper.registerModule(new JavaTimeModule());
 
 		int port;
 		try (ServerSocket serverSocket = new ServerSocket(0)) {
@@ -163,7 +166,7 @@ public class TrolieClientIT {
 
 		//test a roundtrip submission and response 
 
-		String startTime = Instant.now().toString();
+		var startTime = Instant.now();
 
 		requestHandler = request -> {
 
@@ -211,7 +214,7 @@ public class TrolieClientIT {
 						update.period(ForecastRatingPeriod.builder()
 								.periodStart(startTime)
 								.periodEnd(startTime)
-								.continuousOperatingLimit(Map.of("mva",100F))
+								.continuousOperatingLimit(RatingValue.fromMva(100f))
 								.build());
 					}
 					update.endResource();
@@ -229,7 +232,7 @@ public class TrolieClientIT {
 
 		//make sure that server errors are clearly bubbled up with a status code
 
-		String startTime = Instant.now().toString();
+		var startTime = Instant.now();
 
 		requestHandler = request -> {
 			BasicClassicHttpResponse response = new BasicClassicHttpResponse(500);
@@ -258,7 +261,7 @@ public class TrolieClientIT {
 
 		//make sure that client I/O errors are clearly bubbled up
 
-		String startTime = Instant.now().toString();
+		var startTime = Instant.now();
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
 		try (TrolieClient trolieClient = new TrolieClientBuilder(HOST + ":" + 1111,builder.build()).build();) {
@@ -279,7 +282,7 @@ public class TrolieClientIT {
 						update.period(ForecastRatingPeriod.builder()
 								.periodStart(startTime)
 								.periodEnd(startTime)
-								.continuousOperatingLimit(Map.of("mva",100F))
+								.continuousOperatingLimit(RatingValue.fromMva(100f))
 								.build());
 					}
 					update.endResource();
@@ -323,7 +326,7 @@ public class TrolieClientIT {
 
 						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
 
-							writeForecastSnapshot(json, startTimeString);
+							writeForecastSnapshot(json, startTime);
 
 							return null;
 						} catch (Exception e) {
@@ -357,7 +360,7 @@ public class TrolieClientIT {
 				@Override
 				public void header(ForecastSnapshotHeader header) {
 					Assertions.assertNotNull(header);
-					Assertions.assertEquals(startTimeString, header.getBegins());
+					Assertions.assertEquals(startTime, header.getBegins());
 				}
 
 
@@ -410,7 +413,7 @@ public class TrolieClientIT {
 
 		//we will run the subscription for fixed number of requests
 		AtomicInteger requestCounter = new AtomicInteger(0);
-		String startTime = Instant.now().toString();
+		Instant startTime = Instant.now();
 		String etag = UUID.randomUUID().toString();
 
 		requestHandler = request -> {
@@ -478,7 +481,9 @@ public class TrolieClientIT {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.forecastRatingsPollMs(200)
+				.build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -534,7 +539,7 @@ public class TrolieClientIT {
 				}
 
 
-			}, "abc", 1000);
+			}, "abc");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -576,7 +581,7 @@ public class TrolieClientIT {
 
                     try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
 
-                        writeForecastSnapshot(json, startTimeString);
+                        writeForecastSnapshot(json, startTime);
 
                         return null;
                     } catch (Exception e) {
@@ -609,7 +614,7 @@ public class TrolieClientIT {
 				@Override
 				public void header(ForecastSnapshotHeader header) {
 					Assertions.assertNotNull(header);
-					Assertions.assertEquals(startTimeString, header.getBegins());
+					Assertions.assertEquals(startTime, header.getBegins());
 				}
 
 
@@ -662,7 +667,7 @@ public class TrolieClientIT {
 
 		//we will run the subscription for fixed number of requests
 		AtomicInteger requestCounter = new AtomicInteger(0);
-		String startTime = Instant.now().toString();
+		Instant startTime = Instant.now();
 		String etag = UUID.randomUUID().toString();
 
 		requestHandler = request -> {
@@ -730,7 +735,8 @@ public class TrolieClientIT {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.forecastRatingsPollMs(200).build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -786,7 +792,7 @@ public class TrolieClientIT {
 				}
 
 
-			}, "abc", 1000);
+			}, "abc");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -838,7 +844,7 @@ public class TrolieClientIT {
 
 				update.begin(header);
 				for (int i=0;i<3;i++) {
-					update.rating(RealTimeRating.builder().continuousOperatingLimit(Map.of("MVA",100f)).build());
+					update.rating(RealTimeRating.builder().continuousOperatingLimit(RatingValue.fromMva(100f)).build());
 				}
 				RealTimeRatingProposalStatus status = update.complete();
 
@@ -921,7 +927,9 @@ public class TrolieClientIT {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.realTimeRatingsPollMs(200)
+				.build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -966,7 +974,7 @@ public class TrolieClientIT {
 				}
 
 
-			}, "abc", "xyz", 1000);
+			}, "abc", "xyz");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -1140,7 +1148,9 @@ public class TrolieClientIT {
 
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.realTimeRatingsPollMs(200)
+				.build();) {
 
 			AtomicInteger snapshotsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -1185,7 +1195,7 @@ public class TrolieClientIT {
 				}
 
 
-			}, "abc", 1000);
+			}, "abc");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -1375,7 +1385,8 @@ public class TrolieClientIT {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build();
+		TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build())
+				.build();
 		AtomicInteger receivedCount = new AtomicInteger(0);
 		AtomicInteger errorCount = new AtomicInteger(0);
 		//subscribe for snapshots and validate they are transmitted correctly
@@ -1465,7 +1476,8 @@ public class TrolieClientIT {
 		};
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.monitoringSetPollMs(200).build();) {
 
 			AtomicInteger monitoringSetsReceived = new AtomicInteger(0);
 			AtomicInteger errorCount = new AtomicInteger(0);
@@ -1492,7 +1504,7 @@ public class TrolieClientIT {
 				}
 
 
-			}, "abc", 1000);
+			}, "abc");
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
@@ -1506,7 +1518,7 @@ public class TrolieClientIT {
 
 	private void writeMonitoringSet(JsonGenerator json, String id) throws IOException {
 		var source = DataProvenance.builder().provider(id).lastUpdated(
-				Instant.now().toString()).originId(id).build();
+				Instant.now()).originId(id).build();
 		MonitoringSet monitoringSet = new MonitoringSet(source, id, "This is test SDK", List.of());
 		json.writeStartObject();
 		try {
@@ -1524,7 +1536,7 @@ public class TrolieClientIT {
 		json.writeEndObject();
 	}
 
-	private void writeForecastSnapshot(JsonGenerator json, String startTime) throws IOException {
+	private void writeForecastSnapshot(JsonGenerator json, Instant startTime) throws IOException {
 
 		ForecastSnapshotHeader header = new ForecastSnapshotHeader(startTime);
 
@@ -1546,7 +1558,7 @@ public class TrolieClientIT {
 				ForecastPeriodSnapshot period = new ForecastPeriodSnapshot(
 						startTime,
 						startTime,
-						Map.of("mva",100F),
+						RatingValue.fromMva(100f),
 						Collections.emptyList()
 						);
 				json.writeObject(period);
@@ -1574,7 +1586,7 @@ public class TrolieClientIT {
 		for (int i=0;i<100;i++) {
 			json.writeObject(RealTimeLimit.builder()
 					.resourceId("resource" + i)
-					.continuousOperatingLimit(Map.of("mva",100f)).build());
+					.continuousOperatingLimit(RatingValue.fromMva(100f)).build());
 		}
 
 		json.writeEndArray();

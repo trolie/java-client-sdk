@@ -1,6 +1,5 @@
 package org.trolie.client.request.ratingproposals;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -12,13 +11,16 @@ import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.trolie.client.TrolieApiConstants;
 import org.trolie.client.exception.TrolieException;
+import org.trolie.client.impl.model.ratingproposals.ForecastPeriodBuilderImpl;
+import org.trolie.client.impl.request.AbstractStreamingUpdate;
+import org.trolie.client.model.ratingproposals.ForecastPeriodBuilder;
 import org.trolie.client.model.ratingproposals.ForecastProposalHeader;
 import org.trolie.client.model.ratingproposals.ForecastRatingPeriod;
 import org.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
-import org.trolie.client.impl.request.AbstractStreamingUpdate;
-import org.trolie.client.TrolieApiConstants;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -28,7 +30,7 @@ import java.util.function.Function;
  * <ol>
  *     <li>{@link #begin(ForecastProposalHeader)} with a completely populated header.</li>
  *     <li>{@link #beginResource(String)} for each resource.  Then, within that resource,</li>
- *     <li>{@link #period(ForecastRatingPeriod)} for each period in the forecast window.</li>
+ *     <li>{@link #periodBuilder()}  for each period in the forecast window.</li>
  *     <li>{@link #endResource()} before calling {@link #beginResource(String)} again for a new resource.</li>
  *     <li>{@link #complete()} to synchronously finish the request.</li>
  * </ol>
@@ -38,10 +40,25 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 	private static final Logger logger = LoggerFactory.getLogger(ForecastRatingProposalUpdate.class);
 
 
+	/**
+	 * Constructs a new update.  Should not be called by application code.
+	 * @param httpClient client
+	 * @param host host
+	 * @param requestConfig HTTP client request config
+	 * @param bufferSize configure buffer size
+	 * @param objectMapper Jackson object mapper
+	 * @param httpHeaders passed headers
+	 * @param defaultIntervalMinutes forecast interval minutes
+	 */
 	public ForecastRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
-										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders) {
+										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders,
+										int defaultIntervalMinutes) {
 		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders);
+		this.defaultIntervalMinutes = defaultIntervalMinutes;
 	}
+
+    private Instant windowBegin;
+	private final int defaultIntervalMinutes;
 
 
 	private enum Scope {
@@ -89,7 +106,8 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 
 		validateScope(Scope.MAIN, Scope.BEGIN);
 		try {
-			jsonGenerator = new JsonFactory().createGenerator(createRequestOutputStream());
+			jsonGenerator = objectMapper
+					.createGenerator(createRequestOutputStream());
 		} catch (Exception e) {
 			throw new TrolieException("Error creating request output stream",e);
 		}
@@ -105,6 +123,8 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		} catch (Exception e) {
 			handleWriteError(e);
 		}
+
+		this.windowBegin = header.getBegins();
 
 	}
 
@@ -127,7 +147,24 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 	}
 
 	/**
-	 * Write out a rating set.
+	 * Fluent way of constructing valid forecast periods.  Use of these builders
+	 * is the recommended way to send ratings for a given period.
+	 * @return instance of a {@link ForecastPeriodBuilder} to create a new period.
+	 */
+	public ForecastPeriodBuilder periodBuilder() {
+		if(windowBegin == null) {
+			throw new IllegalStateException("Cannot write periods before submitting the header");
+		}
+		return new ForecastPeriodBuilderImpl(windowBegin,
+				defaultIntervalMinutes,
+				this);
+	}
+
+
+	/**
+	 * <p>Write out a rating set, using the JSON format in a relatively raw way.  </p>
+	 * <p><b>NOTE:</b> this method is only intended for advanced users with a low-level
+	 * understanding of the schema.  {@link #periodBuilder()} is preferred for most users.</p>
 	 * @param forecastRatingPeriod per-period rating set applying to the last
 	 *                                resource set in {@link #beginResource(String)}.
 	 */
