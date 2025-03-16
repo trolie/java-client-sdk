@@ -20,7 +20,7 @@ jobs:
       id: parser
       uses: johngeorgewright/parse-version-action@v2.0.0
       with:
-        ref: ${{GITHUB_REF}}
+        ref: ${{github.ref}}
         trim-start: v
 
     # Now, build the code.  
