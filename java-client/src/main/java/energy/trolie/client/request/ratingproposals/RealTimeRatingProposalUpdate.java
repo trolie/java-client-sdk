@@ -2,21 +2,21 @@ package energy.trolie.client.request.ratingproposals;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.TrolieApiConstants;
+import energy.trolie.client.TrolieHost;
 import energy.trolie.client.exception.TrolieException;
+import energy.trolie.client.impl.request.AbstractStreamingUpdate;
+import energy.trolie.client.model.ratingproposals.ProposalHeader;
+import energy.trolie.client.model.ratingproposals.RealTimeRating;
+import energy.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import energy.trolie.client.TrolieApiConstants;
-import energy.trolie.client.impl.request.AbstractStreamingUpdate;
-import energy.trolie.client.model.ratingproposals.ProposalHeader;
-import energy.trolie.client.model.ratingproposals.RealTimeRating;
-import energy.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -43,7 +43,7 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 	 * @param objectMapper Jackson object mapper
 	 * @param httpHeader mapped header list
 	 */
-	public RealTimeRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
+	public RealTimeRatingProposalUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
 										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader) {
 		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeader);
 	}
@@ -61,7 +61,7 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 	@Override
 	protected HttpUriRequestBase getRequest() {
 		//only need to establish the HTTP method. headers/params are handled by base class 
-		return new HttpPost(getPath());
+		return new HttpPost(getFullPath());
 	}
 
 	@Override

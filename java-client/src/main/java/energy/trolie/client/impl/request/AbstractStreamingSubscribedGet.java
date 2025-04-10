@@ -1,19 +1,19 @@
 package energy.trolie.client.impl.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.ETagStore;
+import energy.trolie.client.StreamingSubscribedResponseReceiver;
+import energy.trolie.client.TrolieHost;
 import energy.trolie.client.exception.StreamingGetHandlingException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpHeaders;
-import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.ProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import energy.trolie.client.ETagStore;
-import energy.trolie.client.StreamingSubscribedResponseReceiver;
 
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -44,7 +44,7 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 	
 	protected AbstractStreamingSubscribedGet(
 			HttpClient httpClient, 
-			HttpHost host, 
+			TrolieHost host,
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ObjectMapper objectMapper,

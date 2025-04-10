@@ -2,6 +2,9 @@ package energy.trolie.client.impl.request;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.StreamingResponseReceiver;
+import energy.trolie.client.StreamingSubscribedResponseReceiver;
+import energy.trolie.client.TrolieHost;
 import energy.trolie.client.exception.StreamingGetConnectionException;
 import energy.trolie.client.exception.StreamingGetException;
 import energy.trolie.client.exception.StreamingGetResponseException;
@@ -11,13 +14,10 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpHeaders;
-import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import energy.trolie.client.StreamingResponseReceiver;
-import energy.trolie.client.StreamingSubscribedResponseReceiver;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -40,7 +40,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	Logger logger = LoggerFactory.getLogger(AbstractStreamingGet.class);
 	
 	HttpClient httpClient;
-	HttpHost host;
+	TrolieHost host;
 	RequestConfig requestConfig;
 	int bufferSize;
 	ThreadPoolExecutor threadPoolExecutor;
@@ -63,7 +63,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	
 	protected AbstractStreamingGet(
 			HttpClient httpClient, 
-			HttpHost host, 
+			TrolieHost host,
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ObjectMapper objectMapper,
@@ -119,7 +119,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	}
 	
 	protected HttpGet createRequest() throws URISyntaxException {
-		HttpGet get = new HttpGet(getPath());
+		HttpGet get = new HttpGet(getFullPath());
 		get.addHeader(HttpHeaders.ACCEPT, getContentType());
 		if (httpHeaders !=  null && !httpHeaders.isEmpty()) {
 			httpHeaders.forEach(get::addHeader);
@@ -133,7 +133,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		try {
 			
 			HttpGet get = createRequest();
-			httpClient.execute(host, get, createResponseHandler());
+			httpClient.execute(host.getHost(), get, createResponseHandler());
 		
 		} catch (IOException e) {
 			logger.error("I/O error initiating request",e);
@@ -165,6 +165,10 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			return false;
 		}
 		
+	}
+
+	protected String getFullPath() {
+		return host.hasBasePath() ? host.getBasePath() + getPath() : getPath();
 	}
 	
 }

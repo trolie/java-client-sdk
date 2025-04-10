@@ -1,21 +1,10 @@
 package energy.trolie.client.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
-import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
-import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
-import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
-import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
-import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.core5.http.HttpHost;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import energy.trolie.client.TrolieClient;
 import energy.trolie.client.ETagStore;
+import energy.trolie.client.RequestSubscription;
+import energy.trolie.client.TrolieClient;
+import energy.trolie.client.TrolieHost;
 import energy.trolie.client.impl.request.RequestSubscriptionInternal;
 import energy.trolie.client.impl.request.monitoringsets.DefaultMonitoringSetRequest;
 import energy.trolie.client.impl.request.monitoringsets.DefaultMonitoringSetSubscribedRequest;
@@ -29,7 +18,18 @@ import energy.trolie.client.impl.request.operatingsnapshots.RegionalForecastSnap
 import energy.trolie.client.impl.request.operatingsnapshots.RegionalForecastSubscribedSnapshotRequest;
 import energy.trolie.client.impl.request.operatingsnapshots.RegionalRealTimeSnapshotRequest;
 import energy.trolie.client.impl.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
-import energy.trolie.client.RequestSubscription;
+import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
+import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
+import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -44,7 +44,7 @@ public class TrolieClientImpl implements TrolieClient {
 	private static final Logger logger = LoggerFactory.getLogger(TrolieClientImpl.class);
 
 	CloseableHttpClient httpClient;
-	HttpHost host;
+	TrolieHost host;
 	RequestConfig requestConfig;
 	int bufferSize;
 	ObjectMapper objectMapper;
@@ -55,7 +55,7 @@ public class TrolieClientImpl implements TrolieClient {
 	private final int forecastRatingsPollMs;
 	private final int monitoringSetPollMs;
 
-	public TrolieClientImpl(CloseableHttpClient httpClient, HttpHost host, RequestConfig requestConfig, int bufferSize,
+	public TrolieClientImpl(CloseableHttpClient httpClient, TrolieHost host, RequestConfig requestConfig, int bufferSize,
 							ObjectMapper objectMapper, ETagStore eTagStore, Map<String, String> httpHeaders,
 							int defaultIntervalMinutes,
 							int realTimeRatingsPollMs,
