@@ -1,6 +1,8 @@
 package energy.trolie.client.impl.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.StreamingUpdate;
+import energy.trolie.client.TrolieHost;
 import energy.trolie.client.exception.TrolieException;
 import energy.trolie.client.exception.TrolieServerException;
 import lombok.AllArgsConstructor;
@@ -13,11 +15,9 @@ import org.apache.hc.client5.http.impl.classic.AbstractHttpClientResponseHandler
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
-import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import energy.trolie.client.StreamingUpdate;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -41,7 +41,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractStreamingUpdate.class);
 	
 	HttpClient httpClient;
-	HttpHost host;
+	TrolieHost host;
 	RequestConfig requestConfig;
 	ThreadPoolExecutor threadPoolExecutor;
 	int bufferSize;
@@ -51,7 +51,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 
 	Map<String, String> httpHeaders;
 
-	protected AbstractStreamingUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
+	protected AbstractStreamingUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
 									  int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders) {
 		super();
 		this.httpClient = httpClient;
@@ -132,7 +132,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		if (this.httpHeaders != null && !this.httpHeaders.isEmpty()) {
 			httpHeaders.forEach(request::addHeader);
 		}
-		request.setPath(getPath());
+		request.setPath(getFullPath());
 		
 		request.setConfig(this.requestConfig);
 
@@ -203,7 +203,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		@Override
 		public T call() throws Exception {
 			try {
-				return httpClient.execute(host, request, new ResponseHandler());
+				return httpClient.execute(host.getHost(), request, new ResponseHandler());
 			} finally {
 				//this should already have been closed by the user by this point. If it hasn't, 
 				//then we had a request I/O error and the easiest way to bubble that to the
@@ -218,5 +218,9 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		public T handleEntity(HttpEntity entity) throws IOException {
 			return getResponseHandler().apply(entity);
 		}
+	}
+
+	protected String getFullPath() {
+		return host.hasBasePath() ? host.getBasePath() + getPath() : getPath();
 	}
 }

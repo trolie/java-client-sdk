@@ -1,13 +1,13 @@
 package energy.trolie.client.impl.request.monitoringsets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.ETagStore;
+import energy.trolie.client.TrolieApiConstants;
+import energy.trolie.client.TrolieHost;
+import energy.trolie.client.impl.request.AbstractStreamingSubscribedGet;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.core5.http.HttpHost;
-import energy.trolie.client.ETagStore;
-import energy.trolie.client.impl.request.AbstractStreamingSubscribedGet;
-import energy.trolie.client.TrolieApiConstants;
 
 import java.io.InputStream;
 import java.util.Map;
@@ -20,7 +20,7 @@ public class DefaultMonitoringSetSubscribedRequest extends AbstractStreamingSubs
 
 	public DefaultMonitoringSetSubscribedRequest(
 			HttpClient httpClient, 
-			HttpHost host, 
+			TrolieHost host,
 			RequestConfig requestConfig,
 			int bufferSize, 
 			ObjectMapper objectMapper,

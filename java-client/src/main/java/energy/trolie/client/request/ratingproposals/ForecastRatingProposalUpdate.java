@@ -2,23 +2,23 @@ package energy.trolie.client.request.ratingproposals;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.TrolieApiConstants;
+import energy.trolie.client.TrolieHost;
 import energy.trolie.client.exception.TrolieException;
 import energy.trolie.client.impl.model.ratingproposals.ForecastPeriodBuilderImpl;
+import energy.trolie.client.impl.request.AbstractStreamingUpdate;
+import energy.trolie.client.model.ratingproposals.ForecastPeriodBuilder;
+import energy.trolie.client.model.ratingproposals.ForecastProposalHeader;
+import energy.trolie.client.model.ratingproposals.ForecastRatingPeriod;
+import energy.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpPatch;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import energy.trolie.client.TrolieApiConstants;
-import energy.trolie.client.impl.request.AbstractStreamingUpdate;
-import energy.trolie.client.model.ratingproposals.ForecastPeriodBuilder;
-import energy.trolie.client.model.ratingproposals.ForecastProposalHeader;
-import energy.trolie.client.model.ratingproposals.ForecastRatingPeriod;
-import energy.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
 
 import java.time.Instant;
 import java.util.Map;
@@ -50,7 +50,7 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 	 * @param httpHeaders passed headers
 	 * @param defaultIntervalMinutes forecast interval minutes
 	 */
-	public ForecastRatingProposalUpdate(HttpClient httpClient, HttpHost host, RequestConfig requestConfig,
+	public ForecastRatingProposalUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
 										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders,
 										int defaultIntervalMinutes) {
 		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders);
@@ -73,7 +73,7 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 
 	@Override
 	protected HttpUriRequestBase getRequest() {
-		return new HttpPatch(getPath());
+		return new HttpPatch(getFullPath());
 	}
 
 	@Override

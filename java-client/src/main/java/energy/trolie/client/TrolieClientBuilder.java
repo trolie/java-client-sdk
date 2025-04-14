@@ -3,7 +3,6 @@ package energy.trolie.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import energy.trolie.client.exception.TrolieException;
 import energy.trolie.client.impl.MemoryETagStore;
 import energy.trolie.client.impl.TrolieClientImpl;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
@@ -12,9 +11,7 @@ import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribe
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.HttpHost;
 
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,7 +42,7 @@ public class TrolieClientBuilder {
 	 */
 	public static final int DEFAULT_BUFFER_SIZE = 4096;
 
-	private final HttpHost host;
+	private final TrolieHost host;
 	private final CloseableHttpClient httpClient;
 	private RequestConfig requestConfig;
 	private int bufferSize = DEFAULT_BUFFER_SIZE;
@@ -78,11 +75,7 @@ public class TrolieClientBuilder {
 			String baseUrl, 
 			CloseableHttpClient httpClient) {
 		super();
-		try {
-			this.host = HttpHost.create(baseUrl);
-		} catch (URISyntaxException e) {
-			throw new TrolieException(e);
-		}
+		this.host = new TrolieHost(baseUrl);
 		this.httpClient = httpClient;
 	}
 

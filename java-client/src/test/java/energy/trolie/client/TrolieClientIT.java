@@ -7,7 +7,28 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import energy.trolie.client.exception.StreamingGetException;
 import energy.trolie.client.exception.TrolieException;
 import energy.trolie.client.exception.TrolieServerException;
+import energy.trolie.client.impl.request.RequestSubscriptionInternal;
+import energy.trolie.client.model.common.DataProvenance;
+import energy.trolie.client.model.common.RatingValue;
+import energy.trolie.client.model.monitoringsets.MonitoringSet;
+import energy.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
+import energy.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
+import energy.trolie.client.model.operatingsnapshots.RealTimeLimit;
+import energy.trolie.client.model.operatingsnapshots.RealTimeSnapshotHeader;
+import energy.trolie.client.model.ratingproposals.ForecastProposalHeader;
+import energy.trolie.client.model.ratingproposals.ForecastRatingPeriod;
+import energy.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
+import energy.trolie.client.model.ratingproposals.ProposalHeader;
+import energy.trolie.client.model.ratingproposals.RealTimeRating;
+import energy.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
+import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
+import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
+import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.HttpClient;
@@ -36,27 +57,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import energy.trolie.client.impl.request.RequestSubscriptionInternal;
-import energy.trolie.client.model.common.DataProvenance;
-import energy.trolie.client.model.common.RatingValue;
-import energy.trolie.client.model.monitoringsets.MonitoringSet;
-import energy.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
-import energy.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
-import energy.trolie.client.model.operatingsnapshots.RealTimeLimit;
-import energy.trolie.client.model.operatingsnapshots.RealTimeSnapshotHeader;
-import energy.trolie.client.model.ratingproposals.ForecastProposalHeader;
-import energy.trolie.client.model.ratingproposals.ForecastRatingPeriod;
-import energy.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
-import energy.trolie.client.model.ratingproposals.ProposalHeader;
-import energy.trolie.client.model.ratingproposals.RealTimeRating;
-import energy.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
-import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
-import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
-import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
-import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
-import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 
 import javax.net.ServerSocketFactory;
 import java.io.IOException;
@@ -199,7 +199,7 @@ public class TrolieClientIT {
 
 		HttpClientBuilder builder = HttpClientBuilder.create();
 
-		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri + "/test-path", builder.build()).build()) {
 
 			try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
 
