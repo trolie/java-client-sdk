@@ -167,6 +167,10 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		
 	}
 
+	/**
+	 * Returns the full path for the current operations. If the TrolieHost includes a base path, it will be included.
+	 * @return a String representing the full path of a TROLIE endpoint.
+	 */
 	protected String getFullPath() {
 		return host.hasBasePath() ? host.getBasePath() + getPath() : getPath();
 	}
