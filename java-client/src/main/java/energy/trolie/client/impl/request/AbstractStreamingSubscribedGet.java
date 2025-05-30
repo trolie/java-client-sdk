@@ -84,6 +84,11 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 	}
 
 	@Override
+	public boolean isHealthy() {
+		return !didLastRequestFail();
+	}
+
+	@Override
 	protected boolean handleResponse(ClassicHttpResponse response) {
 		boolean success = super.handleResponse(response);
 		// Cache the ETAG if the response was handled successfully and the status is OK
@@ -91,6 +96,7 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 			try {
 				eTagStore.putETag(getPath(), response.getHeader(HttpHeaders.ETAG).getValue());
 			} catch (ProtocolException e) {
+				lastRequestFailed = true;
 				logger.error("Error handling server response",e);
 				receiver.error(new StreamingGetHandlingException(e));
 				return false;

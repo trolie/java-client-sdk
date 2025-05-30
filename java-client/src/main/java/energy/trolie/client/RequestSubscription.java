@@ -17,4 +17,11 @@ public interface RequestSubscription {
 	 * @return true if the subscription is running and has not been stopped
 	 */
 	boolean isSubscribed();
+
+	/**
+	 *
+	 * @return true if the subscription is currently healthy, meaning that the last poll
+	 * occurred successfully without error.
+	 */
+	boolean isHealthy();
 }

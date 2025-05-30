@@ -45,10 +45,15 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	int bufferSize;
 	ThreadPoolExecutor threadPoolExecutor;
 	Map<String, String> httpHeaders;
+	protected boolean lastRequestFailed = false;
 
 	protected JsonFactory jsonFactory;
 	protected T receiver;
-	
+
+	protected boolean didLastRequestFail() {
+		return lastRequestFailed;
+	}
+
 	protected abstract String getPath();
 	protected abstract String getContentType();
 	
@@ -100,9 +105,11 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			try {
 				return threadPoolExecutor.submit(new HandlerExecutor(response.getEntity().getContent())).get();
 			} catch (IOException e) {
+				lastRequestFailed = true;
 				logger.error("I/O error initiating request",e);
 				receiver.error(new StreamingGetConnectionException(e));
 			} catch (Exception e) {
+				lastRequestFailed = true;
 				logger.error("Internal error handling response",e);
 				receiver.error(new SubscriberInternalException(e));
 			}
@@ -111,6 +118,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			return true;
 		} else {
 			String s = "Server responded with status code " + response.getCode();
+			lastRequestFailed = true;
 			logger.error(s);
 			receiver.error(new StreamingGetResponseException(s, response.getCode()));
 		}
@@ -131,14 +139,16 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	
 	public void executeRequest() {
 		try {
-			
+			lastRequestFailed = false;
 			HttpGet get = createRequest();
 			httpClient.execute(host.getHost(), get, createResponseHandler());
 		
 		} catch (IOException e) {
+			lastRequestFailed = true;
 			logger.error("I/O error initiating request",e);
 			receiver.error(new StreamingGetConnectionException(e));
 		} catch (Exception e) {
+			lastRequestFailed = true;
 			receiver.error(new SubscriberInternalException(e));
 		}
 	}

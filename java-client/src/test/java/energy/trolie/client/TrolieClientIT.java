@@ -78,6 +78,7 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @SuppressWarnings("unchecked")
@@ -543,6 +544,7 @@ public class TrolieClientIT {
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
+				assertTrue(subscription.isHealthy());
 			}
 
 			//we should have received 2 snapshots, 1 304 code and 1 500 code
