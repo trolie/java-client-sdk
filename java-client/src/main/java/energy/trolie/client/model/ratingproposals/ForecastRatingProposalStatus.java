@@ -40,8 +40,8 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 public class ForecastRatingProposalStatus {
 
-    @JsonProperty("forecast-provider")
-    private DataProvenance forecastProvider;
+    @JsonProperty("source")
+    private DataProvenance source;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     @JsonProperty("begins")

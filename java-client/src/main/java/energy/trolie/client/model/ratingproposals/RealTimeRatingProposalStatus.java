@@ -38,8 +38,8 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 public class RealTimeRatingProposalStatus {
 
-    @JsonProperty("forecast-provider")
-    private DataProvenance forecastProvider;
+    @JsonProperty("source")
+    private DataProvenance source;
 
     @JsonProperty("incomplete-obligation-count")
     private long incompleteObligationCount;
