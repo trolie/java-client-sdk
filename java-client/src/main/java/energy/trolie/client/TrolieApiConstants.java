@@ -56,7 +56,7 @@ public class TrolieApiConstants {
 	/**
 	 * Content type for real-time proposal status.
 	 */
-	public static final String CONTENT_TYPE_REALTIME_PROPOSAL = "application/vnd.trolie.rating-realtime-proposal-status.v1+json";
+	public static final String CONTENT_TYPE_REALTIME_PROPOSAL = "application/vnd.trolie.rating-realtime-proposal.v1+json";
 
 	/**
 	 * Content type for forecast limit snapshots
