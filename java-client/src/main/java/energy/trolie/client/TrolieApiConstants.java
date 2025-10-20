@@ -9,6 +9,11 @@ public class TrolieApiConstants {
 	}
 
 	/**
+	 * Path to <a href="https://trolie.energy/spec-1.0#tag/Seasonal/operation/getSeasonalRatingsSnapshot">getRealTimeLimits</a>
+	 */
+	public static final String PATH_SEASONAL_SNAPSHOT = "/seasonal-ratings/snapshot";
+
+	/**
      * Path to <a href="https://trolie.energy/spec-1.0#tag/Real-Time/operation/getRealTimeLimits">getRealTimeLimits</a>
      */
 	public static final String PATH_REALTIME_SNAPSHOT = "/limits/realtime-snapshot";
@@ -47,6 +52,11 @@ public class TrolieApiConstants {
 	 * Path to <a href="https://trolie.energy/spec-1.0#tag/Monitoring-Sets/operation/getDefaultMonitoringSet">getDefaultMonitoringSet</a>
 	 */
 	public static final String PATH_DEFAULT_MONITORING_SET = "/default-monitoring-set";
+
+	/**
+	 * Content type for seasonal rating snapshots
+	 */
+	public static final String CONTENT_TYPE_SEASONAL_SNAPSHOT = "application/vnd.trolie.seasonal-rating-snapshot.v1+json";
 
 	/**
 	 * Content type for real-time limit snapshots
