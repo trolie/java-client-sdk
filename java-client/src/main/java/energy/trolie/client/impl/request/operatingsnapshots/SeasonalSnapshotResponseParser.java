@@ -23,7 +23,7 @@ public class SeasonalSnapshotResponseParser {
 
 	private static final Logger logger = LoggerFactory.getLogger(SeasonalSnapshotResponseParser.class);
 	
-	SeasonalSnapshotReceiver receiver; // seasonal
+	SeasonalSnapshotReceiver receiver;
 
 	public Boolean parseResponse(InputStream inputStream, JsonFactory jsonFactory) {
 		

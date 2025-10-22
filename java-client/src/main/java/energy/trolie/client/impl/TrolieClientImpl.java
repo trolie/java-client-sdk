@@ -10,20 +10,10 @@ import energy.trolie.client.impl.request.monitoringsets.DefaultMonitoringSetRequ
 import energy.trolie.client.impl.request.monitoringsets.DefaultMonitoringSetSubscribedRequest;
 import energy.trolie.client.impl.request.monitoringsets.MonitoringSetsRequest;
 import energy.trolie.client.impl.request.monitoringsets.MonitoringSetsSubscribedRequest;
-import energy.trolie.client.impl.request.operatingsnapshots.ForecastSnapshotRequest;
-import energy.trolie.client.impl.request.operatingsnapshots.ForecastSnapshotSubscribedRequest;
-import energy.trolie.client.impl.request.operatingsnapshots.RealTimeSnapshotRequest;
-import energy.trolie.client.impl.request.operatingsnapshots.RealTimeSnapshotSubscribedRequest;
-import energy.trolie.client.impl.request.operatingsnapshots.RegionalForecastSnapshotRequest;
-import energy.trolie.client.impl.request.operatingsnapshots.RegionalForecastSubscribedSnapshotRequest;
-import energy.trolie.client.impl.request.operatingsnapshots.RegionalRealTimeSnapshotRequest;
-import energy.trolie.client.impl.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
+import energy.trolie.client.impl.request.operatingsnapshots.*;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
-import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
-import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.*;
 import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -372,6 +362,63 @@ public class TrolieClientImpl implements TrolieClient {
 		addSubscription(subscription);
 		return subscription;
 	}
+
+	@Override
+	public void getInUseSeasonalSnapshots(SeasonalSnapshotReceiver receiver) {
+		getInUseSeasonalSnapshots(receiver, null, null);
+	}
+
+	@Override
+	public void getInUseSeasonalSnapshots(SeasonalSnapshotReceiver receiver, String monitoringSet) {
+		getInUseSeasonalSnapshots(receiver, monitoringSet, null);
+	}
+
+	@Override
+	public void getInUseSeasonalSnapshots(
+			SeasonalSnapshotReceiver receiver,
+			String monitoringSet,
+			String resourceId) {
+
+		new SeasonalSnapshotRequest(
+				httpClient,
+				host,
+				requestConfig,
+				bufferSize,
+				objectMapper,
+				httpHeaders,
+				receiver,
+				monitoringSet,
+				resourceId).executeRequest();
+	}
+
+	@Override
+	public SeasonalSnapshotSubscribedRequest subscribeToInUseSeasonalSnapshotUpdates(
+			SeasonalSnapshotSubscribedReceiver receiver) {
+		return subscribeToInUseSeasonalSnapshotUpdates(receiver, null);
+	}
+
+	@Override
+	public SeasonalSnapshotSubscribedRequest subscribeToInUseSeasonalSnapshotUpdates(
+			SeasonalSnapshotSubscribedReceiver receiver,
+			String monitoringSet) {
+
+		SeasonalSnapshotSubscribedRequest subscription = new SeasonalSnapshotSubscribedRequest(
+				httpClient,
+				host,
+				requestConfig,
+				bufferSize,
+				objectMapper,
+				httpHeaders,
+				forecastRatingsPollMs,
+				receiver,
+				eTagStore,
+				monitoringSet);
+
+		addSubscription(subscription);
+		return subscription;
+
+	}
+
 
 	@Override
 	public void close() throws IOException {
