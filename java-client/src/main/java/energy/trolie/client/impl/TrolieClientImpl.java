@@ -44,13 +44,15 @@ public class TrolieClientImpl implements TrolieClient {
 	private final int realTimeRatingsPollMs;
 	private final int forecastRatingsPollMs;
 	private final int monitoringSetPollMs;
+	private final int seasonalRatingsPollMs;
 
 	public TrolieClientImpl(CloseableHttpClient httpClient, TrolieHost host, RequestConfig requestConfig, int bufferSize,
 							ObjectMapper objectMapper, ETagStore eTagStore, Map<String, String> httpHeaders,
 							int defaultIntervalMinutes,
 							int realTimeRatingsPollMs,
 							int forecastRatingsPollMs,
-							int monitoringSetPollMs) {
+							int monitoringSetPollMs,
+							int seasonalRatingsPollMs) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -63,6 +65,7 @@ public class TrolieClientImpl implements TrolieClient {
 		this.realTimeRatingsPollMs = realTimeRatingsPollMs;
 		this.forecastRatingsPollMs = forecastRatingsPollMs;
 		this.monitoringSetPollMs = monitoringSetPollMs;
+		this.seasonalRatingsPollMs = seasonalRatingsPollMs;
 	}
 
 	final Set<RequestSubscriptionInternal> activeSubscriptions = new HashSet<>();
@@ -409,7 +412,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				objectMapper,
 				httpHeaders,
-				forecastRatingsPollMs,
+				seasonalRatingsPollMs,
 				receiver,
 				eTagStore,
 				monitoringSet);
