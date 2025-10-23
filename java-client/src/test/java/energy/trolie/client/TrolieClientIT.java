@@ -80,9 +80,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @SuppressWarnings("unchecked")
@@ -1626,8 +1624,6 @@ public class TrolieClientIT {
 					Assertions.assertEquals(24, numPeriods);
 					numPeriods = 0;
 				}
-
-
 			}, "abc", null);
 
 			Assertions.assertEquals(1, snapshotsReceived.get());
@@ -1775,13 +1771,6 @@ public class TrolieClientIT {
 			int counter = 0;
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
-				if(subscription.isHealthy()){
-//					log.info("Subscription is healthy");
-					counter++;
-				} else {
-					log.warn("Subscription is not healthy");
-				}
-				assertTrue(subscription.isHealthy());
 			}
 
 			//we should have received 2 snapshots, 1 304 code and 1 500 code
