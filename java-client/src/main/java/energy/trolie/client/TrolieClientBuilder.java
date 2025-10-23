@@ -7,7 +7,6 @@ import energy.trolie.client.impl.MemoryETagStore;
 import energy.trolie.client.impl.TrolieClientImpl;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -55,7 +54,6 @@ public class TrolieClientBuilder {
 	private int realTimeRatingsPollMs = 10000;
 	private int forecastRatingsPollMs = 30000;
 	private int monitoringSetPollMs = 60000;
-	private int seasonalRatingsPollMs = 30000;
 
 	/**
 	 * Initializes a new builder with a preconfigured apache HTTP client
@@ -181,18 +179,6 @@ public class TrolieClientBuilder {
 	}
 
 	/**
-	 * Sets the period at which
-	 * {@link TrolieClient#subscribeToInUseSeasonalSnapshotUpdates(SeasonalSnapshotSubscribedReceiver)}
-	 * and similar methods for forecast ratings poll for new ratings.  Defaults to 30 seconds
-	 * @param seasonalRatingsPollMs new poll periodicity in milliseconds
-	 * @return fluent builder
-	 */
-	public TrolieClientBuilder seasonalRatingsPollMs(int seasonalRatingsPollMs) {
-		this.seasonalRatingsPollMs = seasonalRatingsPollMs;
-		return this;
-	}
-
-	/**
 	 * Construct a new client
 	 * @return new client
 	 */
@@ -218,6 +204,6 @@ public class TrolieClientBuilder {
     	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize,
 				objectMapper, eTagStore, httpHeaders, periodLengthMinutes,
 				realTimeRatingsPollMs,
-				forecastRatingsPollMs, monitoringSetPollMs, seasonalRatingsPollMs);
+				forecastRatingsPollMs, monitoringSetPollMs);
     }
 }
