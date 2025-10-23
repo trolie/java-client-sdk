@@ -2,7 +2,10 @@ package energy.trolie.client;
 
 import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.*;
+import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import lombok.NonNull;
@@ -381,60 +384,6 @@ public interface TrolieClient extends Closeable {
      * @return stateful request.
      */
     RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate();
-
-    /**
-     * Execute a synchronous
-     * request for the current seasonal limits with a streaming response handler,
-     * assuming this user's default monitoring set.
-     *
-     * @param receiver Streaming data receiver for snapshot data
-     */
-    void getInUseSeasonalSnapshots(
-            SeasonalSnapshotReceiver receiver);
-
-    /**
-     * Execute a request for the current seasonal limits with a streaming response handler
-     * with the given monitoring set.
-     *
-     * @param receiver Streaming data receiver for snapshot data
-     * @param monitoringSet filter for monitoring set name
-     */
-    void getInUseSeasonalSnapshots(
-            SeasonalSnapshotReceiver receiver,
-            String monitoringSet);
-
-    /**
-     * Execute a request for the current seasonal limits with a streaming response handler
-     *
-     * @param receiver Streaming data receiver for snapshot data
-     * @param monitoringSet filter for monitoring set name
-     * @param resourceId Only return snapshots for this power system resource
-     */
-    void getInUseSeasonalSnapshots(
-            SeasonalSnapshotReceiver receiver,
-            String monitoringSet,
-            String resourceId
-    );
-
-    /**
-     * Create a polling subscription for seasonal limits data updates
-     *
-     * @param receiver Streaming data receiver for snapshot data
-     * @param monitoringSet filter for monitoring set name
-     * @return request handle
-     */
-    RequestSubscription subscribeToInUseSeasonalSnapshotUpdates(
-            SeasonalSnapshotSubscribedReceiver receiver,
-            String monitoringSet);
-
-    /**
-     * Create a polling subscription for seasonal snapshot data updates
-     *
-     * @param receiver Streaming data receiver for snapshot data
-     * @return request handle
-     */
-    RequestSubscription subscribeToInUseSeasonalSnapshotUpdates(
-            SeasonalSnapshotSubscribedReceiver receiver);
 
     /**
      * Un-subscribe an active polling request
