@@ -31,7 +31,7 @@ public class SeasonalSnapshotResponseParser {
 			
 			receiver.beginSnapshot();
 			
-			//START_OBJECT forecast
+			//START_OBJECT seasonal
 			parser.nextToken(); 
 			//FIELD_NAME snapshot-header
 			parser.nextToken();

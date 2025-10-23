@@ -22,7 +22,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 /**
- * {@link SnapshotHeader} for real-time rating snapshots
+ * {@link SnapshotHeader} for seasonal rating snapshots
  */
 @AllArgsConstructor
 @SuperBuilder

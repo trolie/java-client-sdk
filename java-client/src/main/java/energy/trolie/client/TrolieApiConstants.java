@@ -9,7 +9,7 @@ public class TrolieApiConstants {
 	}
 
 	/**
-	 * Path to <a href="https://trolie.energy/spec-1.0#tag/Seasonal/operation/getSeasonalRatingsSnapshot">getRealTimeLimits</a>
+	 * Path to <a href="https://trolie.energy/spec-1.0#tag/Seasonal/operation/getSeasonalRatingsSnapshot">getSeasonalRatings</a>
 	 */
 	public static final String PATH_SEASONAL_SNAPSHOT = "/seasonal-ratings/snapshot";
 

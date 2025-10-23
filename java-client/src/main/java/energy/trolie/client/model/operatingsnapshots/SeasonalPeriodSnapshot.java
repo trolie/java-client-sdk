@@ -25,7 +25,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * For a given resource, represents a rating value set for a given forecast period.
+ * For a given resource, represents a rating value set for a given season.
  */
 @ToString
 @AllArgsConstructor
