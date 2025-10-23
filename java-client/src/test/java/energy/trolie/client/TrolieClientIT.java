@@ -15,6 +15,8 @@ import energy.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
 import energy.trolie.client.model.operatingsnapshots.ForecastSnapshotHeader;
 import energy.trolie.client.model.operatingsnapshots.RealTimeLimit;
 import energy.trolie.client.model.operatingsnapshots.RealTimeSnapshotHeader;
+import energy.trolie.client.model.operatingsnapshots.SeasonalPeriodSnapshot;
+import energy.trolie.client.model.operatingsnapshots.SeasonalSnapshotHeader;
 import energy.trolie.client.model.ratingproposals.ForecastProposalHeader;
 import energy.trolie.client.model.ratingproposals.ForecastRatingPeriod;
 import energy.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
@@ -27,6 +29,8 @@ import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import lombok.extern.slf4j.Slf4j;
@@ -76,9 +80,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @SuppressWarnings("unchecked")
@@ -1518,6 +1520,265 @@ public class TrolieClientIT {
 		}
 	}
 
+	@Test
+	void testSeasonalSnapshotGet() throws Exception {
+
+		Instant startTime = Instant.now();
+		String season = "FALL";  // this should get automatically by date?
+
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				//we expect to get the monitoring set name as a query param
+				Assertions.assertEquals(
+						TrolieApiConstants.PARAM_MONITORING_SET + "=abc",
+						request.getUri().getQuery());
+
+				//on 1st and 3rd request, return a new snapshot to indicate an update
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+
+				response.setEntity(
+						new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_SEASONAL_SNAPSHOT))));
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+				threadPoolExecutor.submit(new Callable<Void>() {
+					@Override
+					public Void call() throws Exception {
+
+						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+
+							writeSeasonalSnapshot(json, startTime, season);
+
+							return null;
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw new RuntimeException(e);
+						}
+					}
+				});
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+
+			return response;
+		};
+
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build()).build();) {
+
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			//subscribe for snapshots and validate they are transmitted correctly
+			trolieClient.getInUseSeasonalSnapshots(new SeasonalSnapshotReceiver() {
+
+				int numResources;
+				int numPeriods;
+
+				@Override
+				public void header(SeasonalSnapshotHeader header) {
+					Assertions.assertNotNull(header);
+
+				}
+
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+				}
+
+
+				@Override
+				public void beginResource(String resourceId) {
+					numResources++;
+				}
+
+
+				@Override
+				public void period(SeasonalPeriodSnapshot period) {
+
+					Assertions.assertEquals( season, period.getSeasonName());
+					numPeriods++;
+				}
+
+
+				@Override
+				public void endResource() {
+					Assertions.assertEquals(24, numPeriods);
+					numPeriods = 0;
+				}
+			}, "abc", null);
+
+			Assertions.assertEquals(1, snapshotsReceived.get());
+			Assertions.assertEquals(0, errorCount.get());
+
+		}
+	}
+
+	@Test
+	void testSeasonalSnapshotSubscription() throws Exception {
+
+		//we will run the subscription for fixed number of requests
+		AtomicInteger requestCounter = new AtomicInteger(0);
+		Instant startTime = Instant.now();
+		String season = "FALL";
+		String etag = UUID.randomUUID().toString();
+
+		requestHandler = request -> {
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+
+				//we expect to get the configured monitoring set name as a query param
+				Assertions.assertEquals("monitoring-set=abc", request.getUri().getQuery());
+
+				Header requestEtag = request.getHeader(HttpHeaders.IF_NONE_MATCH);
+
+				//2nd+ request should have an etag header
+				if (requestCounter.get() > 0) {
+					Assertions.assertNotNull(requestEtag);
+					Assertions.assertEquals(etag, requestEtag.getValue());
+				}
+
+				if (requestCounter.get() == 3) {
+
+					//on 4th request return error to test error propagation to receiver
+					response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+
+				} else if (requestCounter.get() % 2 == 0) {
+
+					//on 1st and 3rd request, return a new snapshot to indicate an update
+					PipedOutputStream out = new PipedOutputStream();
+					PipedInputStream in = new PipedInputStream(out);
+
+					response.setHeader(HttpHeaders.ETAG, etag);
+					response.setEntity(
+							new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_SEASONAL_SNAPSHOT))));
+					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+					threadPoolExecutor.submit(new Callable<Void>() {
+						@Override
+						public Void call() throws Exception {
+
+							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+								writeSeasonalSnapshot(json, startTime, season );
+								return null;
+							} catch (Exception e) {
+								e.printStackTrace();
+								throw new RuntimeException(e);
+							}
+						}
+
+					});
+
+				} else {
+
+					//on 2nd request, indicate existing etag is valid to test that request is short-circuited
+					response.setCode(HttpStatus.SC_NOT_MODIFIED);
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			} finally {
+				requestCounter.incrementAndGet();
+			}
+
+			return response;
+		};
+
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri,builder.build())
+				.seasonalRatingsPollMs(200)
+				.build();) {
+
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			//subscribe for snapshots and validate they are transmitted correctly
+			var subscription = trolieClient.subscribeToInUseSeasonalSnapshotUpdates(new SeasonalSnapshotSubscribedReceiver() {
+
+				RequestSubscription subscription;
+				int numResources;
+				int numPeriods;
+
+				@Override
+				public void period(SeasonalPeriodSnapshot period) {
+					numPeriods++;
+					Assertions.assertEquals(season, period.getSeasonName());
+
+				}
+
+				@Override
+				public void header(SeasonalSnapshotHeader header) {
+
+					Assertions.assertNotNull(header);
+				}
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void endResource() {
+					Assertions.assertEquals(24, numPeriods);
+					numPeriods = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void beginResource(String resourceId) {
+					numResources++;
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+					((RequestSubscriptionInternal)subscription).stop();
+				}
+
+				@Override
+				public void setSubscription(RequestSubscription subscription) {
+					this.subscription = subscription;
+				}
+
+
+			}, "abc");
+			int counter = 0;
+			while (subscription.isSubscribed()) {
+				Thread.sleep(100);
+			}
+
+			//we should have received 2 snapshots, 1 304 code and 1 500 code
+			Assertions.assertEquals(2, snapshotsReceived.get());
+			Assertions.assertEquals(1, errorCount.get());
+		}
+	}
+
 	private void writeMonitoringSet(JsonGenerator json, String id) throws IOException {
 		var source = DataProvenance.builder().provider(id).lastUpdated(
 				Instant.now()).originId(id).build();
@@ -1594,4 +1855,42 @@ public class TrolieClientIT {
 		json.writeEndArray();
 		json.writeEndObject();
 	}
+
+	private void writeSeasonalSnapshot(JsonGenerator json, Instant startTime, String season) throws IOException {
+
+		SeasonalSnapshotHeader header = new SeasonalSnapshotHeader();
+
+		json.writeStartObject();
+
+		json.writeFieldName("snapshot-header");
+		json.writeObject(header);
+
+		json.writeFieldName("ratings");
+		json.writeStartArray();
+
+		for (int i=0;i<100;i++) {
+			json.writeStartObject();
+			json.writeFieldName("resource-id");
+			json.writeString("resource" + i);
+			json.writeFieldName("periods");
+			json.writeStartArray();
+			for (int j=0;j<24;j++) {
+				SeasonalPeriodSnapshot period = new SeasonalPeriodSnapshot(
+						startTime,
+						startTime,
+						season,
+						RatingValue.fromMva(100f),
+						Collections.emptyList()
+				);
+				json.writeObject(period);
+			}
+			json.writeEndArray();
+			json.writeEndObject();
+		}
+
+		json.writeEndArray();
+		json.writeEndObject();
+
+	}
+
 }
