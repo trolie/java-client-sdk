@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Implementation for parsing a real-time snapshot response shared between subscribed and on-demand requests
+ * Implementation for parsing a seasonal snapshot response shared between subscribed and on-demand requests
  */
 @AllArgsConstructor
 public class SeasonalSnapshotResponseParser {

@@ -80,7 +80,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @SuppressWarnings("unchecked")
@@ -1524,7 +1526,7 @@ public class TrolieClientIT {
 	void testSeasonalSnapshotGet() throws Exception {
 
 		Instant startTime = Instant.now();
-		String season = "FALL";  // this should get automatically by date?
+		String season = "FALL";
 
 		requestHandler = request -> {
 

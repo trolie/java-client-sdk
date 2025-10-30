@@ -2,7 +2,12 @@ package energy.trolie.client;
 
 import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.*;
+import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import lombok.NonNull;
