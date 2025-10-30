@@ -18,12 +18,16 @@ import energy.trolie.client.impl.request.operatingsnapshots.RegionalForecastSnap
 import energy.trolie.client.impl.request.operatingsnapshots.RegionalForecastSubscribedSnapshotRequest;
 import energy.trolie.client.impl.request.operatingsnapshots.RegionalRealTimeSnapshotRequest;
 import energy.trolie.client.impl.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
+import energy.trolie.client.impl.request.operatingsnapshots.SeasonalSnapshotRequest;
+import energy.trolie.client.impl.request.operatingsnapshots.SeasonalSnapshotSubscribedRequest;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotReceiver;
+import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -54,13 +58,15 @@ public class TrolieClientImpl implements TrolieClient {
 	private final int realTimeRatingsPollMs;
 	private final int forecastRatingsPollMs;
 	private final int monitoringSetPollMs;
+	private final int seasonalRatingsPollMs;
 
 	public TrolieClientImpl(CloseableHttpClient httpClient, TrolieHost host, RequestConfig requestConfig, int bufferSize,
 							ObjectMapper objectMapper, ETagStore eTagStore, Map<String, String> httpHeaders,
 							int defaultIntervalMinutes,
 							int realTimeRatingsPollMs,
 							int forecastRatingsPollMs,
-							int monitoringSetPollMs) {
+							int monitoringSetPollMs,
+							int seasonalRatingsPollMs) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -73,6 +79,7 @@ public class TrolieClientImpl implements TrolieClient {
 		this.realTimeRatingsPollMs = realTimeRatingsPollMs;
 		this.forecastRatingsPollMs = forecastRatingsPollMs;
 		this.monitoringSetPollMs = monitoringSetPollMs;
+		this.seasonalRatingsPollMs = seasonalRatingsPollMs;
 	}
 
 	final Set<RequestSubscriptionInternal> activeSubscriptions = new HashSet<>();
@@ -372,6 +379,63 @@ public class TrolieClientImpl implements TrolieClient {
 		addSubscription(subscription);
 		return subscription;
 	}
+
+	@Override
+	public void getInUseSeasonalSnapshots(SeasonalSnapshotReceiver receiver) {
+		getInUseSeasonalSnapshots(receiver, null, null);
+	}
+
+	@Override
+	public void getInUseSeasonalSnapshots(SeasonalSnapshotReceiver receiver, String monitoringSet) {
+		getInUseSeasonalSnapshots(receiver, monitoringSet, null);
+	}
+
+	@Override
+	public void getInUseSeasonalSnapshots(
+			SeasonalSnapshotReceiver receiver,
+			String monitoringSet,
+			String resourceId) {
+
+		new SeasonalSnapshotRequest(
+				httpClient,
+				host,
+				requestConfig,
+				bufferSize,
+				objectMapper,
+				httpHeaders,
+				receiver,
+				monitoringSet,
+				resourceId).executeRequest();
+	}
+
+	@Override
+	public SeasonalSnapshotSubscribedRequest subscribeToInUseSeasonalSnapshotUpdates(
+			SeasonalSnapshotSubscribedReceiver receiver) {
+		return subscribeToInUseSeasonalSnapshotUpdates(receiver, null);
+	}
+
+	@Override
+	public SeasonalSnapshotSubscribedRequest subscribeToInUseSeasonalSnapshotUpdates(
+			SeasonalSnapshotSubscribedReceiver receiver,
+			String monitoringSet) {
+
+		SeasonalSnapshotSubscribedRequest subscription = new SeasonalSnapshotSubscribedRequest(
+				httpClient,
+				host,
+				requestConfig,
+				bufferSize,
+				objectMapper,
+				httpHeaders,
+				seasonalRatingsPollMs,
+				receiver,
+				eTagStore,
+				monitoringSet);
+
+		addSubscription(subscription);
+		return subscription;
+
+	}
+
 
 	@Override
 	public void close() throws IOException {
