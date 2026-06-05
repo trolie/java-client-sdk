@@ -1,6 +1,7 @@
 package energy.trolie.client.impl.request.monitoringsets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
 import energy.trolie.client.impl.request.AbstractStreamingGet;
@@ -12,6 +13,7 @@ import org.apache.hc.core5.net.URIBuilder;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,10 +30,11 @@ public class MonitoringSetsRequest extends AbstractStreamingGet<MonitoringSetsRe
 			int bufferSize, 
 			ObjectMapper objectMapper,
 			Map<String, String> httpHeaders,
+			List<RequestHeaderProvider> providers,
 			MonitoringSetsReceiver receiver,
 			String monitoringSet) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, receiver);
 
 		if (monitoringSet == null || monitoringSet.isBlank()) {
 			throw new IllegalArgumentException("Monitoring set name cannot be null or blank");

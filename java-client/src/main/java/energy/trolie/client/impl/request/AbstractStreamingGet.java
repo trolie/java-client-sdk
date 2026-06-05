@@ -2,9 +2,11 @@ package energy.trolie.client.impl.request;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.StreamingResponseReceiver;
 import energy.trolie.client.StreamingSubscribedResponseReceiver;
 import energy.trolie.client.TrolieHost;
+import energy.trolie.client.TrolieRequestContext;
 import energy.trolie.client.exception.StreamingGetConnectionException;
 import energy.trolie.client.exception.StreamingGetException;
 import energy.trolie.client.exception.StreamingGetResponseException;
@@ -23,6 +25,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -45,6 +49,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	int bufferSize;
 	ThreadPoolExecutor threadPoolExecutor;
 	Map<String, String> httpHeaders;
+	List<RequestHeaderProvider> providers;
 	protected boolean lastRequestFailed = false;
 
 	protected JsonFactory jsonFactory;
@@ -73,6 +78,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			int bufferSize, 
 			ObjectMapper objectMapper,
 			Map<String, String> httpHeaders,
+			List<RequestHeaderProvider> providers,
 			T receiver) {
 		super();
 		this.httpClient = httpClient;
@@ -84,6 +90,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,10,
 				TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 		this.httpHeaders = httpHeaders;
+		this.providers = providers;
 	}
 	
 	protected HttpClientResponseHandler<Void> createResponseHandler() {
@@ -125,12 +132,32 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 
 		return false;
 	}
+
+	protected void applyRequestHeaderProviders(HttpGet request) throws URISyntaxException {
+        TrolieRequestContext context = new TrolieRequestContext(request.getMethod(),
+																request.getUri(),
+																getContentType());
+        var mergedHeaders = new LinkedHashMap<String, String>();
+		if (httpHeaders != null) {
+			mergedHeaders.putAll(httpHeaders);
+		}
+
+		for (var provider : providers) {
+			mergedHeaders.putAll(provider.headersFor(context));
+		}
+
+		mergedHeaders.forEach(request::setHeader);
+	}
 	
 	protected HttpGet createRequest() throws URISyntaxException {
 		HttpGet get = new HttpGet(getFullPath());
 		get.addHeader(HttpHeaders.ACCEPT, getContentType());
 		if (httpHeaders !=  null && !httpHeaders.isEmpty()) {
 			httpHeaders.forEach(get::addHeader);
+		}
+
+		if (providers != null && !providers.isEmpty()) {
+			applyRequestHeaderProviders(get);
 		}
 		
 		get.setConfig(requestConfig);

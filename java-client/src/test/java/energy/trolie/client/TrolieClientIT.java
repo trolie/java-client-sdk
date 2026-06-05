@@ -49,6 +49,7 @@ import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpRequestInterceptor;
 import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.ProtocolException;
 import org.apache.hc.core5.http.impl.bootstrap.HttpServer;
 import org.apache.hc.core5.http.impl.io.DefaultBHttpServerConnectionFactory;
 import org.apache.hc.core5.http.impl.io.HttpService;
@@ -56,6 +57,7 @@ import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpResponse;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.hc.core5.http.protocol.DefaultHttpProcessor;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -1778,6 +1780,53 @@ public class TrolieClientIT {
 			//we should have received 2 snapshots, 1 304 code and 1 500 code
 			Assertions.assertEquals(2, snapshotsReceived.get());
 			Assertions.assertEquals(1, errorCount.get());
+		}
+	}
+
+	@Test
+	void testDynamicRequestHeaderProvider() throws IOException {
+		String expectedHeaderName = "X-TROLIE-Auth";
+		String expectedHeaderValue = "dynamic-token-123";
+
+		// Setup the request handler to verify the header exists
+		requestHandler = request -> {
+            try {
+                Assertions.assertNotNull(request.getHeader(expectedHeaderName), "Header should be present");
+            } catch (ProtocolException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                Assertions.assertEquals(expectedHeaderValue, request.getHeader(expectedHeaderName).getValue());
+            } catch (ProtocolException e) {
+                throw new RuntimeException(e);
+            }
+
+            BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			ForecastRatingProposalStatus status = ForecastRatingProposalStatus.builder().build();
+			try {
+				String jsonResponse = objectMapper.writeValueAsString(status);
+				response.setEntity(new StringEntity(jsonResponse, ContentType.APPLICATION_JSON));
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+
+			return response;
+		};
+
+		// Configure the client to use the new provider
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		RequestHeaderProvider headerProvider = (context) -> Map.of(expectedHeaderName, expectedHeaderValue);
+
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri + "/test-path", builder.build())
+				.addRequestHeaderProvider( headerProvider)
+				.build()) {
+
+			//Perform a request that triggers the header provider
+			try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
+				update.begin(ForecastProposalHeader.builder().begins(Instant.now()).build());
+				update.complete();
+			}
 		}
 	}
 

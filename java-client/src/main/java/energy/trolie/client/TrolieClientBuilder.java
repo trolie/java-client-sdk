@@ -13,7 +13,9 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,6 +52,7 @@ public class TrolieClientBuilder {
 	private ObjectMapper objectMapper;
 	private ETagStore eTagStore;
 	private Map<String, String> httpHeaders = new HashMap<>();
+	private final List<RequestHeaderProvider> providers = new ArrayList<>();
 	private int periodLengthMinutes = 60;
 
 	private int realTimeRatingsPollMs = 10000;
@@ -135,6 +138,33 @@ public class TrolieClientBuilder {
 	}
 
 	/**
+	 * Adds a request header provider that can generate additional headers for each request execution.
+	 * Providers are invoked when a request is built, and their output is not cached across retries
+	 * or repeated executions.
+	 *
+	 * @param provider provider used to generate request-specific headers
+	 * @return fluent builder
+	 */
+	public TrolieClientBuilder addRequestHeaderProvider(RequestHeaderProvider provider) {
+		this.providers.add(provider);
+		return this;
+	}
+
+	/**
+	 * Replaces the current set of request header providers with the given list.
+	 * Providers are invoked when a request is built, and their output is not cached across retries
+	 * or repeated executions.
+	 *
+	 * @param providers list of providers used to generate request-specific headers
+	 * @return fluent builder
+	 */
+	public TrolieClientBuilder requestHeaderProviders(List<RequestHeaderProvider> providers) {
+		this.providers.clear();
+		this.providers.addAll(providers);
+		return this;
+	}
+
+	/**
 	 * Sets the period length assumed for forecast ratings.  Defaults to 60 minutes.
 	 * @param periodLengthMinutes new assumed period length.
 	 * @return fluent builder
@@ -216,7 +246,7 @@ public class TrolieClientBuilder {
 		}
 
     	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize,
-				objectMapper, eTagStore, httpHeaders, periodLengthMinutes,
+				objectMapper, eTagStore, httpHeaders, providers, periodLengthMinutes,
 				realTimeRatingsPollMs,
 				forecastRatingsPollMs, monitoringSetPollMs, seasonalRatingsPollMs);
     }

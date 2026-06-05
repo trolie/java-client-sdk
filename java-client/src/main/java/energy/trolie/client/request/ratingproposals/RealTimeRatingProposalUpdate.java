@@ -2,6 +2,7 @@ package energy.trolie.client.request.ratingproposals;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
 import energy.trolie.client.exception.TrolieException;
@@ -18,6 +19,7 @@ import org.apache.hc.core5.http.HttpEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -42,10 +44,11 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 	 * @param bufferSize internal buffer size
 	 * @param objectMapper Jackson object mapper
 	 * @param httpHeader mapped header list
+	 * @param providers header providers
 	 */
 	public RealTimeRatingProposalUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
-										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeader);
+                                        int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader, List<RequestHeaderProvider> providers) {
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeader, providers);
 	}
 
 	private enum Scope {

@@ -2,6 +2,7 @@ package energy.trolie.client.impl.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.ETagStore;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.StreamingSubscribedResponseReceiver;
 import energy.trolie.client.TrolieHost;
 import energy.trolie.client.exception.StreamingGetHandlingException;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -49,10 +51,11 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 			int bufferSize, 
 			ObjectMapper objectMapper,
 			Map<String, String> httpHeaders,
+			List<RequestHeaderProvider> providers,
 			int pollingRateMillis,
 			T receiver,
 			ETagStore eTagStore) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, receiver);
 		this.pollingRateMillis = pollingRateMillis;
 		this.eTagStore = eTagStore;
 	}

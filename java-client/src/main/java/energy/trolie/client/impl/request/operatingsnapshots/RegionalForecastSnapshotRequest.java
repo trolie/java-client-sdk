@@ -1,6 +1,7 @@
 package energy.trolie.client.impl.request.operatingsnapshots;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
@@ -8,6 +9,7 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,13 +24,14 @@ public class RegionalForecastSnapshotRequest extends ForecastSnapshotRequest {
 			int bufferSize, 
 			ObjectMapper objectMapper,
 			Map<String, String> httpHeaders,
+			List<RequestHeaderProvider> providers,
 			ForecastSnapshotReceiver receiver,
 			String monitoringSet,
 			String resourceId,
 			Instant offsetPeriodStart,
 			Instant periodEnd) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver,
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, receiver,
 				monitoringSet, resourceId, offsetPeriodStart, periodEnd);
 	}
 

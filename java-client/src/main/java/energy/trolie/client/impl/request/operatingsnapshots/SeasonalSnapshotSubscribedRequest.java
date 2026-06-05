@@ -2,6 +2,7 @@ package energy.trolie.client.impl.request.operatingsnapshots;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.ETagStore;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
 import energy.trolie.client.impl.request.AbstractStreamingSubscribedGet;
@@ -13,6 +14,7 @@ import org.apache.hc.core5.net.URIBuilder;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,12 +31,13 @@ public class SeasonalSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 			int bufferSize, 
 			ObjectMapper objectMapper,
 			Map<String, String> httpHeaders,
+			List<RequestHeaderProvider> providers,
 			int pollingRateMillis,
 			SeasonalSnapshotSubscribedReceiver receiver,
 			ETagStore eTagStore,
 			String monitoringSet) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, pollingRateMillis,
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, pollingRateMillis,
 				receiver, eTagStore);
 		this.monitoringSet = monitoringSet;
 	}

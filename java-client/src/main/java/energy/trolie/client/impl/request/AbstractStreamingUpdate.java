@@ -1,8 +1,10 @@
 package energy.trolie.client.impl.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.StreamingUpdate;
 import energy.trolie.client.TrolieHost;
+import energy.trolie.client.TrolieRequestContext;
 import energy.trolie.client.exception.TrolieException;
 import energy.trolie.client.exception.TrolieServerException;
 import lombok.AllArgsConstructor;
@@ -23,6 +25,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.URISyntaxException;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -50,9 +55,10 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 	Future<T> responseFuture;
 
 	Map<String, String> httpHeaders;
+	List<RequestHeaderProvider> providers;
 
 	protected AbstractStreamingUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
-									  int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders) {
+                                      int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders, List<RequestHeaderProvider> providers) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -62,6 +68,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		this.bufferSize = bufferSize;
 		this.objectMapper = objectMapper;
 		this.httpHeaders = httpHeaders;
+		this.providers = providers;
 	}
 
 	/**
@@ -122,9 +129,9 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 	 * initiate the request and pipe an output stream to the request entity
 	 * 
 	 * @return
-	 * @throws IOException
+	 * @throws IOException URISyntaxException
      */
-	protected OutputStream createRequestOutputStream() throws IOException {
+	protected OutputStream createRequestOutputStream() throws IOException, URISyntaxException {
 
 		//they probably already set these parameters, but may as well make sure
 		HttpUriRequestBase request = getRequest();
@@ -135,6 +142,10 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		request.setPath(getFullPath());
 		
 		request.setConfig(this.requestConfig);
+
+		if (providers != null && !providers.isEmpty()) {
+			applyRequestHeaderProviders(request);
+		}
 
 		//create a request entity we can write into from a stream
 		PipedOutputStream pipedOutputStream = new PipedOutputStream();
@@ -150,6 +161,27 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		responseFuture = threadPoolExecutor.submit(new RequestExecutor(request));
 
 		return outputStream;
+	}
+
+	protected void applyRequestHeaderProviders(HttpUriRequestBase request) throws URISyntaxException {
+		var context = new TrolieRequestContext(
+				request.getMethod(),
+				request.getUri(),
+				request.getFirstHeader(HttpHeaders.CONTENT_TYPE) != null
+						? request.getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue()
+						: null
+		);
+
+		var mergedHeaders = new LinkedHashMap<String, String>();
+		if (httpHeaders != null) {
+			mergedHeaders.putAll(httpHeaders);
+		}
+
+		for (var provider : providers) {
+			mergedHeaders.putAll(provider.headersFor(context));
+		}
+
+		mergedHeaders.forEach(request::setHeader);
 	}
 
 	/**

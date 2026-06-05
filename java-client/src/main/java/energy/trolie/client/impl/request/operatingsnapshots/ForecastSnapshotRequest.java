@@ -1,6 +1,7 @@
 package energy.trolie.client.impl.request.operatingsnapshots;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
 import energy.trolie.client.impl.request.AbstractStreamingGet;
@@ -13,6 +14,7 @@ import org.apache.hc.core5.net.URIBuilder;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,13 +34,14 @@ public class ForecastSnapshotRequest extends AbstractStreamingGet<ForecastSnapsh
 			int bufferSize, 
 			ObjectMapper objectMapper,
 			Map<String, String> httpHeaders,
+			List<RequestHeaderProvider> providers,
 			ForecastSnapshotReceiver receiver,
 			String monitoringSet,
 			String resourceId,
 			Instant offsetPeriodStart,
 			Instant periodEnd) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver);
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, receiver);
 		this.monitoringSet = monitoringSet;
 		this.resourceId = resourceId;
 		this.offsetPeriodStart = offsetPeriodStart;
