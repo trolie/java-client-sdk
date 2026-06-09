@@ -134,9 +134,10 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	}
 
 	protected void applyRequestHeaderProviders(HttpGet request) throws URISyntaxException {
-        TrolieRequestContext context = new TrolieRequestContext(request.getMethod(),
+
+		TrolieRequestContext context = new TrolieRequestContext(request.getMethod(),
 																request.getUri(),
-																getContentType());
+																null);
         var mergedHeaders = new LinkedHashMap<String, String>();
 		if (httpHeaders != null) {
 			mergedHeaders.putAll(httpHeaders);
@@ -156,10 +157,6 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			httpHeaders.forEach(get::addHeader);
 		}
 
-		if (providers != null && !providers.isEmpty()) {
-			applyRequestHeaderProviders(get);
-		}
-		
 		get.setConfig(requestConfig);
 		return get;
 	}
@@ -168,6 +165,9 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		try {
 			lastRequestFailed = false;
 			HttpGet get = createRequest();
+			if (providers != null && !providers.isEmpty()) {
+				applyRequestHeaderProviders(get);
+			}
 			httpClient.execute(host.getHost(), get, createResponseHandler());
 		
 		} catch (IOException e) {
