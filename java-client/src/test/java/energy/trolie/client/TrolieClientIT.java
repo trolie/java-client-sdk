@@ -1943,4 +1943,293 @@ public class TrolieClientIT {
 
 	}
 
+	@Test
+	void testRequestHeaderProviderOnParameterizedGet() throws Exception {
+		// Verify that the RequestHeaderProvider is invoked on the GET path,
+		// that context.uri().getQuery() is non-null and contains the expected
+		// query parameters, and that context.contentType() is null for GETs.
+
+		Instant startTime = Instant.now();
+		String startTimeString = startTime.toString();
+
+		requestHandler = request -> {
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+			try {
+				PipedOutputStream out = new PipedOutputStream();
+				PipedInputStream in = new PipedInputStream(out);
+				response.setEntity(new GzipCompressingEntity(new InputStreamEntity(in,
+						ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
+				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+				threadPoolExecutor.submit((Callable<Void>) () -> {
+					try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+						writeForecastSnapshot(json, startTime);
+						return null;
+					}
+				});
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			}
+			return response;
+		};
+
+		AtomicInteger providerInvocationCount = new AtomicInteger(0);
+		// Captured context fields
+		String[] capturedQuery = {null};
+		String[] capturedMethod = {null};
+		String[] capturedContentType = {"NOT_SET"};
+
+		RequestHeaderProvider provider = context -> {
+			providerInvocationCount.incrementAndGet();
+			capturedMethod[0] = context.method();
+			capturedQuery[0] = context.uri().getQuery();
+			capturedContentType[0] = context.contentType();
+			return Map.of();
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build())
+				.addRequestHeaderProvider(provider)
+				.build()) {
+
+			trolieClient.getInUseLimitForecasts(new ForecastSnapshotReceiver() {
+				@Override public void header(ForecastSnapshotHeader header) {}
+				@Override public void beginSnapshot() {}
+				@Override public void endSnapshot() {}
+				@Override public void beginResource(String resourceId) {}
+				@Override public void period(ForecastPeriodSnapshot period) {}
+				@Override public void endResource() {}
+				@Override public void error(StreamingGetException t) {}
+			}, "abc", null, startTime, startTime);
+		}
+
+		// Provider must have been called exactly once for the single GET
+		Assertions.assertEquals(1, providerInvocationCount.get(),
+				"Provider should be invoked once for the GET request");
+
+		// Method must be GET
+		Assertions.assertEquals("GET", capturedMethod[0]);
+
+		// Query must be non-null and contain the expected parameters
+		Assertions.assertNotNull(capturedQuery[0],
+				"context.uri().getQuery() must not be null for a parameterized GET");
+		Assertions.assertTrue(capturedQuery[0].contains(TrolieApiConstants.PARAM_MONITORING_SET + "=abc"),
+				"Query should contain monitoring-set param");
+		Assertions.assertTrue(capturedQuery[0].contains(TrolieApiConstants.PARAM_OFFSET_PERIOD_START + "=" + startTimeString),
+				"Query should contain offset-period-start param");
+		Assertions.assertTrue(capturedQuery[0].contains(TrolieApiConstants.PARAM_PERIOD_END + "=" + startTimeString),
+				"Query should contain period-end param");
+
+		// contentType must be null for a GET (no request body)
+		Assertions.assertNull(capturedContentType[0],
+				"context.contentType() must be null for GET requests");
+	}
+
+	@Test
+	void testMultipleProvidersAndStaticHeaderPrecedence() throws IOException {
+		// Validates the documented merge order:
+		//   static httpHeaders  →  provider1  →  provider2  (later values overwrite earlier ones)
+		//
+		// Setup:
+		//   X-Static   set by static headers ("static-value")
+		//              then overwritten by provider1 ("provider1-value")
+		//   X-P1-Only  set only by provider1 ("p1-only")
+		//              then overwritten by provider2 ("provider2-wins")
+		//   X-P2-Only  set only by provider2 ("p2-only")
+		//
+		// Expected on the server:
+		//   X-Static   = "provider1-value"   (provider1 overwrites static)
+		//   X-P1-Only  = "provider2-wins"    (provider2 overwrites provider1)
+		//   X-P2-Only  = "p2-only"           (only provider2 touches this key)
+
+		requestHandler = request -> {
+			try {
+				Assertions.assertEquals("provider1-value",
+						request.getHeader("X-Static").getValue(),
+						"provider1 must overwrite the static header value");
+				Assertions.assertEquals("provider2-wins",
+						request.getHeader("X-P1-Only").getValue(),
+						"provider2 must overwrite provider1 for the same key");
+				Assertions.assertEquals("p2-only",
+						request.getHeader("X-P2-Only").getValue(),
+						"provider2-only header must be present");
+			} catch (ProtocolException e) {
+				throw new RuntimeException(e);
+			}
+
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+			try {
+				response.setEntity(new StringEntity(
+						objectMapper.writeValueAsString(ForecastRatingProposalStatus.builder().build()),
+						ContentType.APPLICATION_JSON));
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+			return response;
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri + "/test-path", builder.build())
+				.httpHeaders(Map.of("X-Static", "static-value"))
+				.addRequestHeaderProvider(ctx -> Map.of(
+						"X-Static",  "provider1-value",   // overwrites static
+						"X-P1-Only", "p1-only"))
+				.addRequestHeaderProvider(ctx -> Map.of(
+						"X-P1-Only", "provider2-wins",    // overwrites provider1
+						"X-P2-Only", "p2-only"))
+				.build()) {
+
+			try (ForecastRatingProposalUpdate update = trolieClient.createForecastRatingProposalStreamingUpdate()) {
+				update.begin(ForecastProposalHeader.builder().begins(Instant.now()).build());
+				update.complete();
+			}
+		}
+	}
+
+	@Test
+	void testProviderReInvocationOnSubscribedGetPolls() throws Exception {
+		// Test that verifies providers are re-called on repeated poll cycles.
+		// This validates that for subscribed-GET requests, the RequestHeaderProvider
+		// is invoked fresh on each poll cycle, ensuring dynamic content (e.g., auth tokens, nonces)
+		// is regenerated for every request.
+
+		AtomicInteger requestCounter = new AtomicInteger(0);
+		AtomicInteger providerInvocationCount = new AtomicInteger(0);
+		String etag = UUID.randomUUID().toString();
+		Instant startTime = Instant.now();
+
+		requestHandler = request -> {
+			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+
+			try {
+				// Verify that the request has the expected header from the provider
+				Header dynamicHeader = request.getHeader("X-Provider-Test");
+				Assertions.assertNotNull(dynamicHeader, "Provider header should be present on every request");
+				Assertions.assertEquals("provider-invocation-" + requestCounter.get(), dynamicHeader.getValue());
+
+				if (requestCounter.get() == 0) {
+					// First poll: return forecast snapshot with etag
+					PipedOutputStream out = new PipedOutputStream();
+					PipedInputStream in = new PipedInputStream(out);
+
+					response.setHeader(HttpHeaders.ETAG, etag);
+					response.setEntity(
+							new GzipCompressingEntity(new InputStreamEntity(in, ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
+					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+					threadPoolExecutor.submit(new Callable<Void>() {
+						@Override
+						public Void call() throws Exception {
+							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+								writeForecastSnapshot(json, startTime);
+								return null;
+							} catch (Exception e) {
+								e.printStackTrace();
+								throw new RuntimeException(e);
+							}
+						}
+					});
+				} else if (requestCounter.get() == 1) {
+					// Second poll: return 304 Not Modified (provider should still be called)
+					response.setCode(HttpStatus.SC_NOT_MODIFIED);
+				}
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.setCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			} finally {
+				requestCounter.incrementAndGet();
+			}
+
+			return response;
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build())
+				.forecastRatingsPollMs(200)
+				.addRequestHeaderProvider(context -> {
+					// Increment provider invocation counter
+					int invocationNumber = providerInvocationCount.getAndIncrement();
+					log.info("Provider invoked for poll cycle {}", invocationNumber);
+					// Return headers that include the invocation number for verification
+					return Map.of("X-Provider-Test", "provider-invocation-" + requestCounter.get());
+				})
+				.build()) {
+
+			AtomicInteger snapshotsReceived = new AtomicInteger(0);
+			AtomicInteger errorCount = new AtomicInteger(0);
+
+			// Subscribe and run for two poll cycles
+			var subscription = trolieClient.subscribeToInUseLimitForecastUpdates(new ForecastSnapshotSubscribedReceiver() {
+
+				RequestSubscription subscription;
+				int numResources;
+				int numPeriods;
+
+				@Override
+				public void period(ForecastPeriodSnapshot period) {
+					numPeriods++;
+				}
+
+				@Override
+				public void header(ForecastSnapshotHeader header) {
+					Assertions.assertEquals(startTime, header.getBegins());
+				}
+
+				@Override
+				public void endSnapshot() {
+					Assertions.assertEquals(100, numResources);
+					numResources = 0;
+				}
+
+				@Override
+				public void endResource() {
+					Assertions.assertEquals(24, numPeriods);
+					numPeriods = 0;
+				}
+
+				@Override
+				public void beginSnapshot() {
+					snapshotsReceived.incrementAndGet();
+				}
+
+				@Override
+				public void beginResource(String resourceId) {
+					numResources++;
+				}
+
+				@Override
+				public void error(StreamingGetException t) {
+					errorCount.incrementAndGet();
+					((RequestSubscriptionInternal)subscription).stop();
+				}
+
+				@Override
+				public void setSubscription(RequestSubscription subscription) {
+					this.subscription = subscription;
+				}
+
+			}, "abc");
+
+			// Wait for two poll cycles to complete
+			// First request sends data, second request gets 304 Not Modified
+			int waitCycles = 0;
+			while (subscription.isSubscribed() && waitCycles < 20) {
+				Thread.sleep(100);
+				waitCycles++;
+				if (requestCounter.get() >= 2) {
+					((RequestSubscriptionInternal) subscription).stop();
+					break;
+				}
+			}
+
+			// Verify the provider was invoked on each poll cycle
+			Assertions.assertEquals(2, providerInvocationCount.get(),
+					"Provider should be invoked exactly twice (once per poll cycle)");
+			Assertions.assertEquals(1, snapshotsReceived.get(),
+					"Should have received one snapshot on first poll");
+			Assertions.assertEquals(0, errorCount.get(),
+					"Should have no errors during subscription");
+		}
+	}
+
 }
