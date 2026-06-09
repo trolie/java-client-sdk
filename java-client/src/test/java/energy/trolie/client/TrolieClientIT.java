@@ -1999,8 +1999,7 @@ public class TrolieClientIT {
 				@Override public void beginResource(String resourceId) {}
 				@Override public void period(ForecastPeriodSnapshot period) {}
 				@Override public void endResource() {}
-				@Override public void error(StreamingGetException t) {}
-			}, "abc", null, startTime, startTime);
+            }, "abc", null, startTime, startTime);
 		}
 
 		// Provider must have been called exactly once for the single GET
