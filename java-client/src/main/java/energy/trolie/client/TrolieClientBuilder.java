@@ -139,8 +139,13 @@ public class TrolieClientBuilder {
 
 	/**
 	 * Adds a request header provider that can generate additional headers for each request execution.
-	 * Providers are invoked when a request is built, and their output is not cached across retries
-	 * or repeated executions.
+	 * Providers are invoked during the initial request construction.
+	 *
+	 * <p><strong>Note:</strong> If the underlying {@code HttpClient} is configured with
+	 * automatic retries, the same request object (and its headers) may be sent multiple times.
+	 * To ensure security-sensitive headers like nonces are regenerated, users should ensure
+	 * that automatic retries are disabled or that the client is configured to rebuild
+	 * requests on retry.</p>
 	 *
 	 * @param provider provider used to generate request-specific headers
 	 * @return fluent builder
@@ -152,8 +157,13 @@ public class TrolieClientBuilder {
 
 	/**
 	 * Replaces the current set of request header providers with the given list.
-	 * Providers are invoked when a request is built, and their output is not cached across retries
-	 * or repeated executions.
+	 * Providers are invoked during the initial request construction.
+	 *
+	 * <p><strong>Note:</strong> If the underlying {@code HttpClient} is configured with
+	 * automatic retries, the request (including these headers) may be reused across
+	 * multiple attempts. To guarantee fresh header values (e.g., new nonces) on retry,
+	 * implementers must ensure that automatic transport-level retries are disabled or
+	 * that the client is configured to rebuild requests on retry.</p>
 	 *
 	 * @param providers list of providers used to generate request-specific headers
 	 * @return fluent builder
