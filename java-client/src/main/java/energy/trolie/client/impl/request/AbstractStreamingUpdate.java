@@ -15,6 +15,7 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.entity.GzipCompressingEntity;
 import org.apache.hc.client5.http.impl.classic.AbstractHttpClientResponseHandler;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
@@ -163,13 +164,41 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		return outputStream;
 	}
 
+	/**
+	 * Determines the Content-Type for the request context.
+	 * <p>
+	 * This method prioritizes any existing Content-Type header already set on the request.
+	 * If none is found, it falls back to the {@link #getContentType()} provided by this instance.
+	 *
+	 * @param request the current HTTP request
+	 * @return the Content-Type as a string, or {@code null} if none is defined
+	 */
+	private String determineContentType(HttpUriRequestBase request) {
+		Header header = request.getFirstHeader(HttpHeaders.CONTENT_TYPE);
+		if (header != null) {
+			return header.getValue();
+		}
+
+		return getContentType() != null ? getContentType().toString() : null;
+	}
+
+	/**
+	 * Applies headers from all registered providers to the given request.
+	 * <p>
+	 * This method builds a {@link TrolieRequestContext} based on the request's current state,
+	 * allowing providers to inspect the request and contribute necessary headers.
+	 * The resulting headers are then merged and applied to the request instance.
+	 *
+	 * @param request the HTTP request to which headers will be applied
+	 * @throws URISyntaxException if the request URI cannot be parsed
+	 */
 	protected void applyRequestHeaderProviders(HttpUriRequestBase request) throws URISyntaxException {
+		String contentType = determineContentType(request);
+
 		var context = new TrolieRequestContext(
 				request.getMethod(),
 				request.getUri(),
-				request.getFirstHeader(HttpHeaders.CONTENT_TYPE) != null
-						? request.getFirstHeader(HttpHeaders.CONTENT_TYPE).getValue()
-						: null
+				contentType
 		);
 
 		var mergedHeaders = new LinkedHashMap<String, String>();

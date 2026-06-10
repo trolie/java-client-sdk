@@ -133,6 +133,16 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		return false;
 	}
 
+	/**
+	 * Applies headers from all registered providers to the given GET request.
+	 * <p>
+	 * Since GET requests generally do not carry a body, this method initializes
+	 * the {@link TrolieRequestContext} with a {@code null} content type, allowing
+	 * providers to apply relevant headers based on the request metadata.
+	 *
+	 * @param request the HTTP GET request to which headers will be applied
+	 * @throws URISyntaxException if the request URI cannot be parsed
+	 */
 	protected void applyRequestHeaderProviders(HttpGet request) throws URISyntaxException {
 
 		TrolieRequestContext context = new TrolieRequestContext(request.getMethod(),
