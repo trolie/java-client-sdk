@@ -173,9 +173,6 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		);
 
 		var mergedHeaders = new LinkedHashMap<String, String>();
-		if (httpHeaders != null) {
-			mergedHeaders.putAll(httpHeaders);
-		}
 
 		for (var provider : providers) {
 			mergedHeaders.putAll(provider.headersFor(context));

@@ -139,9 +139,6 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 																request.getUri(),
 																null);
         var mergedHeaders = new LinkedHashMap<String, String>();
-		if (httpHeaders != null) {
-			mergedHeaders.putAll(httpHeaders);
-		}
 
 		for (var provider : providers) {
 			mergedHeaders.putAll(provider.headersFor(context));
