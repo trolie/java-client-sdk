@@ -49,7 +49,7 @@ public class PublishForecastProposals {
                         "X-TROLIE-Testing-Identity", "TO1"))
 
                 // SPP Authentication (Optional):
-                // This configuration is required only when connecting to an SPP.
+                // This configuration is required only when connecting to SPP.
                 // It generates the mandatory X-SPP-API-Token header using an HMAC-SHA512
                 // signature based on your SPP-provided Screen Name and Base64-encoded API Key
                 .withSppAuthentication(

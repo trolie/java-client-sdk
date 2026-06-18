@@ -33,7 +33,10 @@ import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotReceiver;
 import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
+import energy.trolie.client.spp.SppApiTokenHeaderProvider;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.codec.digest.HmacUtils;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -69,7 +72,12 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +89,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1827,6 +1836,62 @@ public class TrolieClientIT {
 				update.complete();
 			}
 		}
+	}
+
+	@Test
+	void testSppApiTokenHeaderProvider_generatesCorrectHeader() {
+		// Arrange
+		String screenName = "TestScreenName";
+		String rawApiKey = "my-secret-api-key-987654321";
+		String base64ApiKey = Base64.getEncoder().encodeToString(rawApiKey.getBytes(StandardCharsets.UTF_8));
+		Instant fixedInstant = Instant.parse("2026-06-18T12:34:56Z");
+		Clock clock = Clock.fixed(fixedInstant, ZoneOffset.UTC);
+
+		SppApiTokenHeaderProvider provider = new SppApiTokenHeaderProvider(screenName, base64ApiKey, clock);
+
+		TrolieRequestContext context = new TrolieRequestContext(
+				"GET",
+				URI.create("https://trolie.example.com/api/v1/ratings?query=abc"),
+				"application/json"
+		);
+
+		// Act
+		Map<String, String> headers = provider.headersFor(context);
+
+		// Assert
+		assertNotNull(headers);
+		assertTrue(headers.containsKey("X-SPP-API-Token"));
+
+		String token = headers.get("X-SPP-API-Token");
+		assertNotNull(token);
+
+		// Token format should be: timestamp-nonce-hmacHash
+		// Timestamp is "2026-06-18T12:34:56Z" (length 20)
+		String expectedTimestamp = "2026-06-18T12:34:56Z";
+		assertTrue(token.startsWith(expectedTimestamp + "-"), "Token should start with the expected timestamp followed by a hyphen");
+
+		// Extract materials following the prefix
+		String remainder = token.substring(expectedTimestamp.length() + 1);
+
+		// A UUID has 36 characters (e.g., 8-4-4-4-12)
+		assertTrue(remainder.length() > 36, "Token remainder must be longer than UUID length");
+		String nonceStr = remainder.substring(0, 36);
+		// Verify it is a valid UUID
+		assertDoesNotThrow(() -> UUID.fromString(nonceStr), "Nonce should be a valid UUID");
+
+		assertEquals('-', remainder.charAt(36), "Character after UUID should be a hyphen");
+		String hmacHash = remainder.substring(37);
+
+		// Verify HMAC authenticity
+		String lowerScreenName = "testscreenname";
+		String lowerPath = "/api/v1/ratings";
+		String expectedStringToSign = nonceStr + expectedTimestamp + lowerScreenName + lowerPath;
+
+		byte[] expectedHmacBytes = new HmacUtils(HmacAlgorithms.HMAC_SHA_512, rawApiKey.getBytes(StandardCharsets.UTF_8))
+				.hmac(expectedStringToSign);
+		String expectedHmacHash = Base64.getEncoder().encodeToString(expectedHmacBytes);
+
+		assertEquals(expectedHmacHash, hmacHash, "HMAC signature should match the expected signature over metadata");
 	}
 
 	private void writeMonitoringSet(JsonGenerator json, String id) throws IOException {
