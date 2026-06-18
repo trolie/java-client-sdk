@@ -3,9 +3,12 @@ package energy.trolie.client.spp;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieRequestContext;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.HmacAlgorithms;
-import org.apache.commons.codec.digest.HmacUtils;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -68,7 +71,15 @@ public final class SppApiTokenHeaderProvider implements RequestHeaderProvider {
         log.debug("Creating SPP API token with string to sign: {}", stringToSign);
 
         // 5. Compute HMAC-SHA512 and Base64-encode
-        byte[] hmacBytes = new HmacUtils(HmacAlgorithms.HMAC_SHA_512, decodedApiKey).hmac(stringToSign);
+        byte[] hmacBytes;
+        try{
+            Mac mac = Mac.getInstance("HmacSHA512");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(decodedApiKey, "HmacSHA512");
+            mac.init(secretKeySpec);
+            hmacBytes = mac.doFinal(stringToSign.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
         var hmacHash = Base64.getEncoder().encodeToString(hmacBytes);
 
         log.debug("Generated HMAC hash: {}", hmacHash);

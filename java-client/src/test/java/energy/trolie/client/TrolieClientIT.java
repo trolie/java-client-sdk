@@ -35,8 +35,6 @@ import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate
 import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import energy.trolie.client.spp.SppApiTokenHeaderProvider;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.HmacAlgorithms;
-import org.apache.commons.codec.digest.HmacUtils;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -66,6 +64,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import javax.net.ServerSocketFactory;
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -74,6 +74,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -1839,7 +1841,7 @@ public class TrolieClientIT {
 	}
 
 	@Test
-	void testSppApiTokenHeaderProvider_generatesCorrectHeader() {
+	void testSppApiTokenHeaderProvider_generatesCorrectHeader() throws NoSuchAlgorithmException, InvalidKeyException {
 		// Arrange
 		String screenName = "TestScreenName";
 		String rawApiKey = "my-secret-api-key-987654321";
@@ -1887,8 +1889,11 @@ public class TrolieClientIT {
 		String lowerPath = "/api/v1/ratings";
 		String expectedStringToSign = nonceStr + expectedTimestamp + lowerScreenName + lowerPath;
 
-		byte[] expectedHmacBytes = new HmacUtils(HmacAlgorithms.HMAC_SHA_512, rawApiKey.getBytes(StandardCharsets.UTF_8))
-				.hmac(expectedStringToSign);
+		byte[] expectedHmacBytes;
+		Mac mac = Mac.getInstance("HmacSHA512");
+		SecretKeySpec secretKeySpec = new SecretKeySpec(rawApiKey.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
+		mac.init(secretKeySpec);
+		expectedHmacBytes = mac.doFinal(expectedStringToSign.getBytes(StandardCharsets.UTF_8));
 		String expectedHmacHash = Base64.getEncoder().encodeToString(expectedHmacBytes);
 
 		assertEquals(expectedHmacHash, hmacHash, "HMAC signature should match the expected signature over metadata");
