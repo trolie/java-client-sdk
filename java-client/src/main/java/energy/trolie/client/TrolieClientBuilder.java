@@ -9,10 +9,12 @@ import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedRecei
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.spp.SppApiTokenHeaderProvider;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -230,6 +232,21 @@ public class TrolieClientBuilder {
 	public TrolieClientBuilder seasonalRatingsPollMs(int seasonalRatingsPollMs) {
 		this.seasonalRatingsPollMs = seasonalRatingsPollMs;
 		return this;
+	}
+
+	/**
+	 * Configures this client to authenticate with an SPP system
+	 * using the SPP Two-Factor Authentication (TFA) protocol.
+	 *
+	 * @param screenName the SPP-assigned screen name
+	 * @param apiKey     the Base64-encoded API key assigned by SPP
+	 * @return this builder
+	 * @see SppApiTokenHeaderProvider
+	 */
+	public TrolieClientBuilder withSppAuthentication(String screenName, String apiKey) {
+		return addRequestHeaderProvider(
+				new SppApiTokenHeaderProvider(screenName, apiKey, Clock.systemUTC())
+		);
 	}
 
 	/**
