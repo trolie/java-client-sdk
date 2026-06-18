@@ -27,6 +27,44 @@ It is also built with Maven, specifically because it offers the
 broadest array of compatibility.  Maven artifacts can easily be used
 by other build tools such as Gradle and SBT.  
 
+## Connecting to SPP TROLIE (SPP Two-Factor Authentication)
+
+For FERC 881 compliance, many Transmission Owners (TO) and neighboring 
+Reliability Coordinators (RC) must connect to Southwest Power Pool (SPP) 
+TROLIE systems. Doing so requires adherence to the 
+[SPP Two-Factor Authentication (TFA) Technical Specifications v1.4](https://spp.org/documents/75215/two-factor%20authentication%20technical%20specifications%20v1.4.pdf).
+
+The TROLIE Java Client SDK offers built-in support for SPP Authentication. 
+This handles the requirement to cryptographically sign every single outbound 
+request with a custom `X-SPP-API-Token` header using HTTP request metadata 
+(path, timestamp, nonce, and screen name) signed with an HMAC-SHA512 key.
+
+### Basic Setup with SPP TFA
+
+Configure the `TrolieClient` using your SPP-assigned screen name and Base64-encoded 
+API key directly in the builder:
+
+```java
+import energy.trolie.client.TrolieClient;
+import energy.trolie.client.TrolieClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import java.util.Base64;
+
+public class SppConnectionDemo {
+    public static void main(String[] args) throws Exception {
+        String base64ApiKey = Base64.getEncoder().encodeToString("your-spp-secret-key".getBytes());
+
+        try (TrolieClient client = new TrolieClientBuilder("https://trolie.spp.org", HttpClients.createDefault())
+                .withSppAuthentication("YourSppScreenName", base64ApiKey)
+                .build()) {
+            
+            // The client automatically signs every outbound request 
+            // with compliant X-SPP-API-Token signatures.
+        }
+    }
+}
+```
+
 ## Best Practices
 
 This library will include best practices around usage.  This includes:

@@ -17,12 +17,14 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,6 +47,15 @@ public class PublishForecastProposals {
                 // the test data provided in this example.
                 .httpHeaders(Map.of(
                         "X-TROLIE-Testing-Identity", "TO1"))
+
+                // SPP Authentication (Optional):
+                // This configuration is required only when connecting to SPP.
+                // It generates the mandatory X-SPP-API-Token header using an HMAC-SHA512
+                // signature based on your SPP-provided Screen Name and Base64-encoded API Key
+                .withSppAuthentication(
+                        "TestScreenName",
+                        Base64.getEncoder().encodeToString("secretkey".getBytes(StandardCharsets.UTF_8))
+                )
                 .build();
     }
 

@@ -2,12 +2,14 @@ package energy.trolie.client.impl.request.operatingsnapshots;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.ETagStore;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,12 +24,13 @@ public class RegionalRealTimeSnapshotSubscribedRequest extends RealTimeSnapshotS
             int bufferSize,
             ObjectMapper objectMapper,
             Map<String, String> httpHeaders,
+            List<RequestHeaderProvider> providers,
             int pollingRateMillis,
             RealTimeSnapshotSubscribedReceiver receiver,
             ETagStore eTagStore,
             String monitoringSet) {
 
-        super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, pollingRateMillis, receiver,
+        super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, pollingRateMillis, receiver,
                 eTagStore, monitoringSet, null);
     }
 

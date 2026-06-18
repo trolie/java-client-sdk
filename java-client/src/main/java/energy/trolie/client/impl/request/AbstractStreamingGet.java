@@ -2,9 +2,11 @@ package energy.trolie.client.impl.request;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.StreamingResponseReceiver;
 import energy.trolie.client.StreamingSubscribedResponseReceiver;
 import energy.trolie.client.TrolieHost;
+import energy.trolie.client.TrolieRequestContext;
 import energy.trolie.client.exception.StreamingGetConnectionException;
 import energy.trolie.client.exception.StreamingGetException;
 import energy.trolie.client.exception.StreamingGetResponseException;
@@ -23,6 +25,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -45,6 +49,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	int bufferSize;
 	ThreadPoolExecutor threadPoolExecutor;
 	Map<String, String> httpHeaders;
+	List<RequestHeaderProvider> providers;
 	protected boolean lastRequestFailed = false;
 
 	protected JsonFactory jsonFactory;
@@ -73,6 +78,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			int bufferSize, 
 			ObjectMapper objectMapper,
 			Map<String, String> httpHeaders,
+			List<RequestHeaderProvider> providers,
 			T receiver) {
 		super();
 		this.httpClient = httpClient;
@@ -84,6 +90,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,10,
 				TimeUnit.SECONDS, new LinkedBlockingDeque<>());
 		this.httpHeaders = httpHeaders;
+		this.providers = providers;
 	}
 	
 	protected HttpClientResponseHandler<Void> createResponseHandler() {
@@ -125,6 +132,30 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 
 		return false;
 	}
+
+	/**
+	 * Applies headers from all registered providers to the given GET request.
+	 * <p>
+	 * Since GET requests generally do not carry a body, this method initializes
+	 * the {@link TrolieRequestContext} with a {@code null} content type, allowing
+	 * providers to apply relevant headers based on the request metadata.
+	 *
+	 * @param request the HTTP GET request to which headers will be applied
+	 * @throws URISyntaxException if the request URI cannot be parsed
+	 */
+	protected void applyRequestHeaderProviders(HttpGet request) throws URISyntaxException {
+
+		TrolieRequestContext context = new TrolieRequestContext(request.getMethod(),
+																request.getUri(),
+																null);
+        var mergedHeaders = new LinkedHashMap<String, String>();
+
+		for (var provider : providers) {
+			mergedHeaders.putAll(provider.headersFor(context));
+		}
+
+		mergedHeaders.forEach(request::setHeader);
+	}
 	
 	protected HttpGet createRequest() throws URISyntaxException {
 		HttpGet get = new HttpGet(getFullPath());
@@ -132,7 +163,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		if (httpHeaders !=  null && !httpHeaders.isEmpty()) {
 			httpHeaders.forEach(get::addHeader);
 		}
-		
+
 		get.setConfig(requestConfig);
 		return get;
 	}
@@ -141,6 +172,9 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		try {
 			lastRequestFailed = false;
 			HttpGet get = createRequest();
+			if (providers != null && !providers.isEmpty()) {
+				applyRequestHeaderProviders(get);
+			}
 			httpClient.execute(host.getHost(), get, createResponseHandler());
 		
 		} catch (IOException e) {

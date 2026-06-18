@@ -1,8 +1,10 @@
 package energy.trolie.client.impl.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.StreamingUpdate;
 import energy.trolie.client.TrolieHost;
+import energy.trolie.client.TrolieRequestContext;
 import energy.trolie.client.exception.TrolieException;
 import energy.trolie.client.exception.TrolieServerException;
 import lombok.AllArgsConstructor;
@@ -13,6 +15,7 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.entity.GzipCompressingEntity;
 import org.apache.hc.client5.http.impl.classic.AbstractHttpClientResponseHandler;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
@@ -23,6 +26,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.net.URISyntaxException;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -50,9 +56,10 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 	Future<T> responseFuture;
 
 	Map<String, String> httpHeaders;
+	List<RequestHeaderProvider> providers;
 
 	protected AbstractStreamingUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
-									  int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders) {
+                                      int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders, List<RequestHeaderProvider> providers) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -62,6 +69,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		this.bufferSize = bufferSize;
 		this.objectMapper = objectMapper;
 		this.httpHeaders = httpHeaders;
+		this.providers = providers;
 	}
 
 	/**
@@ -122,9 +130,9 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 	 * initiate the request and pipe an output stream to the request entity
 	 * 
 	 * @return
-	 * @throws IOException
+	 * @throws IOException URISyntaxException
      */
-	protected OutputStream createRequestOutputStream() throws IOException {
+	protected OutputStream createRequestOutputStream() throws IOException, URISyntaxException {
 
 		//they probably already set these parameters, but may as well make sure
 		HttpUriRequestBase request = getRequest();
@@ -135,6 +143,10 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		request.setPath(getFullPath());
 		
 		request.setConfig(this.requestConfig);
+
+		if (providers != null && !providers.isEmpty()) {
+			applyRequestHeaderProviders(request);
+		}
 
 		//create a request entity we can write into from a stream
 		PipedOutputStream pipedOutputStream = new PipedOutputStream();
@@ -150,6 +162,52 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		responseFuture = threadPoolExecutor.submit(new RequestExecutor(request));
 
 		return outputStream;
+	}
+
+	/**
+	 * Determines the Content-Type for the request context.
+	 * <p>
+	 * This method prioritizes any existing Content-Type header already set on the request.
+	 * If none is found, it falls back to the {@link #getContentType()} provided by this instance.
+	 *
+	 * @param request the current HTTP request
+	 * @return the Content-Type as a string, or {@code null} if none is defined
+	 */
+	private String determineContentType(HttpUriRequestBase request) {
+		Header header = request.getFirstHeader(HttpHeaders.CONTENT_TYPE);
+		if (header != null) {
+			return header.getValue();
+		}
+
+		return getContentType() != null ? getContentType().toString() : null;
+	}
+
+	/**
+	 * Applies headers from all registered providers to the given request.
+	 * <p>
+	 * This method builds a {@link TrolieRequestContext} based on the request's current state,
+	 * allowing providers to inspect the request and contribute necessary headers.
+	 * The resulting headers are then merged and applied to the request instance.
+	 *
+	 * @param request the HTTP request to which headers will be applied
+	 * @throws URISyntaxException if the request URI cannot be parsed
+	 */
+	protected void applyRequestHeaderProviders(HttpUriRequestBase request) throws URISyntaxException {
+		String contentType = determineContentType(request);
+
+		var context = new TrolieRequestContext(
+				request.getMethod(),
+				request.getUri(),
+				contentType
+		);
+
+		var mergedHeaders = new LinkedHashMap<String, String>();
+
+		for (var provider : providers) {
+			mergedHeaders.putAll(provider.headersFor(context));
+		}
+
+		mergedHeaders.forEach(request::setHeader);
 	}
 
 	/**

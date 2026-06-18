@@ -2,6 +2,7 @@ package energy.trolie.client.request.ratingproposals;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
 import energy.trolie.client.exception.TrolieException;
@@ -21,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -48,12 +50,13 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 	 * @param bufferSize configure buffer size
 	 * @param objectMapper Jackson object mapper
 	 * @param httpHeaders passed headers
+	 * @param providers header providers
 	 * @param defaultIntervalMinutes forecast interval minutes
 	 */
 	public ForecastRatingProposalUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
 										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders,
-										int defaultIntervalMinutes) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders);
+										List<RequestHeaderProvider> providers, int defaultIntervalMinutes) {
+		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers);
 		this.defaultIntervalMinutes = defaultIntervalMinutes;
 	}
 

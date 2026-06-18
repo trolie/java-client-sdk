@@ -2,6 +2,7 @@ package energy.trolie.client.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.ETagStore;
+import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.RequestSubscription;
 import energy.trolie.client.TrolieClient;
 import energy.trolie.client.TrolieHost;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +56,7 @@ public class TrolieClientImpl implements TrolieClient {
 	ObjectMapper objectMapper;
 	ETagStore eTagStore;
 	Map<String, String> httpHeaders;
+	List<RequestHeaderProvider> providers;
 	private final int defaultIntervalMinutes;
 	private final int realTimeRatingsPollMs;
 	private final int forecastRatingsPollMs;
@@ -61,7 +64,7 @@ public class TrolieClientImpl implements TrolieClient {
 	private final int seasonalRatingsPollMs;
 
 	public TrolieClientImpl(CloseableHttpClient httpClient, TrolieHost host, RequestConfig requestConfig, int bufferSize,
-							ObjectMapper objectMapper, ETagStore eTagStore, Map<String, String> httpHeaders,
+							ObjectMapper objectMapper, ETagStore eTagStore, Map<String, String> httpHeaders, List<RequestHeaderProvider> providers,
 							int defaultIntervalMinutes,
 							int realTimeRatingsPollMs,
 							int forecastRatingsPollMs,
@@ -75,6 +78,7 @@ public class TrolieClientImpl implements TrolieClient {
 		this.objectMapper = objectMapper;
 		this.eTagStore = eTagStore;
 		this.httpHeaders = httpHeaders;
+		this.providers = providers;
 		this.defaultIntervalMinutes = defaultIntervalMinutes;
 		this.realTimeRatingsPollMs = realTimeRatingsPollMs;
 		this.forecastRatingsPollMs = forecastRatingsPollMs;
@@ -121,6 +125,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize, 
 				objectMapper,
 				httpHeaders,
+				providers,
 				receiver,
 				monitoringSet,
 				resourceId,
@@ -147,6 +152,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize, 
 				objectMapper,
 				httpHeaders,
+				providers,
 				forecastRatingsPollMs,
 				receiver,
 				eTagStore,
@@ -187,6 +193,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				objectMapper,
 				httpHeaders,
+				providers,
 				receiver,
 				monitoringSet,
 				resourceId,
@@ -214,6 +221,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				objectMapper,
 				httpHeaders,
+				providers,
 				forecastRatingsPollMs,
 				receiver,
 				eTagStore,
@@ -226,7 +234,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public ForecastRatingProposalUpdate createForecastRatingProposalStreamingUpdate() {
 		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, bufferSize,
-				objectMapper, httpHeaders, defaultIntervalMinutes);
+				objectMapper, httpHeaders, providers, defaultIntervalMinutes);
 	}
 
 	@Override
@@ -251,6 +259,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize, 
 				objectMapper,
 				httpHeaders,
+				providers,
 				realTimeRatingsPollMs,
 				receiver,
 				eTagStore,
@@ -264,7 +273,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate() {
 		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, bufferSize,
-				objectMapper, httpHeaders);
+				objectMapper, httpHeaders, providers);
 	}
 
 	@Override
@@ -287,6 +296,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				objectMapper,
 				httpHeaders,
+				providers,
 				receiver,
 				monitoringSet,
 				resourceId).executeRequest();
@@ -313,6 +323,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				objectMapper,
 				httpHeaders,
+				providers,
 				receiver,
 				monitoringSet,
 				resourceId).executeRequest();
@@ -336,6 +347,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				objectMapper,
 				httpHeaders,
+				providers,
 				realTimeRatingsPollMs,
 				receiver,
 				eTagStore,
@@ -348,7 +360,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getMonitoringSet(MonitoringSetsReceiver receiver, String monitoringSet) {
 		new MonitoringSetsRequest(
-				httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders,
+				httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers,
 				receiver, monitoringSet).executeRequest();
 
 	}
@@ -357,7 +369,7 @@ public class TrolieClientImpl implements TrolieClient {
 	public MonitoringSetsSubscribedRequest subscribeToMonitoringSetUpdates(MonitoringSetsSubscribedReceiver receiver,
                                                                            String monitoringSet) {
 		MonitoringSetsSubscribedRequest subscription = new MonitoringSetsSubscribedRequest(
-				httpClient, host, requestConfig, monitoringSetPollMs, objectMapper, httpHeaders,
+				httpClient, host, requestConfig, monitoringSetPollMs, objectMapper, httpHeaders, providers,
 				monitoringSetPollMs, receiver, eTagStore, monitoringSet);
 		addSubscription(subscription);
 		return subscription;
@@ -366,7 +378,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getDefaultMonitoringSet(MonitoringSetsReceiver receiver) {
 		new DefaultMonitoringSetRequest(
-				httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, receiver)
+				httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, receiver)
 				.executeRequest();
 	}
 
@@ -374,7 +386,7 @@ public class TrolieClientImpl implements TrolieClient {
 	public DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringSetUpdates(
 			MonitoringSetsSubscribedReceiver receiver) {
 		var subscription = new DefaultMonitoringSetSubscribedRequest(
-				httpClient, host, requestConfig, monitoringSetPollMs, objectMapper, httpHeaders,
+				httpClient, host, requestConfig, monitoringSetPollMs, objectMapper, httpHeaders, providers,
 				monitoringSetPollMs, receiver, eTagStore);
 		addSubscription(subscription);
 		return subscription;
@@ -403,6 +415,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				objectMapper,
 				httpHeaders,
+				providers,
 				receiver,
 				monitoringSet,
 				resourceId).executeRequest();
@@ -426,6 +439,7 @@ public class TrolieClientImpl implements TrolieClient {
 				bufferSize,
 				objectMapper,
 				httpHeaders,
+				providers,
 				seasonalRatingsPollMs,
 				receiver,
 				eTagStore,

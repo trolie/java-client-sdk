@@ -9,11 +9,15 @@ import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedRecei
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.spp.SppApiTokenHeaderProvider;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 
+import java.time.Clock;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,6 +54,7 @@ public class TrolieClientBuilder {
 	private ObjectMapper objectMapper;
 	private ETagStore eTagStore;
 	private Map<String, String> httpHeaders = new HashMap<>();
+	private final List<RequestHeaderProvider> providers = new ArrayList<>();
 	private int periodLengthMinutes = 60;
 
 	private int realTimeRatingsPollMs = 10000;
@@ -135,6 +140,43 @@ public class TrolieClientBuilder {
 	}
 
 	/**
+	 * Adds a request header provider that can generate additional headers for each request execution.
+	 * Providers are invoked during the initial request construction.
+	 *
+	 * <p><strong>Note:</strong> If the underlying {@code HttpClient} is configured with
+	 * automatic retries, the same request object (and its headers) may be sent multiple times.
+	 * To ensure security-sensitive headers like nonces are regenerated, users should ensure
+	 * that automatic retries are disabled or that the client is configured to rebuild
+	 * requests on retry.</p>
+	 *
+	 * @param provider provider used to generate request-specific headers
+	 * @return fluent builder
+	 */
+	public TrolieClientBuilder addRequestHeaderProvider(RequestHeaderProvider provider) {
+		this.providers.add(provider);
+		return this;
+	}
+
+	/**
+	 * Replaces the current set of request header providers with the given list.
+	 * Providers are invoked during the initial request construction.
+	 *
+	 * <p><strong>Note:</strong> If the underlying {@code HttpClient} is configured with
+	 * automatic retries, the request (including these headers) may be reused across
+	 * multiple attempts. To guarantee fresh header values (e.g., new nonces) on retry,
+	 * implementers must ensure that automatic transport-level retries are disabled or
+	 * that the client is configured to rebuild requests on retry.</p>
+	 *
+	 * @param providers list of providers used to generate request-specific headers
+	 * @return fluent builder
+	 */
+	public TrolieClientBuilder requestHeaderProviders(List<RequestHeaderProvider> providers) {
+		this.providers.clear();
+		this.providers.addAll(providers);
+		return this;
+	}
+
+	/**
 	 * Sets the period length assumed for forecast ratings.  Defaults to 60 minutes.
 	 * @param periodLengthMinutes new assumed period length.
 	 * @return fluent builder
@@ -193,6 +235,21 @@ public class TrolieClientBuilder {
 	}
 
 	/**
+	 * Configures this client to authenticate with an SPP system
+	 * using the SPP Two-Factor Authentication (TFA) protocol.
+	 *
+	 * @param screenName the SPP-assigned screen name
+	 * @param apiKey     the Base64-encoded API key assigned by SPP
+	 * @return this builder
+	 * @see SppApiTokenHeaderProvider
+	 */
+	public TrolieClientBuilder withSppAuthentication(String screenName, String apiKey) {
+		return addRequestHeaderProvider(
+				new SppApiTokenHeaderProvider(screenName, apiKey, Clock.systemUTC())
+		);
+	}
+
+	/**
 	 * Construct a new client
 	 * @return new client
 	 */
@@ -216,7 +273,7 @@ public class TrolieClientBuilder {
 		}
 
     	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize,
-				objectMapper, eTagStore, httpHeaders, periodLengthMinutes,
+				objectMapper, eTagStore, httpHeaders, providers, periodLengthMinutes,
 				realTimeRatingsPollMs,
 				forecastRatingsPollMs, monitoringSetPollMs, seasonalRatingsPollMs);
     }
