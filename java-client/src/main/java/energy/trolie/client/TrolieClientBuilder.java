@@ -1,14 +1,15 @@
 package energy.trolie.client;
 
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import energy.trolie.client.impl.MemoryETagStore;
 import energy.trolie.client.impl.TrolieClientImpl;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotSubscribedReceiver;
-import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
+import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
 import energy.trolie.client.spp.SppApiTokenHeaderProvider;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -262,6 +263,7 @@ public class TrolieClientBuilder {
     	if (objectMapper == null) {
     		objectMapper = new ObjectMapper();
 			objectMapper.registerModule(new JavaTimeModule());
+			objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     	}
 
     	if (eTagStore == null) {
