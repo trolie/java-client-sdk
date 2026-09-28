@@ -54,6 +54,16 @@ public class TrolieApiConstants {
 	public static final String PATH_DEFAULT_MONITORING_SET = "/default-monitoring-set";
 
 	/**
+	 * Path to <a href="https://trolie.energy/spec-1.0#tag/Temporary-AAR-Exceptions/operation/getTemporaryAARExceptions">getTemporaryAARExceptions</a>,
+	 * <a href="https://trolie.energy/spec-1.0#tag/Temporary-AAR-Exceptions/operation/createTemporaryAARException">createTemporaryAARException</a>,
+	 * <a href="https://trolie.energy/spec-1.0#tag/Temporary-AAR-Exceptions/operation/getTemporaryAARException">getTemporaryAARException</a>,
+	 * <a href="https://trolie.energy/spec-1.0#tag/Temporary-AAR-Exceptions/operation/updateTemporaryAARException">updateTemporaryAARException</a>, and
+	 * <a href="https://trolie.energy/spec-1.0#tag/Temporary-AAR-Exceptions/operation/deleteTemporaryAARException">deleteTemporaryAARException</a>.
+	 * Single-resource operations append {@code /{id}} to this path.
+	 */
+	public static final String PATH_TEMPORARY_AAR_EXCEPTIONS = "/temporary-aar-exceptions";
+
+	/**
 	 * Content type for seasonal rating snapshots
 	 */
 	public static final String CONTENT_TYPE_SEASONAL_SNAPSHOT = "application/vnd.trolie.seasonal-rating-snapshot.v1+json";
@@ -84,6 +94,16 @@ public class TrolieApiConstants {
 	public static final String CONTENT_TYPE_MONITORING_SET = "application/vnd.trolie.monitoring-set.v1+json";
 
 	/**
+	 * Content type for a single Temporary AAR Exception (used for create, get, and update).
+	 */
+	public static final String CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION = "application/vnd.trolie.temporary-aar-exception.v1+json";
+
+	/**
+	 * Content type for a set (list) of Temporary AAR Exceptions.
+	 */
+	public static final String CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION_SET = "application/vnd.trolie.temporary-aar-exception-set.v1+json";
+
+	/**
 	 * Common query parameter name for monitoring set filter.
 	 */
 	public static final String PARAM_MONITORING_SET = "monitoring-set";
@@ -102,5 +122,16 @@ public class TrolieApiConstants {
 	 * Common query parameter name for the period end.
 	 */
 	public static final String PARAM_PERIOD_END = "period-end";
-	
+
+	/**
+	 * Query parameter name for filtering by the start of an applicable operating period,
+	 * as used by {@code GET /temporary-aar-exceptions}.
+	 */
+	public static final String PARAM_PERIOD_START = "period-start";
+
+	/**
+	 * Query parameter name for filtering by segment, as used by {@code GET /temporary-aar-exceptions}.
+	 */
+	public static final String PARAM_SEGMENT = "segment";
+
 }

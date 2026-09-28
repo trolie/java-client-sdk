@@ -9,6 +9,8 @@ import energy.trolie.client.exception.TrolieException;
 import energy.trolie.client.exception.TrolieServerException;
 import energy.trolie.client.impl.request.RequestSubscriptionInternal;
 import energy.trolie.client.model.common.DataProvenance;
+import energy.trolie.client.model.common.EmergencyRatingValue;
+import energy.trolie.client.model.common.PowerSystemResource;
 import energy.trolie.client.model.common.RatingValue;
 import energy.trolie.client.model.monitoringsets.MonitoringSet;
 import energy.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
@@ -23,6 +25,8 @@ import energy.trolie.client.model.ratingproposals.ForecastRatingProposalStatus;
 import energy.trolie.client.model.ratingproposals.ProposalHeader;
 import energy.trolie.client.model.ratingproposals.RealTimeRating;
 import energy.trolie.client.model.ratingproposals.RealTimeRatingProposalStatus;
+import energy.trolie.client.model.temporaryaarexceptions.TemporaryAARException;
+import energy.trolie.client.model.temporaryaarexceptions.TemporaryAARExceptionRequest;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
@@ -2298,6 +2302,331 @@ public class TrolieClientIT {
 					"Should have received one snapshot on first poll");
 			Assertions.assertEquals(0, errorCount.get(),
 					"Should have no errors during subscription");
+		}
+	}
+
+	@Test
+	void testCreateTemporaryAARException() throws IOException {
+
+		var startTime = Instant.now();
+
+		requestHandler = request -> {
+			try {
+				Assertions.assertEquals("POST", request.getMethod());
+				Assertions.assertEquals("/temporary-aar-exceptions", request.getUri().getPath());
+
+				var sentRequest = objectMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
+				Assertions.assertEquals("8badf00d", sentRequest.getResource().getResourceId());
+				Assertions.assertNull(sentRequest.getSource());
+
+				TemporaryAARException created = TemporaryAARException.builder()
+						.id("46f7212b-1633-4c30-ba71-c6e987b2ded7")
+						.resource(sentRequest.getResource())
+						.startTime(sentRequest.getStartTime())
+						.endTime(sentRequest.getEndTime())
+						.continuousOperatingLimit(sentRequest.getContinuousOperatingLimit())
+						.emergencyOperatingLimits(sentRequest.getEmergencyOperatingLimits())
+						.reason(sentRequest.getReason())
+						.build();
+
+				BasicClassicHttpResponse response = new BasicClassicHttpResponse(201);
+				response.setEntity(new StringEntity(objectMapper.writeValueAsString(created),
+						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
+				return response;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+
+			TemporaryAARExceptionRequest request = TemporaryAARExceptionRequest.builder()
+					.resource(PowerSystemResource.of("8badf00d", List.of()))
+					.startTime(startTime)
+					.endTime(startTime.plusSeconds(3600))
+					.continuousOperatingLimit(RatingValue.fromMva(160f))
+					.emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
+					.reason("High wildfire risk")
+					.build();
+
+			TemporaryAARException created = trolieClient.createTemporaryAARException(request);
+
+			Assertions.assertNotNull(created);
+			Assertions.assertEquals("46f7212b-1633-4c30-ba71-c6e987b2ded7", created.getId());
+			Assertions.assertEquals("8badf00d", created.getResource().getResourceId());
+		}
+	}
+
+	@Test
+	void testCreateTemporaryAARException_withSourceForPeerReplication() throws IOException {
+
+		// verifies that the `source` (data-provenance) field used to track a
+		// Temporary AAR Exception's origin across peered systems round-trips correctly.
+
+		var startTime = Instant.now();
+
+		requestHandler = request -> {
+			try {
+				var sentRequest = objectMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
+				Assertions.assertNotNull(sentRequest.getSource());
+				Assertions.assertEquals("TO1", sentRequest.getSource().getProvider());
+				Assertions.assertEquals("origin-123", sentRequest.getSource().getOriginId());
+
+				TemporaryAARException created = TemporaryAARException.builder()
+						.id("iso-assigned-id")
+						.source(sentRequest.getSource())
+						.resource(sentRequest.getResource())
+						.startTime(sentRequest.getStartTime())
+						.continuousOperatingLimit(sentRequest.getContinuousOperatingLimit())
+						.emergencyOperatingLimits(sentRequest.getEmergencyOperatingLimits())
+						.build();
+
+				BasicClassicHttpResponse response = new BasicClassicHttpResponse(201);
+				response.setEntity(new StringEntity(objectMapper.writeValueAsString(created),
+						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
+				return response;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+
+			TemporaryAARExceptionRequest request = TemporaryAARExceptionRequest.builder()
+					.source(DataProvenance.builder()
+							.provider("TO1")
+							.originId("origin-123")
+							.lastUpdated(startTime)
+							.build())
+					.resource(PowerSystemResource.of("8badf00d", List.of()))
+					.startTime(startTime)
+					.continuousOperatingLimit(RatingValue.fromMva(160f))
+					.emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
+					.build();
+
+			TemporaryAARException created = trolieClient.createTemporaryAARException(request);
+
+			Assertions.assertEquals("TO1", created.getSource().getProvider());
+			Assertions.assertEquals("origin-123", created.getSource().getOriginId());
+		}
+	}
+
+	@Test
+	void testGetTemporaryAARException() throws IOException {
+
+		requestHandler = request -> {
+			try {
+				Assertions.assertEquals("GET", request.getMethod());
+				Assertions.assertEquals("/temporary-aar-exceptions/46f7212b-1633-4c30-ba71-c6e987b2ded7",
+						request.getUri().getPath());
+
+				TemporaryAARException found = TemporaryAARException.builder()
+						.id("46f7212b-1633-4c30-ba71-c6e987b2ded7")
+						.resource(PowerSystemResource.of("8badf00d", List.of()))
+						.startTime(Instant.now())
+						.continuousOperatingLimit(RatingValue.fromMva(160f))
+						.emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
+						.build();
+
+				BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+				response.setEntity(new StringEntity(objectMapper.writeValueAsString(found),
+						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
+				return response;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+			TemporaryAARException found = trolieClient.getTemporaryAARException("46f7212b-1633-4c30-ba71-c6e987b2ded7");
+			Assertions.assertNotNull(found);
+			Assertions.assertEquals("46f7212b-1633-4c30-ba71-c6e987b2ded7", found.getId());
+		}
+	}
+
+	@Test
+	void testGetTemporaryAARException_notFound() throws IOException {
+
+		requestHandler = request -> new BasicClassicHttpResponse(404);
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+			TrolieServerException ex = Assertions.assertThrows(TrolieServerException.class,
+					() -> trolieClient.getTemporaryAARException("does-not-exist"));
+			Assertions.assertEquals(404, ex.getHttpCode());
+		}
+	}
+
+	@Test
+	void testGetTemporaryAARExceptions_withFilters() throws IOException {
+
+		var startTime = Instant.now();
+
+		requestHandler = request -> {
+			try {
+				Assertions.assertEquals("GET", request.getMethod());
+				Assertions.assertEquals("/temporary-aar-exceptions", request.getUri().getPath());
+
+				String query = request.getUri().getQuery();
+				Assertions.assertTrue(query.contains("segment=segmentX"));
+				Assertions.assertTrue(query.contains("monitoring-set=X-AMPL"));
+
+				List<TemporaryAARException> exceptions = List.of(
+						TemporaryAARException.builder()
+								.id("id-1")
+								.resource(PowerSystemResource.of("resource-1", List.of()))
+								.startTime(startTime)
+								.continuousOperatingLimit(RatingValue.fromMva(160f))
+								.emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
+								.build(),
+						TemporaryAARException.builder()
+								.id("id-2")
+								.resource(PowerSystemResource.of("resource-2", List.of()))
+								.startTime(startTime)
+								.continuousOperatingLimit(RatingValue.fromMva(160f))
+								.emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
+								.build()
+				);
+
+				BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+				response.setEntity(new StringEntity(objectMapper.writeValueAsString(exceptions),
+						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION_SET)));
+				return response;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+			List<TemporaryAARException> exceptions = trolieClient.getTemporaryAARExceptions(
+					startTime, startTime.plusSeconds(3600), "segmentX", "X-AMPL");
+
+			Assertions.assertEquals(2, exceptions.size());
+			Assertions.assertEquals("id-1", exceptions.get(0).getId());
+			Assertions.assertEquals("id-2", exceptions.get(1).getId());
+		}
+	}
+
+	@Test
+	void testGetTemporaryAARExceptions_noFilters() throws IOException {
+
+		requestHandler = request -> {
+			try {
+				Assertions.assertEquals("/temporary-aar-exceptions", request.getUri().getPath());
+				Assertions.assertNull(request.getUri().getQuery());
+
+				BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
+				response.setEntity(new StringEntity(objectMapper.writeValueAsString(List.of()),
+						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION_SET)));
+				return response;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+			List<TemporaryAARException> exceptions = trolieClient.getTemporaryAARExceptions();
+			Assertions.assertTrue(exceptions.isEmpty());
+		}
+	}
+
+	@Test
+	void testUpdateTemporaryAARException() throws IOException {
+
+		// also covers termination, which TROLIE represents as an update with an earlier end-time
+
+		var startTime = Instant.now();
+		var newEndTime = startTime.plusSeconds(600);
+
+		requestHandler = request -> {
+			try {
+				Assertions.assertEquals("PUT", request.getMethod());
+				Assertions.assertEquals("/temporary-aar-exceptions/46f7212b-1633-4c30-ba71-c6e987b2ded7",
+						request.getUri().getPath());
+
+				var sentRequest = objectMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
+				Assertions.assertEquals(newEndTime, sentRequest.getEndTime());
+
+				return new BasicClassicHttpResponse(204);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+
+			TemporaryAARExceptionRequest request = TemporaryAARExceptionRequest.builder()
+					.resource(PowerSystemResource.of("8badf00d", List.of()))
+					.startTime(startTime)
+					.endTime(newEndTime)
+					.continuousOperatingLimit(RatingValue.fromMva(160f))
+					.emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
+					.build();
+
+			Assertions.assertDoesNotThrow(
+					() -> trolieClient.updateTemporaryAARException("46f7212b-1633-4c30-ba71-c6e987b2ded7", request));
+		}
+	}
+
+	@Test
+	void testUpdateTemporaryAARException_ServerError() throws IOException {
+
+		requestHandler = request -> new BasicClassicHttpResponse(409);
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+
+			TemporaryAARExceptionRequest request = TemporaryAARExceptionRequest.builder()
+					.resource(PowerSystemResource.of("8badf00d", List.of()))
+					.startTime(Instant.now())
+					.continuousOperatingLimit(RatingValue.fromMva(160f))
+					.emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
+					.build();
+
+			TrolieServerException ex = Assertions.assertThrows(TrolieServerException.class,
+					() -> trolieClient.updateTemporaryAARException("some-id", request));
+			Assertions.assertEquals(409, ex.getHttpCode());
+		}
+	}
+
+	@Test
+	void testDeleteTemporaryAARException() throws IOException {
+
+		requestHandler = request -> {
+			try {
+				Assertions.assertEquals("DELETE", request.getMethod());
+				Assertions.assertEquals("/temporary-aar-exceptions/46f7212b-1633-4c30-ba71-c6e987b2ded7",
+						request.getUri().getPath());
+				return new BasicClassicHttpResponse(204);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+			Assertions.assertDoesNotThrow(
+					() -> trolieClient.deleteTemporaryAARException("46f7212b-1633-4c30-ba71-c6e987b2ded7"));
+		}
+	}
+
+	@Test
+	void testDeleteTemporaryAARException_conflict() throws IOException {
+
+		// e.g. TROLIE 409: Temporary AAR Exception already employed in Operations cannot be deleted.
+		requestHandler = request -> new BasicClassicHttpResponse(409);
+
+		HttpClientBuilder builder = HttpClientBuilder.create();
+		try (TrolieClient trolieClient = new TrolieClientBuilder(baseUri, builder.build()).build()) {
+			TrolieServerException ex = Assertions.assertThrows(TrolieServerException.class,
+					() -> trolieClient.deleteTemporaryAARException("in-use-id"));
+			Assertions.assertEquals(409, ex.getHttpCode());
 		}
 	}
 
