@@ -1,7 +1,7 @@
 package energy.trolie.client.model.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import energy.trolie.client.model.operatingsnapshots.RealTimeLimit;
+import energy.trolie.client.model.ratingproposals.RealTimeRating;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -30,28 +30,28 @@ class CurrentSourceTest {
     }
 
     @Test
-    void field_is_optional_on_real_time_limit() throws IOException {
-        RealTimeLimit withoutCurrentSource = RealTimeLimit.builder()
+    void field_is_optional_on_real_time_rating() throws IOException {
+        RealTimeRating withoutCurrentSource = RealTimeRating.builder()
                 .resourceId("resource1")
                 .continuousOperatingLimit(RatingValue.fromMva(100f))
                 .build();
 
         String json = objectMapper.writeValueAsString(withoutCurrentSource);
-        RealTimeLimit roundTripped = objectMapper.readValue(json, RealTimeLimit.class);
+        RealTimeRating roundTripped = objectMapper.readValue(json, RealTimeRating.class);
 
         assertNull(roundTripped.getCurrentSource());
     }
 
     @Test
-    void field_round_trips_on_real_time_limit() throws IOException {
-        RealTimeLimit withCurrentSource = RealTimeLimit.builder()
+    void field_round_trips_on_real_time_rating() throws IOException {
+        RealTimeRating withCurrentSource = RealTimeRating.builder()
                 .resourceId("resource1")
                 .continuousOperatingLimit(RatingValue.fromMva(100f))
                 .currentSource(CurrentSource.MANUAL)
                 .build();
 
         String json = objectMapper.writeValueAsString(withCurrentSource);
-        RealTimeLimit roundTripped = objectMapper.readValue(json, RealTimeLimit.class);
+        RealTimeRating roundTripped = objectMapper.readValue(json, RealTimeRating.class);
 
         assertEquals(CurrentSource.MANUAL, roundTripped.getCurrentSource());
     }
