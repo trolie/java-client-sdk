@@ -457,34 +457,6 @@ public class TrolieClientImpl implements TrolieClient {
 
 	}
 
-
-	@Override
-	public void close() throws IOException {
-		logger.info("Closing all subscriptions");
-		unsubscribeAll();
-
-		logger.debug("Closing HTTP Client");
-		httpClient.close();
-
-	}
-
-	@Override
-	public void unsubscribe(RequestSubscription subscription) {
-		try {
-			((RequestSubscriptionInternal)subscription).stop().get();
-		} catch (ExecutionException e) {
-			logger.error("Error in request subscription {}", subscription, e);
-		} catch (InterruptedException e) {
-			logger.info("Request subscription interrupted {}", subscription);
-			Thread.currentThread().interrupt();
-		}
-	}
-
-	@Override
-	public void unsubscribeAll() {
-		activeSubscriptions.forEach(this::unsubscribe);
-	}
-
 	@Override
 	public TemporaryAARException createTemporaryAARException(TemporaryAARExceptionRequest request) {
 		return new CreateTemporaryAARExceptionRequest(
@@ -520,6 +492,33 @@ public class TrolieClientImpl implements TrolieClient {
 	public void deleteTemporaryAARException(String id) {
 		new DeleteTemporaryAARExceptionRequest(
 				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, id).execute();
+	}
+
+	@Override
+	public void close() throws IOException {
+		logger.info("Closing all subscriptions");
+		unsubscribeAll();
+
+		logger.debug("Closing HTTP Client");
+		httpClient.close();
+
+	}
+
+	@Override
+	public void unsubscribe(RequestSubscription subscription) {
+		try {
+			((RequestSubscriptionInternal)subscription).stop().get();
+		} catch (ExecutionException e) {
+			logger.error("Error in request subscription {}", subscription, e);
+		} catch (InterruptedException e) {
+			logger.info("Request subscription interrupted {}", subscription);
+			Thread.currentThread().interrupt();
+		}
+	}
+
+	@Override
+	public void unsubscribeAll() {
+		activeSubscriptions.forEach(this::unsubscribe);
 	}
 
 }

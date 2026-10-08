@@ -445,18 +445,6 @@ public interface TrolieClient extends Closeable {
             SeasonalSnapshotSubscribedReceiver receiver);
 
     /**
-     * Un-subscribe an active polling request
-     *
-     * @param subscription subscription to cancel.
-     */
-    void unsubscribe(RequestSubscription subscription);
-
-    /**
-     * Un-subscribe all active polling requests
-     */
-    void unsubscribeAll();
-
-    /**
      * <p>Create a new Temporary AAR Exception.</p>
      * <p>Note: unlike most other TROLIE operations in this SDK, this is a simple
      * synchronous call, given that Temporary AAR Exceptions are small, individually
@@ -511,6 +499,18 @@ public interface TrolieClient extends Closeable {
      * @param id the id of the Temporary AAR Exception to delete.
      */
     void deleteTemporaryAARException(@NonNull String id);
+
+    /**
+     * Un-subscribe an active polling request
+     *
+     * @param subscription subscription to cancel.
+     */
+    void unsubscribe(RequestSubscription subscription);
+
+    /**
+     * Un-subscribe all active polling requests
+     */
+    void unsubscribeAll();
 
     /**
      * Initializes a new builder.
