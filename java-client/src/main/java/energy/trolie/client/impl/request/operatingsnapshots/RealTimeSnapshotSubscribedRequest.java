@@ -1,6 +1,5 @@
 package energy.trolie.client.impl.request.operatingsnapshots;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.ETagStore;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
@@ -11,6 +10,7 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.net.URIBuilder;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -30,7 +30,7 @@ public class RealTimeSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 			TrolieHost host,
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers,
 			int pollingRateMillis,
@@ -39,7 +39,7 @@ public class RealTimeSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 			String monitoringSet,
 			String resourceId) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers,
+		super(httpClient, host, requestConfig, bufferSize, jsonMapper, httpHeaders, providers,
 				pollingRateMillis, receiver, eTagStore);
 		this.monitoringSet = monitoringSet;
 		this.resourceId = resourceId;
@@ -82,7 +82,7 @@ public class RealTimeSnapshotSubscribedRequest extends AbstractStreamingSubscrib
 	@Override
 	protected Boolean handleResponseContent(InputStream inputStream) {
 		
-		return new RealTimeSnapshotResponseParser(receiver).parseResponse(inputStream, jsonFactory);
+		return new RealTimeSnapshotResponseParser(receiver).parseResponse(inputStream, jsonMapper);
 		
 	}
 	

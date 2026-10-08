@@ -1,6 +1,5 @@
 package energy.trolie.client.impl.request.temporaryaarexceptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
@@ -15,6 +14,7 @@ import org.apache.hc.client5.http.impl.classic.AbstractHttpClientResponseHandler
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.net.URIBuilder;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -40,7 +40,7 @@ public abstract class AbstractTemporaryAARExceptionRequest<T> {
 	protected final HttpClient httpClient;
 	protected final TrolieHost host;
 	protected final RequestConfig requestConfig;
-	protected final ObjectMapper objectMapper;
+	protected final JsonMapper jsonMapper;
 	protected final Map<String, String> httpHeaders;
 	protected final List<RequestHeaderProvider> providers;
 
@@ -48,13 +48,13 @@ public abstract class AbstractTemporaryAARExceptionRequest<T> {
 			HttpClient httpClient,
 			TrolieHost host,
 			RequestConfig requestConfig,
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers) {
 		this.httpClient = httpClient;
 		this.host = host;
 		this.requestConfig = requestConfig;
-		this.objectMapper = objectMapper;
+		this.jsonMapper = jsonMapper;
 		this.httpHeaders = httpHeaders;
 		this.providers = providers;
 	}

@@ -1,8 +1,5 @@
 package energy.trolie.client.impl.request.operatingsnapshots;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import energy.trolie.client.exception.StreamingGetConnectionException;
 import energy.trolie.client.exception.StreamingGetHandlingException;
 import energy.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
@@ -11,8 +8,11 @@ import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.exc.JacksonIOException;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -25,9 +25,9 @@ public class ForecastSnapshotResponseParser {
 	
 	ForecastSnapshotReceiver receiver;
 
-	public Boolean parseResponse(InputStream inputStream, JsonFactory jsonFactory) {
+	public Boolean parseResponse(InputStream inputStream, JsonMapper jsonMapper) {
 		
-		try (JsonParser parser = jsonFactory.createParser(inputStream);) {
+		try (JsonParser parser = jsonMapper.createParser(inputStream);) {
 			
 			receiver.beginSnapshot();
 			
@@ -82,7 +82,7 @@ public class ForecastSnapshotResponseParser {
 			receiver.endSnapshot();
 			return true;
 
-		} catch (IOException e) {
+		} catch (JacksonIOException e) {
 			logger.error("I/O error handling response",e);
 			receiver.error(new StreamingGetConnectionException(e));
 		} catch (Exception e) {

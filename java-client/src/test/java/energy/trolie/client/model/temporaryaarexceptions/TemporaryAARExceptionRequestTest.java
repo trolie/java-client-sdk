@@ -1,12 +1,11 @@
 package energy.trolie.client.model.temporaryaarexceptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import energy.trolie.client.model.common.DataProvenance;
 import energy.trolie.client.model.common.EmergencyRatingValue;
 import energy.trolie.client.model.common.PowerSystemResource;
 import energy.trolie.client.model.common.RatingValue;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -18,8 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class TemporaryAARExceptionRequestTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+    private final JsonMapper jsonMapper = new JsonMapper();
 
     @Test
     void does_not_include_an_id_field() throws IOException {
@@ -31,7 +29,7 @@ class TemporaryAARExceptionRequestTest {
                 .emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
                 .build();
 
-        String json = objectMapper.writeValueAsString(request);
+        String json = jsonMapper.writeValueAsString(request);
 
         assertFalse(json.contains("\"id\""));
     }
@@ -52,8 +50,8 @@ class TemporaryAARExceptionRequestTest {
                 .reason("High wildfire risk forecasted until mid-day 7/13/25")
                 .build();
 
-        String json = objectMapper.writeValueAsString(request);
-        TemporaryAARExceptionRequest roundTripped = objectMapper.readValue(json, TemporaryAARExceptionRequest.class);
+        String json = jsonMapper.writeValueAsString(request);
+        TemporaryAARExceptionRequest roundTripped = jsonMapper.readValue(json, TemporaryAARExceptionRequest.class);
 
         assertEquals(request, roundTripped);
         assertEquals("X-AMPL", roundTripped.getSource().getProvider());
@@ -68,8 +66,8 @@ class TemporaryAARExceptionRequestTest {
                 .emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
                 .build();
 
-        String json = objectMapper.writeValueAsString(request);
-        TemporaryAARExceptionRequest roundTripped = objectMapper.readValue(json, TemporaryAARExceptionRequest.class);
+        String json = jsonMapper.writeValueAsString(request);
+        TemporaryAARExceptionRequest roundTripped = jsonMapper.readValue(json, TemporaryAARExceptionRequest.class);
 
         assertNull(roundTripped.getSource());
     }

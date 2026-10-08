@@ -1,9 +1,6 @@
 package energy.trolie.client;
 
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import energy.trolie.client.impl.MemoryETagStore;
 import energy.trolie.client.impl.TrolieClientImpl;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
@@ -14,6 +11,8 @@ import energy.trolie.client.spp.SppApiTokenHeaderProvider;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
 import java.util.ArrayList;
@@ -52,7 +51,7 @@ public class TrolieClientBuilder {
 	private final CloseableHttpClient httpClient;
 	private RequestConfig requestConfig;
 	private int bufferSize = DEFAULT_BUFFER_SIZE;
-	private ObjectMapper objectMapper;
+	private JsonMapper jsonMapper;
 	private ETagStore eTagStore;
 	private Map<String, String> httpHeaders = new HashMap<>();
 	private final List<RequestHeaderProvider> providers = new ArrayList<>();
@@ -109,12 +108,12 @@ public class TrolieClientBuilder {
 	}
 
 	/**
-	 * Overrides configuration of the Jackson object mapper using for JSON parsing and serialization
-	 * @param objectMapper new object mapper
+	 * Overrides configuration of the Jackson JSON mapper used for JSON parsing and serialization
+	 * @param jsonMapper new JSON mapper
 	 * @return fluent builder
 	 */
-	public TrolieClientBuilder objectMapper(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
+	public TrolieClientBuilder jsonMapper(JsonMapper jsonMapper) {
+		this.jsonMapper = jsonMapper;
 		return this;
 	}
 
@@ -260,10 +259,10 @@ public class TrolieClientBuilder {
     		requestConfig = RequestConfig.DEFAULT;
     	}
     	
-    	if (objectMapper == null) {
-    		objectMapper = new ObjectMapper();
-			objectMapper.registerModule(new JavaTimeModule());
-			objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    	if (jsonMapper == null) {
+            jsonMapper = JsonMapper.builder()
+					.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+					.build();
     	}
 
     	if (eTagStore == null) {
@@ -275,7 +274,7 @@ public class TrolieClientBuilder {
 		}
 
     	return new TrolieClientImpl(httpClient, host, requestConfig, bufferSize,
-				objectMapper, eTagStore, httpHeaders, providers, periodLengthMinutes,
+				jsonMapper, eTagStore, httpHeaders, providers, periodLengthMinutes,
 				realTimeRatingsPollMs,
 				forecastRatingsPollMs, monitoringSetPollMs, seasonalRatingsPollMs);
     }

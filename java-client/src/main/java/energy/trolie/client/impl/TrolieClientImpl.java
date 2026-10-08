@@ -1,6 +1,5 @@
 package energy.trolie.client.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.ETagStore;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.RequestSubscription;
@@ -42,6 +41,7 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -60,7 +60,7 @@ public class TrolieClientImpl implements TrolieClient {
 	TrolieHost host;
 	RequestConfig requestConfig;
 	int bufferSize;
-	ObjectMapper objectMapper;
+	JsonMapper jsonMapper;
 	ETagStore eTagStore;
 	Map<String, String> httpHeaders;
 	List<RequestHeaderProvider> providers;
@@ -71,7 +71,7 @@ public class TrolieClientImpl implements TrolieClient {
 	private final int seasonalRatingsPollMs;
 
 	public TrolieClientImpl(CloseableHttpClient httpClient, TrolieHost host, RequestConfig requestConfig, int bufferSize,
-							ObjectMapper objectMapper, ETagStore eTagStore, Map<String, String> httpHeaders, List<RequestHeaderProvider> providers,
+							JsonMapper jsonMapper, ETagStore eTagStore, Map<String, String> httpHeaders, List<RequestHeaderProvider> providers,
 							int defaultIntervalMinutes,
 							int realTimeRatingsPollMs,
 							int forecastRatingsPollMs,
@@ -82,7 +82,7 @@ public class TrolieClientImpl implements TrolieClient {
 		this.host = host;
 		this.requestConfig = requestConfig;
 		this.bufferSize = bufferSize;
-		this.objectMapper = objectMapper;
+		this.jsonMapper = jsonMapper;
 		this.eTagStore = eTagStore;
 		this.httpHeaders = httpHeaders;
 		this.providers = providers;
@@ -130,7 +130,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host, 
 				requestConfig, 
 				bufferSize, 
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				receiver,
@@ -157,7 +157,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host, 
 				requestConfig, 
 				bufferSize, 
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				forecastRatingsPollMs,
@@ -198,7 +198,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host,
 				requestConfig,
 				bufferSize,
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				receiver,
@@ -226,7 +226,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host,
 				requestConfig,
 				bufferSize,
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				forecastRatingsPollMs,
@@ -241,7 +241,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public ForecastRatingProposalUpdate createForecastRatingProposalStreamingUpdate() {
 		return new ForecastRatingProposalUpdate(httpClient, host, requestConfig, bufferSize,
-				objectMapper, httpHeaders, providers, defaultIntervalMinutes);
+				jsonMapper, httpHeaders, providers, defaultIntervalMinutes);
 	}
 
 	@Override
@@ -264,7 +264,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host, 
 				requestConfig, 
 				bufferSize, 
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				realTimeRatingsPollMs,
@@ -280,7 +280,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public RealTimeRatingProposalUpdate createRealTimeRatingProposalStreamingUpdate() {
 		return new RealTimeRatingProposalUpdate(httpClient, host, requestConfig, bufferSize,
-				objectMapper, httpHeaders, providers);
+				jsonMapper, httpHeaders, providers);
 	}
 
 	@Override
@@ -301,7 +301,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host, 
 				requestConfig, 
 				bufferSize,
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				receiver,
@@ -328,7 +328,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host,
 				requestConfig,
 				bufferSize,
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				receiver,
@@ -352,7 +352,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host,
 				requestConfig,
 				bufferSize,
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				realTimeRatingsPollMs,
@@ -367,7 +367,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getMonitoringSet(MonitoringSetsReceiver receiver, String monitoringSet) {
 		new MonitoringSetsRequest(
-				httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers,
+				httpClient, host, requestConfig, bufferSize, jsonMapper, httpHeaders, providers,
 				receiver, monitoringSet).executeRequest();
 
 	}
@@ -376,7 +376,7 @@ public class TrolieClientImpl implements TrolieClient {
 	public MonitoringSetsSubscribedRequest subscribeToMonitoringSetUpdates(MonitoringSetsSubscribedReceiver receiver,
                                                                            String monitoringSet) {
 		MonitoringSetsSubscribedRequest subscription = new MonitoringSetsSubscribedRequest(
-				httpClient, host, requestConfig, monitoringSetPollMs, objectMapper, httpHeaders, providers,
+				httpClient, host, requestConfig, monitoringSetPollMs, jsonMapper, httpHeaders, providers,
 				monitoringSetPollMs, receiver, eTagStore, monitoringSet);
 		addSubscription(subscription);
 		return subscription;
@@ -385,7 +385,7 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void getDefaultMonitoringSet(MonitoringSetsReceiver receiver) {
 		new DefaultMonitoringSetRequest(
-				httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, receiver)
+				httpClient, host, requestConfig, bufferSize, jsonMapper, httpHeaders, providers, receiver)
 				.executeRequest();
 	}
 
@@ -393,7 +393,7 @@ public class TrolieClientImpl implements TrolieClient {
 	public DefaultMonitoringSetSubscribedRequest subscribeToDefaultMonitoringSetUpdates(
 			MonitoringSetsSubscribedReceiver receiver) {
 		var subscription = new DefaultMonitoringSetSubscribedRequest(
-				httpClient, host, requestConfig, monitoringSetPollMs, objectMapper, httpHeaders, providers,
+				httpClient, host, requestConfig, monitoringSetPollMs, jsonMapper, httpHeaders, providers,
 				monitoringSetPollMs, receiver, eTagStore);
 		addSubscription(subscription);
 		return subscription;
@@ -420,7 +420,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host,
 				requestConfig,
 				bufferSize,
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				receiver,
@@ -444,7 +444,7 @@ public class TrolieClientImpl implements TrolieClient {
 				host,
 				requestConfig,
 				bufferSize,
-				objectMapper,
+				jsonMapper,
 				httpHeaders,
 				providers,
 				seasonalRatingsPollMs,
@@ -460,20 +460,20 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public TemporaryAARException createTemporaryAARException(TemporaryAARExceptionRequest request) {
 		return new CreateTemporaryAARExceptionRequest(
-				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, request).execute();
+				httpClient, host, requestConfig, jsonMapper, httpHeaders, providers, request).execute();
 	}
 
 	@Override
 	public TemporaryAARException getTemporaryAARException(String id) {
 		return new GetTemporaryAARExceptionRequest(
-				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, id).execute();
+				httpClient, host, requestConfig, jsonMapper, httpHeaders, providers, id).execute();
 	}
 
 	@Override
 	public List<TemporaryAARException> getTemporaryAARExceptions(Instant periodStart, Instant periodEnd,
 																  String segment, String monitoringSet) {
 		return new GetTemporaryAARExceptionsRequest(
-				httpClient, host, requestConfig, objectMapper, httpHeaders, providers,
+				httpClient, host, requestConfig, jsonMapper, httpHeaders, providers,
 				periodStart, periodEnd, segment, monitoringSet).execute();
 	}
 
@@ -485,13 +485,13 @@ public class TrolieClientImpl implements TrolieClient {
 	@Override
 	public void updateTemporaryAARException(String id, TemporaryAARExceptionRequest request) {
 		new UpdateTemporaryAARExceptionRequest(
-				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, id, request).execute();
+				httpClient, host, requestConfig, jsonMapper, httpHeaders, providers, id, request).execute();
 	}
 
 	@Override
 	public void deleteTemporaryAARException(String id) {
 		new DeleteTemporaryAARExceptionRequest(
-				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, id).execute();
+				httpClient, host, requestConfig, jsonMapper, httpHeaders, providers, id).execute();
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 package energy.trolie.client.impl.request;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.ETagStore;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.StreamingSubscribedResponseReceiver;
@@ -15,6 +14,7 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.ProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -49,13 +49,13 @@ public abstract class AbstractStreamingSubscribedGet<T extends StreamingSubscrib
 			TrolieHost host,
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers,
 			int pollingRateMillis,
 			T receiver,
 			ETagStore eTagStore) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, receiver);
+		super(httpClient, host, requestConfig, bufferSize, jsonMapper, httpHeaders, providers, receiver);
 		this.pollingRateMillis = pollingRateMillis;
 		this.eTagStore = eTagStore;
 	}

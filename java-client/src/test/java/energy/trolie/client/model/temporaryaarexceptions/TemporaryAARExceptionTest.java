@@ -1,12 +1,11 @@
 package energy.trolie.client.model.temporaryaarexceptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import energy.trolie.client.model.common.DataProvenance;
 import energy.trolie.client.model.common.EmergencyRatingValue;
 import energy.trolie.client.model.common.PowerSystemResource;
 import energy.trolie.client.model.common.RatingValue;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -18,8 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TemporaryAARExceptionTest {
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+    private final JsonMapper jsonMapper = new JsonMapper();
 
     private TemporaryAARException fullException() {
         return TemporaryAARException.builder()
@@ -42,7 +40,7 @@ class TemporaryAARExceptionTest {
 
     @Test
     void serializes_using_hyphenated_field_names() throws IOException {
-        String json = objectMapper.writeValueAsString(fullException());
+        String json = jsonMapper.writeValueAsString(fullException());
 
         assertTrue(json.contains("\"start-time\""));
         assertTrue(json.contains("\"end-time\""));
@@ -57,8 +55,8 @@ class TemporaryAARExceptionTest {
     void round_trips_through_json() throws IOException {
         TemporaryAARException original = fullException();
 
-        String json = objectMapper.writeValueAsString(original);
-        TemporaryAARException roundTripped = objectMapper.readValue(json, TemporaryAARException.class);
+        String json = jsonMapper.writeValueAsString(original);
+        TemporaryAARException roundTripped = jsonMapper.readValue(json, TemporaryAARException.class);
 
         assertEquals(original, roundTripped);
     }
@@ -91,7 +89,7 @@ class TemporaryAARExceptionTest {
                 }
                 """;
 
-        TemporaryAARException value = objectMapper.readValue(json, TemporaryAARException.class);
+        TemporaryAARException value = jsonMapper.readValue(json, TemporaryAARException.class);
 
         assertEquals("46f7212b-1633-4c30-ba71-c6e987b2ded7", value.getId());
         assertEquals("X-AMPL", value.getSource().getProvider());
@@ -113,8 +111,8 @@ class TemporaryAARExceptionTest {
                 .emergencyOperatingLimits(List.of(EmergencyRatingValue.of("emergency", RatingValue.fromMva(165f))))
                 .build();
 
-        String json = objectMapper.writeValueAsString(withoutEndTime);
-        TemporaryAARException roundTripped = objectMapper.readValue(json, TemporaryAARException.class);
+        String json = jsonMapper.writeValueAsString(withoutEndTime);
+        TemporaryAARException roundTripped = jsonMapper.readValue(json, TemporaryAARException.class);
 
         assertNull(roundTripped.getEndTime());
     }
