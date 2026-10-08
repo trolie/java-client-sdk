@@ -1,6 +1,5 @@
 package energy.trolie.client.impl.request;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.StreamingUpdate;
 import energy.trolie.client.TrolieHost;
@@ -21,6 +20,8 @@ import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.exc.JacksonIOException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -51,7 +52,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 	RequestConfig requestConfig;
 	ThreadPoolExecutor threadPoolExecutor;
 	int bufferSize;
-	protected ObjectMapper objectMapper;
+	protected JsonMapper jsonMapper;
 	PipedOutputStream outputStream;
 	Future<T> responseFuture;
 
@@ -59,7 +60,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 	List<RequestHeaderProvider> providers;
 
 	protected AbstractStreamingUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
-                                      int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders, List<RequestHeaderProvider> providers) {
+									  int bufferSize, JsonMapper jsonMapper, Map<String, String> httpHeaders, List<RequestHeaderProvider> providers) {
 		super();
 		this.httpClient = httpClient;
 		this.host = host;
@@ -67,7 +68,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		this.threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1,
 				TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 		this.bufferSize = bufferSize;
-		this.objectMapper = objectMapper;
+		this.jsonMapper = jsonMapper;
 		this.httpHeaders = httpHeaders;
 		this.providers = providers;
 	}
@@ -119,7 +120,8 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 	 */
 	protected void handleWriteError(Exception e) {
 		//if the exception is a broken pipe chances are the more interesting error is in the request thread
-		if (e instanceof IOException && responseFuture != null && responseFuture.isDone()) {
+		if ((e instanceof IOException || e instanceof JacksonIOException)
+				&& responseFuture != null && responseFuture.isDone()) {
 			checkCanWrite();
 		}
 		close();

@@ -1,9 +1,5 @@
 package energy.trolie.client;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import energy.trolie.client.exception.StreamingGetException;
 import energy.trolie.client.exception.TrolieException;
 import energy.trolie.client.exception.TrolieServerException;
@@ -67,6 +63,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.json.JsonMapper;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -114,15 +112,14 @@ public class TrolieClientIT {
 
 	static HttpServer httpServer;
 	static Function<ClassicHttpRequest,ClassicHttpResponse> requestHandler;
-	static ObjectMapper objectMapper;
+	static JsonMapper jsonMapper;
 
 	ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(1,1,1,TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
 
 	@BeforeAll
 	public static void createTestServer() throws Exception {
 
-		objectMapper = new ObjectMapper();
-		objectMapper.registerModule(new JavaTimeModule());
+		jsonMapper = new JsonMapper();
 
 		int port;
 		try (ServerSocket serverSocket = new ServerSocket(0)) {
@@ -201,7 +198,7 @@ public class TrolieClientIT {
 
 			try (GzipDecompressingEntity entity = new GzipDecompressingEntity(request.getEntity())) {
 
-				Map<String,Object> data = objectMapper.readValue(entity.getContent(),Map.class);
+				Map<String,Object> data = jsonMapper.readValue(entity.getContent(),Map.class);
 				List<Map<String,Object>> ratings = (List<Map<String,Object>>)data.get("ratings");
 				Assertions.assertEquals(3, ratings.size());
 				for (Map<String,Object> rating : ratings) {
@@ -210,7 +207,7 @@ public class TrolieClientIT {
 				}
 
 				BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
-				response.setEntity(new StringEntity(objectMapper.writeValueAsString(status)));
+				response.setEntity(new StringEntity(jsonMapper.writeValueAsString(status)));
 				return response;
 
 			} catch (Exception e) {
@@ -345,7 +342,7 @@ public class TrolieClientIT {
 					@Override
 					public Void call() throws Exception {
 
-						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+						try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 
 							writeForecastSnapshot(json, startTime);
 
@@ -473,7 +470,7 @@ public class TrolieClientIT {
 						@Override
 						public Void call() throws Exception {
 
-							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+							try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 								writeForecastSnapshot(json, startTime);
 								return null;
 							} catch (Exception e) {
@@ -600,7 +597,7 @@ public class TrolieClientIT {
 				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 				threadPoolExecutor.submit((Callable<Void>) () -> {
 
-                    try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+                    try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 
                         writeForecastSnapshot(json, startTime);
 
@@ -727,7 +724,7 @@ public class TrolieClientIT {
 						@Override
 						public Void call() throws Exception {
 
-							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+							try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 								writeForecastSnapshot(json, startTime);
 								return null;
 							} catch (Exception e) {
@@ -842,12 +839,12 @@ public class TrolieClientIT {
 
 			try (GzipDecompressingEntity entity = new GzipDecompressingEntity(request.getEntity())) {
 
-				Map<String,Object> data = objectMapper.readValue(entity.getContent(),Map.class);
+				Map<String,Object> data = jsonMapper.readValue(entity.getContent(),Map.class);
 				List<Map<String,Object>> ratings = (List<Map<String,Object>>)data.get("ratings");
 				Assertions.assertEquals(3, ratings.size());
 
 				BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
-				response.setEntity(new StringEntity(objectMapper.writeValueAsString(status)));
+				response.setEntity(new StringEntity(jsonMapper.writeValueAsString(status)));
 				return response;
 
 			} catch (Exception e) {
@@ -919,7 +916,7 @@ public class TrolieClientIT {
 					threadPoolExecutor.submit(new Callable<Void>() {
 						@Override
 						public Void call() throws Exception {
-							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+							try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 								writeRealTimeSnapshot(json);
 								return null;
 							} catch (Exception e) {
@@ -1032,7 +1029,7 @@ public class TrolieClientIT {
 					@Override
 					public Void call() throws Exception {
 
-						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+						try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 
 
 							writeRealTimeSnapshot(json);
@@ -1142,7 +1139,7 @@ public class TrolieClientIT {
 							new GzipCompressingEntity(new InputStreamEntity(in,ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_SNAPSHOT))));
 					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 					threadPoolExecutor.submit((Callable<Void>) () -> {
-                        try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+                        try (JsonGenerator json = jsonMapper.createGenerator(out)) {
                             writeRealTimeSnapshot(json);
                             return null;
                         } catch (Exception e) {
@@ -1251,7 +1248,7 @@ public class TrolieClientIT {
 				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 				threadPoolExecutor.submit((Callable<Void>) () -> {
 
-                    try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+                    try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 
 
                         writeRealTimeSnapshot(json);
@@ -1330,7 +1327,7 @@ public class TrolieClientIT {
 						ContentType.create(TrolieApiConstants.CONTENT_TYPE_MONITORING_SET))));
 				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 				threadPoolExecutor.submit((Callable<Void>) () -> {
-                    try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+                    try (JsonGenerator json = jsonMapper.createGenerator(out)) {
                         writeMonitoringSet(json, id);
                         return null;
                     } catch (Exception e) {
@@ -1387,7 +1384,7 @@ public class TrolieClientIT {
 				threadPoolExecutor.submit(new Callable<Void>() {
 					@Override
 					public Void call() throws Exception {
-						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+						try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 							writeMonitoringSet(json, id);
 							return null;
 						} catch (Exception e) {
@@ -1471,7 +1468,7 @@ public class TrolieClientIT {
 					response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 					threadPoolExecutor.submit((Callable<Void>) () -> {
 
-                        try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+                        try (JsonGenerator json = jsonMapper.createGenerator(out)) {
                             writeMonitoringSet(json, startTime);
                             return null;
                         } catch (Exception e) {
@@ -1565,7 +1562,7 @@ public class TrolieClientIT {
 					@Override
 					public Void call() throws Exception {
 
-						try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+						try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 
 							writeSeasonalSnapshot(json, startTime, season);
 
@@ -1694,7 +1691,7 @@ public class TrolieClientIT {
 						@Override
 						public Void call() throws Exception {
 
-							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+							try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 								writeSeasonalSnapshot(json, startTime, season );
 								return null;
 							} catch (Exception e) {
@@ -1818,7 +1815,7 @@ public class TrolieClientIT {
 
 			ForecastRatingProposalStatus status = ForecastRatingProposalStatus.builder().build();
 			try {
-				String jsonResponse = objectMapper.writeValueAsString(status);
+				String jsonResponse = jsonMapper.writeValueAsString(status);
 				response.setEntity(new StringEntity(jsonResponse, ContentType.APPLICATION_JSON));
 			} catch (Exception e) {
 				throw new RuntimeException(e);
@@ -1908,14 +1905,14 @@ public class TrolieClientIT {
 		MonitoringSet monitoringSet = new MonitoringSet("monitoringSetName", "This is test SDK", List.of(), source, id);
 		json.writeStartObject();
 		try {
-			json.writeFieldName(TAG_SOURCE);
-			json.writeObject(monitoringSet.getSource());
-			json.writeFieldName(TAG_ID);
-			json.writeObject(monitoringSet.getId());
-			json.writeFieldName(TAG_DESCRIPTION);
-			json.writeObject(monitoringSet.getDescription());
-			json.writeFieldName(TAG_POWER_SYSTEM_RESOURCES);
-			json.writeObject(monitoringSet.getPowerSystemResources());
+			json.writeName(TAG_SOURCE);
+			jsonMapper.writeValue(json, monitoringSet.getSource());
+			json.writeName(TAG_ID);
+			jsonMapper.writeValue(json, monitoringSet.getId());
+			json.writeName(TAG_DESCRIPTION);
+			jsonMapper.writeValue(json, monitoringSet.getDescription());
+			json.writeName(TAG_POWER_SYSTEM_RESOURCES);
+			jsonMapper.writeValue(json, monitoringSet.getPowerSystemResources());
 		}catch (Exception e) {
 			log.error("writeMonitoringSet.error ", e);
 		}
@@ -1928,17 +1925,17 @@ public class TrolieClientIT {
 
 		json.writeStartObject();
 
-		json.writeFieldName("snapshot-header");
-		json.writeObject(header);
+		json.writeName("snapshot-header");
+		jsonMapper.writeValue(json, header);
 
-		json.writeFieldName("ratings");
+		json.writeName("ratings");
 		json.writeStartArray();
 
 		for (int i=0;i<100;i++) {
 			json.writeStartObject();
-			json.writeFieldName("resource-id");
+			json.writeName("resource-id");
 			json.writeString("resource" + i);
-			json.writeFieldName("periods");						
+			json.writeName("periods");
 			json.writeStartArray();
 			for (int j=0;j<24;j++) {
 				ForecastPeriodSnapshot period = ForecastPeriodSnapshot.builder()
@@ -1947,7 +1944,7 @@ public class TrolieClientIT {
 						.continuousOperatingLimit(RatingValue.fromMva(100f))
 						.emergencyOperatingLimits(Collections.emptyList())
 						.build();
-				json.writeObject(period);
+				jsonMapper.writeValue(json, period);
 			}
 			json.writeEndArray();
 			json.writeEndObject();
@@ -1963,14 +1960,14 @@ public class TrolieClientIT {
 		json.writeStartObject();
 
 		RealTimeSnapshotHeader header = new RealTimeSnapshotHeader();
-		json.writeFieldName("snapshot-header");
-		json.writeObject(header);
+		json.writeName("snapshot-header");
+		jsonMapper.writeValue(json, header);
 
-		json.writeFieldName("ratings");
+		json.writeName("ratings");
 		json.writeStartArray();
 
 		for (int i=0;i<100;i++) {
-			json.writeObject(RealTimeLimit.builder()
+			jsonMapper.writeValue(json, RealTimeLimit.builder()
 					.resourceId("resource" + i)
 					.continuousOperatingLimit(RatingValue.fromMva(100f)).build());
 		}
@@ -1985,17 +1982,17 @@ public class TrolieClientIT {
 
 		json.writeStartObject();
 
-		json.writeFieldName("snapshot-header");
-		json.writeObject(header);
+		json.writeName("snapshot-header");
+		jsonMapper.writeValue(json, header);
 
-		json.writeFieldName("ratings");
+		json.writeName("ratings");
 		json.writeStartArray();
 
 		for (int i=0;i<100;i++) {
 			json.writeStartObject();
-			json.writeFieldName("resource-id");
+			json.writeName("resource-id");
 			json.writeString("resource" + i);
-			json.writeFieldName("periods");
+			json.writeName("periods");
 			json.writeStartArray();
 			for (int j=0;j<24;j++) {
 				SeasonalPeriodSnapshot period = SeasonalPeriodSnapshot.builder()
@@ -2005,7 +2002,7 @@ public class TrolieClientIT {
 						.continuousOperatingLimit(RatingValue.fromMva(100f))
 						.emergencyOperatingLimits(Collections.emptyList())
 						.build();
-				json.writeObject(period);
+				jsonMapper.writeValue(json, period);
 			}
 			json.writeEndArray();
 			json.writeEndObject();
@@ -2034,7 +2031,7 @@ public class TrolieClientIT {
 						ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_SNAPSHOT))));
 				response.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 				threadPoolExecutor.submit((Callable<Void>) () -> {
-					try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+					try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 						writeForecastSnapshot(json, startTime);
 						return null;
 					}
@@ -2132,7 +2129,7 @@ public class TrolieClientIT {
 			BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
 			try {
 				response.setEntity(new StringEntity(
-						objectMapper.writeValueAsString(ForecastRatingProposalStatus.builder().build()),
+						jsonMapper.writeValueAsString(ForecastRatingProposalStatus.builder().build()),
 						ContentType.APPLICATION_JSON));
 			} catch (Exception e) {
 				throw new RuntimeException(e);
@@ -2191,7 +2188,7 @@ public class TrolieClientIT {
 					threadPoolExecutor.submit(new Callable<Void>() {
 						@Override
 						public Void call() throws Exception {
-							try (JsonGenerator json = new JsonFactory(objectMapper).createGenerator(out)) {
+							try (JsonGenerator json = jsonMapper.createGenerator(out)) {
 								writeForecastSnapshot(json, startTime);
 								return null;
 							} catch (Exception e) {
@@ -2314,7 +2311,7 @@ public class TrolieClientIT {
 				Assertions.assertEquals("POST", request.getMethod());
 				Assertions.assertEquals("/temporary-aar-exceptions", request.getUri().getPath());
 
-				var sentRequest = objectMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
+				var sentRequest = jsonMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
 				Assertions.assertEquals("8badf00d", sentRequest.getResource().getResourceId());
 				Assertions.assertNull(sentRequest.getSource());
 
@@ -2329,7 +2326,7 @@ public class TrolieClientIT {
 						.build();
 
 				BasicClassicHttpResponse response = new BasicClassicHttpResponse(201);
-				response.setEntity(new StringEntity(objectMapper.writeValueAsString(created),
+				response.setEntity(new StringEntity(jsonMapper.writeValueAsString(created),
 						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
 				return response;
 			} catch (Exception e) {
@@ -2367,7 +2364,7 @@ public class TrolieClientIT {
 
 		requestHandler = request -> {
 			try {
-				var sentRequest = objectMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
+				var sentRequest = jsonMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
 				Assertions.assertNotNull(sentRequest.getSource());
 				Assertions.assertEquals("TO1", sentRequest.getSource().getProvider());
 				Assertions.assertEquals("origin-123", sentRequest.getSource().getOriginId());
@@ -2382,7 +2379,7 @@ public class TrolieClientIT {
 						.build();
 
 				BasicClassicHttpResponse response = new BasicClassicHttpResponse(201);
-				response.setEntity(new StringEntity(objectMapper.writeValueAsString(created),
+				response.setEntity(new StringEntity(jsonMapper.writeValueAsString(created),
 						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
 				return response;
 			} catch (Exception e) {
@@ -2430,7 +2427,7 @@ public class TrolieClientIT {
 						.build();
 
 				BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
-				response.setEntity(new StringEntity(objectMapper.writeValueAsString(found),
+				response.setEntity(new StringEntity(jsonMapper.writeValueAsString(found),
 						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
 				return response;
 			} catch (Exception e) {
@@ -2491,7 +2488,7 @@ public class TrolieClientIT {
 				);
 
 				BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
-				response.setEntity(new StringEntity(objectMapper.writeValueAsString(exceptions),
+				response.setEntity(new StringEntity(jsonMapper.writeValueAsString(exceptions),
 						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION_SET)));
 				return response;
 			} catch (Exception e) {
@@ -2519,7 +2516,7 @@ public class TrolieClientIT {
 				Assertions.assertNull(request.getUri().getQuery());
 
 				BasicClassicHttpResponse response = new BasicClassicHttpResponse(200);
-				response.setEntity(new StringEntity(objectMapper.writeValueAsString(List.of()),
+				response.setEntity(new StringEntity(jsonMapper.writeValueAsString(List.of()),
 						ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION_SET)));
 				return response;
 			} catch (Exception e) {
@@ -2548,7 +2545,7 @@ public class TrolieClientIT {
 				Assertions.assertEquals("/temporary-aar-exceptions/46f7212b-1633-4c30-ba71-c6e987b2ded7",
 						request.getUri().getPath());
 
-				var sentRequest = objectMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
+				var sentRequest = jsonMapper.readValue(request.getEntity().getContent(), TemporaryAARExceptionRequest.class);
 				Assertions.assertEquals(newEndTime, sentRequest.getEndTime());
 
 				return new BasicClassicHttpResponse(204);

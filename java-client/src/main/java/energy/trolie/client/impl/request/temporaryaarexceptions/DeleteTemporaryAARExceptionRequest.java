@@ -1,12 +1,12 @@
 package energy.trolie.client.impl.request.temporaryaarexceptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieHost;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -24,11 +24,11 @@ public class DeleteTemporaryAARExceptionRequest extends AbstractTemporaryAARExce
 			HttpClient httpClient,
 			TrolieHost host,
 			RequestConfig requestConfig,
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers,
 			String id) {
-		super(httpClient, host, requestConfig, objectMapper, httpHeaders, providers);
+		super(httpClient, host, requestConfig, jsonMapper, httpHeaders, providers);
 		if (id == null || id.isBlank()) {
 			throw new IllegalArgumentException("Temporary AAR Exception id cannot be null or blank");
 		}

@@ -1,7 +1,5 @@
 package energy.trolie.client.request.ratingproposals;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
@@ -18,6 +16,8 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.Map;
@@ -42,13 +42,13 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 	 * @param host host
 	 * @param requestConfig client request config
 	 * @param bufferSize internal buffer size
-	 * @param objectMapper Jackson object mapper
+	 * @param jsonMapper Jackson JSON mapper
 	 * @param httpHeader mapped header list
 	 * @param providers header providers
 	 */
 	public RealTimeRatingProposalUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
-                                        int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeader, List<RequestHeaderProvider> providers) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeader, providers);
+                                        int bufferSize, JsonMapper jsonMapper, Map<String, String> httpHeader, List<RequestHeaderProvider> providers) {
+		super(httpClient, host, requestConfig, bufferSize, jsonMapper, httpHeader, providers);
 	}
 
 	private enum Scope {
@@ -81,7 +81,7 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 	protected Function<HttpEntity,RealTimeRatingProposalStatus> getResponseHandler() {
 		return e -> {
 			try {
-				return objectMapper.readValue(e.getContent(), RealTimeRatingProposalStatus.class);
+				return jsonMapper.readValue(e.getContent(), RealTimeRatingProposalStatus.class);
 			} catch (Exception e2) {	
 				throw new TrolieException("Failed to parse response",e2);
 			}
@@ -97,7 +97,7 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 
 		validateScope(Scope.MAIN, Scope.BEGIN);
 		try {
-			jsonGenerator = objectMapper.createGenerator(createRequestOutputStream());
+			jsonGenerator = jsonMapper.createGenerator(createRequestOutputStream());
 		} catch (Exception e) {
 			throw new TrolieException("Error creating request output stream",e);
 		}
@@ -105,11 +105,11 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 		checkCanWrite();
 
 		try {	
-			jsonGenerator.setCodec(objectMapper);
 			jsonGenerator.writeStartObject();
-			jsonGenerator.writeFieldName("proposal-header");
-			jsonGenerator.writeObject(header);
-			jsonGenerator.writeArrayFieldStart("ratings");
+			jsonGenerator.writeName("proposal-header");
+			jsonMapper.writeValue(jsonGenerator, header);
+			jsonGenerator.writeName("ratings");
+			jsonGenerator.writeStartArray();
 		} catch (Exception e) {
 			handleWriteError(e);
 		}
@@ -124,7 +124,7 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 		checkCanWrite();
 		try {
 			validateScope(Scope.RATING, Scope.RATING, Scope.MAIN);
-			jsonGenerator.writeObject(rating);
+			jsonMapper.writeValue(jsonGenerator, rating);
 		} catch (Exception e) {
 			handleWriteError(e);
 		}

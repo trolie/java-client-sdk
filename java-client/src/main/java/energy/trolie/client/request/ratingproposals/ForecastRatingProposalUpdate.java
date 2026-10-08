@@ -1,7 +1,5 @@
 package energy.trolie.client.request.ratingproposals;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
@@ -20,6 +18,8 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.util.List;
@@ -48,15 +48,15 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 	 * @param host host
 	 * @param requestConfig HTTP client request config
 	 * @param bufferSize configure buffer size
-	 * @param objectMapper Jackson object mapper
+	 * @param jsonMapper Jackson JSON mapper
 	 * @param httpHeaders passed headers
 	 * @param providers header providers
 	 * @param defaultIntervalMinutes forecast interval minutes
 	 */
 	public ForecastRatingProposalUpdate(HttpClient httpClient, TrolieHost host, RequestConfig requestConfig,
-										int bufferSize, ObjectMapper objectMapper, Map<String, String> httpHeaders,
+										int bufferSize, JsonMapper jsonMapper, Map<String, String> httpHeaders,
 										List<RequestHeaderProvider> providers, int defaultIntervalMinutes) {
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers);
+		super(httpClient, host, requestConfig, bufferSize, jsonMapper, httpHeaders, providers);
 		this.defaultIntervalMinutes = defaultIntervalMinutes;
 	}
 
@@ -93,7 +93,7 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 	protected Function<HttpEntity,ForecastRatingProposalStatus> getResponseHandler() {
 		return e -> {
 			try {
-				return objectMapper.readValue(e.getContent(), ForecastRatingProposalStatus.class);
+				return jsonMapper.readValue(e.getContent(), ForecastRatingProposalStatus.class);
 			} catch (Exception e2) {	
 				throw new TrolieException("Failed to parse response",e2);
 			}
@@ -109,7 +109,7 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 
 		validateScope(Scope.MAIN, Scope.BEGIN);
 		try {
-			jsonGenerator = objectMapper
+			jsonGenerator = jsonMapper
 					.createGenerator(createRequestOutputStream());
 		} catch (Exception e) {
 			throw new TrolieException("Error creating request output stream",e);
@@ -118,11 +118,11 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		checkCanWrite();
 
 		try {	
-			jsonGenerator.setCodec(objectMapper);
 			jsonGenerator.writeStartObject();
-			jsonGenerator.writeFieldName("proposal-header");
-			jsonGenerator.writeObject(header);
-			jsonGenerator.writeArrayFieldStart("ratings");
+			jsonGenerator.writeName("proposal-header");
+			jsonMapper.writeValue(jsonGenerator, header);
+			jsonGenerator.writeName("ratings");
+			jsonGenerator.writeStartArray();
 		} catch (Exception e) {
 			handleWriteError(e);
 		}
@@ -141,9 +141,10 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		try {
 			validateScope(Scope.RATING, Scope.MAIN);
 			jsonGenerator.writeStartObject();
-			jsonGenerator.writeFieldName("resource-id");
+			jsonGenerator.writeName("resource-id");
 			jsonGenerator.writeString(resourceId);
-			jsonGenerator.writeArrayFieldStart("periods");
+			jsonGenerator.writeName("periods");
+			jsonGenerator.writeStartArray();
 		} catch (Exception e) {
 			handleWriteError(e);
 		}
@@ -175,7 +176,7 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 		checkCanWrite();
 		try {
 			validateScope(Scope.RATING, Scope.RATING);
-			jsonGenerator.writeObject(forecastRatingPeriod);
+			jsonMapper.writeValue(jsonGenerator, forecastRatingPeriod);
 		} catch (Exception e) {
 			handleWriteError(e);
 		}

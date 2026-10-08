@@ -1,7 +1,5 @@
 package energy.trolie.client.impl.request;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.StreamingResponseReceiver;
 import energy.trolie.client.StreamingSubscribedResponseReceiver;
@@ -20,6 +18,7 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -52,7 +51,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 	List<RequestHeaderProvider> providers;
 	protected boolean lastRequestFailed = false;
 
-	protected JsonFactory jsonFactory;
+	protected JsonMapper jsonMapper;
 	protected T receiver;
 
 	protected boolean didLastRequestFail() {
@@ -76,7 +75,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 			TrolieHost host,
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers,
 			T receiver) {
@@ -85,7 +84,7 @@ public abstract class AbstractStreamingGet<T extends StreamingResponseReceiver> 
 		this.host = host;
 		this.requestConfig = requestConfig;
 		this.bufferSize = bufferSize;
-		this.jsonFactory = new JsonFactory(objectMapper);
+		this.jsonMapper = jsonMapper;
 		this.receiver = receiver;
 		this.threadPoolExecutor = new ThreadPoolExecutor(2,2,10,
 				TimeUnit.SECONDS, new LinkedBlockingDeque<>());
