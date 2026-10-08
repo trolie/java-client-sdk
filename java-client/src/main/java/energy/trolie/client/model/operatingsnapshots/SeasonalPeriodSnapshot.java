@@ -2,7 +2,6 @@ package energy.trolie.client.model.operatingsnapshots;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import energy.trolie.client.model.common.CurrentSource;
 import energy.trolie.client.model.common.EmergencyRatingValue;
 import energy.trolie.client.model.common.RatingValue;
 import lombok.AllArgsConstructor;
@@ -42,11 +41,4 @@ public class SeasonalPeriodSnapshot {
 
     @JsonProperty("emergency-operating-limits")
     private List<EmergencyRatingValue> emergencyOperatingLimits;
-
-    /**
-     * Optional origin/quality of the rating value, e.g. telemetered, calculated,
-     * estimated, or manual.
-     */
-    @JsonProperty("current-source")
-    private CurrentSource currentSource;
 }
