@@ -8,6 +8,8 @@ import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotReceiver;
 import energy.trolie.client.request.operatingsnapshots.RealTimeSnapshotSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotReceiver;
 import energy.trolie.client.request.operatingsnapshots.SeasonalSnapshotSubscribedReceiver;
+import energy.trolie.client.model.temporaryaarexceptions.TemporaryAARException;
+import energy.trolie.client.model.temporaryaarexceptions.TemporaryAARExceptionRequest;
 import energy.trolie.client.request.ratingproposals.ForecastRatingProposalUpdate;
 import energy.trolie.client.request.ratingproposals.RealTimeRatingProposalUpdate;
 import lombok.NonNull;
@@ -15,6 +17,7 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 
 import java.io.Closeable;
 import java.time.Instant;
+import java.util.List;
 
 
 /**
@@ -440,6 +443,62 @@ public interface TrolieClient extends Closeable {
      */
     RequestSubscription subscribeToInUseSeasonalSnapshotUpdates(
             SeasonalSnapshotSubscribedReceiver receiver);
+
+    /**
+     * <p>Create a new Temporary AAR Exception.</p>
+     * <p>Note: unlike most other TROLIE operations in this SDK, this is a simple
+     * synchronous call, given that Temporary AAR Exceptions are small, individually
+     * addressable objects rather than large time-series payloads.</p>
+     *
+     * @param request populated request. Must not include an {@code id}, as this is
+     *                assigned by the server.
+     * @return the created Temporary AAR Exception, including its server-assigned id.
+     */
+    TemporaryAARException createTemporaryAARException(@NonNull TemporaryAARExceptionRequest request);
+
+    /**
+     * Fetch a specific Temporary AAR Exception by its id.
+     *
+     * @param id the Temporary AAR Exception's id
+     * @return the Temporary AAR Exception
+     */
+    TemporaryAARException getTemporaryAARException(@NonNull String id);
+
+    /**
+     * Search for Temporary AAR Exceptions, optionally filtered by operating period,
+     * segment, and/or monitoring set.
+     *
+     * @param periodStart optional. Only Temporary AAR Exceptions overlapping this period start onward will be returned.
+     * @param periodEnd optional. Only Temporary AAR Exceptions overlapping up to this period end will be returned.
+     * @param segment optional. Only return Temporary AAR Exceptions for this segment.
+     * @param monitoringSet optional. Only return Temporary AAR Exceptions for facilities in this monitoring set.
+     * @return list of matching Temporary AAR Exceptions.
+     */
+    List<TemporaryAARException> getTemporaryAARExceptions(Instant periodStart, Instant periodEnd, String segment, String monitoringSet);
+
+    /**
+     * Equivalent to {@link #getTemporaryAARExceptions(Instant, Instant, String, String)}, with no filters applied.
+     *
+     * @return list of all Temporary AAR Exceptions.
+     */
+    List<TemporaryAARException> getTemporaryAARExceptions();
+
+    /**
+     * <p>Update an existing Temporary AAR Exception.</p>
+     * <p>TROLIE does not define a separate operation for terminating a Temporary AAR
+     * Exception. To terminate one, submit an update with an earlier {@code end-time}.</p>
+     *
+     * @param id the id of the Temporary AAR Exception to update.
+     * @param request populated request representing the full, updated state of the Temporary AAR Exception.
+     */
+    void updateTemporaryAARException(@NonNull String id, @NonNull TemporaryAARExceptionRequest request);
+
+    /**
+     * Delete a specific Temporary AAR Exception by its id.
+     *
+     * @param id the id of the Temporary AAR Exception to delete.
+     */
+    void deleteTemporaryAARException(@NonNull String id);
 
     /**
      * Un-subscribe an active polling request

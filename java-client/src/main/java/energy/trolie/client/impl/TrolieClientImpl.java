@@ -21,6 +21,13 @@ import energy.trolie.client.impl.request.operatingsnapshots.RegionalRealTimeSnap
 import energy.trolie.client.impl.request.operatingsnapshots.RegionalRealTimeSnapshotSubscribedRequest;
 import energy.trolie.client.impl.request.operatingsnapshots.SeasonalSnapshotRequest;
 import energy.trolie.client.impl.request.operatingsnapshots.SeasonalSnapshotSubscribedRequest;
+import energy.trolie.client.impl.request.temporaryaarexceptions.CreateTemporaryAARExceptionRequest;
+import energy.trolie.client.impl.request.temporaryaarexceptions.DeleteTemporaryAARExceptionRequest;
+import energy.trolie.client.impl.request.temporaryaarexceptions.GetTemporaryAARExceptionRequest;
+import energy.trolie.client.impl.request.temporaryaarexceptions.GetTemporaryAARExceptionsRequest;
+import energy.trolie.client.impl.request.temporaryaarexceptions.UpdateTemporaryAARExceptionRequest;
+import energy.trolie.client.model.temporaryaarexceptions.TemporaryAARException;
+import energy.trolie.client.model.temporaryaarexceptions.TemporaryAARExceptionRequest;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsSubscribedReceiver;
 import energy.trolie.client.request.operatingsnapshots.ForecastSnapshotReceiver;
@@ -450,6 +457,42 @@ public class TrolieClientImpl implements TrolieClient {
 
 	}
 
+	@Override
+	public TemporaryAARException createTemporaryAARException(TemporaryAARExceptionRequest request) {
+		return new CreateTemporaryAARExceptionRequest(
+				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, request).execute();
+	}
+
+	@Override
+	public TemporaryAARException getTemporaryAARException(String id) {
+		return new GetTemporaryAARExceptionRequest(
+				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, id).execute();
+	}
+
+	@Override
+	public List<TemporaryAARException> getTemporaryAARExceptions(Instant periodStart, Instant periodEnd,
+																  String segment, String monitoringSet) {
+		return new GetTemporaryAARExceptionsRequest(
+				httpClient, host, requestConfig, objectMapper, httpHeaders, providers,
+				periodStart, periodEnd, segment, monitoringSet).execute();
+	}
+
+	@Override
+	public List<TemporaryAARException> getTemporaryAARExceptions() {
+		return getTemporaryAARExceptions(null, null, null, null);
+	}
+
+	@Override
+	public void updateTemporaryAARException(String id, TemporaryAARExceptionRequest request) {
+		new UpdateTemporaryAARExceptionRequest(
+				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, id, request).execute();
+	}
+
+	@Override
+	public void deleteTemporaryAARException(String id) {
+		new DeleteTemporaryAARExceptionRequest(
+				httpClient, host, requestConfig, objectMapper, httpHeaders, providers, id).execute();
+	}
 
 	@Override
 	public void close() throws IOException {
