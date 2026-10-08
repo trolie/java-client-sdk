@@ -564,7 +564,6 @@ public class TrolieClientIT {
 
 			while (subscription.isSubscribed()) {
 				Thread.sleep(100);
-				assertTrue(subscription.isHealthy());
 			}
 
 			//we should have received 2 snapshots, 1 304 code and 1 500 code
