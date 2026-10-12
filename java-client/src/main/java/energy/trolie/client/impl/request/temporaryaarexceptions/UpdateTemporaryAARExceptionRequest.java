@@ -1,6 +1,5 @@
 package energy.trolie.client.impl.request.temporaryaarexceptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
@@ -12,6 +11,7 @@ import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -34,12 +34,12 @@ public class UpdateTemporaryAARExceptionRequest extends AbstractTemporaryAARExce
 			HttpClient httpClient,
 			TrolieHost host,
 			RequestConfig requestConfig,
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers,
 			String id,
 			TemporaryAARExceptionRequest requestBody) {
-		super(httpClient, host, requestConfig, objectMapper, httpHeaders, providers);
+		super(httpClient, host, requestConfig, jsonMapper, httpHeaders, providers);
 		if (id == null || id.isBlank()) {
 			throw new IllegalArgumentException("Temporary AAR Exception id cannot be null or blank");
 		}
@@ -51,7 +51,7 @@ public class UpdateTemporaryAARExceptionRequest extends AbstractTemporaryAARExce
 	protected HttpUriRequestBase createRequest() throws URISyntaxException, IOException {
 		HttpPut put = new HttpPut(getFullPath());
 		appendPath(put, id);
-		String json = objectMapper.writeValueAsString(requestBody);
+		String json = jsonMapper.writeValueAsString(requestBody);
 		put.setEntity(new StringEntity(json, ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
 		put.addHeader(HttpHeaders.CONTENT_TYPE, TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION);
 		return put;

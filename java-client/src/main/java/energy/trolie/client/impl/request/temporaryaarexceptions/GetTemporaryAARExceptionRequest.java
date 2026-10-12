@@ -1,6 +1,5 @@
 package energy.trolie.client.impl.request.temporaryaarexceptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
@@ -11,6 +10,7 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -28,11 +28,11 @@ public class GetTemporaryAARExceptionRequest extends AbstractTemporaryAARExcepti
 			HttpClient httpClient,
 			TrolieHost host,
 			RequestConfig requestConfig,
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers,
 			String id) {
-		super(httpClient, host, requestConfig, objectMapper, httpHeaders, providers);
+		super(httpClient, host, requestConfig, jsonMapper, httpHeaders, providers);
 		if (id == null || id.isBlank()) {
 			throw new IllegalArgumentException("Temporary AAR Exception id cannot be null or blank");
 		}
@@ -49,7 +49,7 @@ public class GetTemporaryAARExceptionRequest extends AbstractTemporaryAARExcepti
 
 	@Override
 	protected TemporaryAARException handleEntity(HttpEntity entity) throws IOException {
-		return objectMapper.readValue(entity.getContent(), TemporaryAARException.class);
+		return jsonMapper.readValue(entity.getContent(), TemporaryAARException.class);
 	}
 
 }

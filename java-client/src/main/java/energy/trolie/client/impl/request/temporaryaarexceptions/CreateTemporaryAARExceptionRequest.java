@@ -1,6 +1,5 @@
 package energy.trolie.client.impl.request.temporaryaarexceptions;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
@@ -14,6 +13,7 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.io.entity.StringEntity;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,18 +30,18 @@ public class CreateTemporaryAARExceptionRequest extends AbstractTemporaryAARExce
 			HttpClient httpClient,
 			TrolieHost host,
 			RequestConfig requestConfig,
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers,
 			TemporaryAARExceptionRequest requestBody) {
-		super(httpClient, host, requestConfig, objectMapper, httpHeaders, providers);
+		super(httpClient, host, requestConfig, jsonMapper, httpHeaders, providers);
 		this.requestBody = requestBody;
 	}
 
 	@Override
 	protected HttpUriRequestBase createRequest() throws IOException {
 		HttpPost post = new HttpPost(getFullPath());
-		String json = objectMapper.writeValueAsString(requestBody);
+		String json = jsonMapper.writeValueAsString(requestBody);
 		post.setEntity(new StringEntity(json, ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
 		post.addHeader(HttpHeaders.CONTENT_TYPE, TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION);
 		post.addHeader(HttpHeaders.ACCEPT, TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION);
@@ -50,7 +50,7 @@ public class CreateTemporaryAARExceptionRequest extends AbstractTemporaryAARExce
 
 	@Override
 	protected TemporaryAARException handleEntity(HttpEntity entity) throws IOException {
-		return objectMapper.readValue(entity.getContent(), TemporaryAARException.class);
+		return jsonMapper.readValue(entity.getContent(), TemporaryAARException.class);
 	}
 
 }

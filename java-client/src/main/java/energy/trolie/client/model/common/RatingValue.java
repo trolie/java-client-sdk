@@ -1,9 +1,7 @@
 package energy.trolie.client.model.common;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import energy.trolie.client.impl.model.common.RatingValueDeserializer;
-import energy.trolie.client.impl.model.common.RatingValueSerializer;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -22,8 +20,6 @@ import java.util.Map;
  * Clients may wish to write defensive code as appropriate to the actual units
  * of a given exchange.  </p>
  */
-@JsonSerialize(using = RatingValueSerializer.class)
-@JsonDeserialize(using = RatingValueDeserializer.class)
 @ToString
 @EqualsAndHashCode
 @Getter
@@ -32,6 +28,7 @@ public class RatingValue {
     /**
      * Gets the raw value of the rating as would be marshalled to JSON.
      */
+    @JsonValue
     private final Map<String,Float> values;
 
     private RatingValue(Map<String,Float> values) {
@@ -45,6 +42,7 @@ public class RatingValue {
      * @param values map representing a JSON map as defined in the TROLIE specification
      * @return new instance
      */
+    @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
     public static RatingValue ofMappedJson(Map<String,Float> values) {
         return new RatingValue(values);
     }

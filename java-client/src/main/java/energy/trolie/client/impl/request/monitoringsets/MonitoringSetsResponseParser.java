@@ -1,7 +1,5 @@
 package energy.trolie.client.impl.request.monitoringsets;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
 import energy.trolie.client.exception.StreamingGetConnectionException;
 import energy.trolie.client.exception.StreamingGetHandlingException;
 import energy.trolie.client.model.monitoringsets.MonitoringSet;
@@ -10,8 +8,10 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.exc.JacksonIOException;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -25,13 +25,13 @@ public class MonitoringSetsResponseParser {
 	
 	MonitoringSetsReceiver receiver;
 
-	public Boolean parseResponse(InputStream inputStream, JsonFactory jsonFactory) {
+	public Boolean parseResponse(InputStream inputStream, JsonMapper jsonMapper) {
 
-		try (JsonParser parser = jsonFactory.createParser(inputStream)) {
+		try (JsonParser parser = jsonMapper.createParser(inputStream)) {
 			MonitoringSet monitoringSet = parser.readValueAs(MonitoringSet.class);
 			receiver.monitoringSet(monitoringSet);
 			return true;
-		} catch (IOException e) {
+		} catch (JacksonIOException e) {
 			logger.error("I/O error handling response",e);
 			receiver.error(new StreamingGetConnectionException(e));
 		} catch (Exception e) {

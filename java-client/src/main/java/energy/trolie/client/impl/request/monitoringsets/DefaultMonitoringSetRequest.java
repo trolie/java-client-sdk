@@ -1,6 +1,5 @@
 package energy.trolie.client.impl.request.monitoringsets;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
 import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
@@ -8,6 +7,7 @@ import energy.trolie.client.impl.request.AbstractStreamingGet;
 import energy.trolie.client.request.monitoringsets.MonitoringSetsReceiver;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.RequestConfig;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.InputStream;
 import java.util.List;
@@ -24,12 +24,12 @@ public class DefaultMonitoringSetRequest extends AbstractStreamingGet<Monitoring
 			TrolieHost host,
 			RequestConfig requestConfig,
 			int bufferSize, 
-			ObjectMapper objectMapper,
+			JsonMapper jsonMapper,
 			Map<String, String> httpHeaders,
 			List<RequestHeaderProvider> providers,
 			MonitoringSetsReceiver receiver) {
 		
-		super(httpClient, host, requestConfig, bufferSize, objectMapper, httpHeaders, providers, receiver);
+		super(httpClient, host, requestConfig, bufferSize, jsonMapper, httpHeaders, providers, receiver);
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class DefaultMonitoringSetRequest extends AbstractStreamingGet<Monitoring
 
 	@Override
 	protected Boolean handleResponseContent(InputStream inputStream) {
-		return new MonitoringSetsResponseParser(receiver).parseResponse(inputStream, jsonFactory);
+		return new MonitoringSetsResponseParser(receiver).parseResponse(inputStream, jsonMapper);
 	}
 
 	
