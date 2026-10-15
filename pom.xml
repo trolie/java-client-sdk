@@ -76,7 +76,7 @@
         <version.lombok>1.18.48</version.lombok>
 
         <version.jackson>3.2.3</version.jackson>
-        <version.httpclient5>5.6.4</version.httpclient5>
+        <version.httpclient5>5.6.5</version.httpclient5>
 
 	    <version.slf4j>2.0.20</version.slf4j>
 	    <version.logback>1.6.5</version.logback>
