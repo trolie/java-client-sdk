@@ -55,47 +55,4 @@ public enum LimitingAnalysis {
      */
     OTHER;
 
-
-    /**
-     * Convert from domain LimitingAnalysisType to DTO LimitingAnalysis.
-     *
-     * @param domainType the domain enum value
-     * @return the corresponding DTO enum value, or null if input is null
-     */
-    public static LimitingAnalysis fromDomain(LimitingAnalysisType domainType) {
-        if (domainType == null) {
-            return null;
-        }
-
-        return switch (domainType) {
-            case THERMAL_RATING -> THERMAL_RATING;
-            case TRANSIENT_SECURITY_ASSESSMENT -> TRANSIENT_SECURITY_ASSESSMENT;
-            case VOLTAGE_SECURITY_ASSESSMENT -> VOLTAGE_SECURITY_ASSESSMENT;
-            case SMALL_SIGNAL_STABILITY_ASSESSMENT -> SMALL_SIGNAL_STABILITY_ASSESSMENT;
-            case SYSTEM_SPECIFIC -> SYSTEM_SPECIFIC;
-            case ENVIRONMENTAL_CONDITIONS -> ENVIRONMENTAL_CONDITIONS;
-            case REGULATORY_REQUIREMENTS -> REGULATORY_REQUIREMENTS;
-            case CONTRACT_CAPACITY -> CONTRACT_CAPACITY;
-            case OTHER -> OTHER;
-        };
-    }
-
-    /**
-     * Convert to domain LimitingAnalysisType from DTO LimitingAnalysis.
-     *
-     * @return the corresponding domain enum value, or null if this is null
-     */
-    public LimitingAnalysisType toDomain() {
-        return switch (this) {
-            case THERMAL_RATING -> LimitingAnalysisType.THERMAL_RATING;
-            case TRANSIENT_SECURITY_ASSESSMENT -> LimitingAnalysisType.TRANSIENT_SECURITY_ASSESSMENT;
-            case VOLTAGE_SECURITY_ASSESSMENT -> LimitingAnalysisType.VOLTAGE_SECURITY_ASSESSMENT;
-            case SMALL_SIGNAL_STABILITY_ASSESSMENT -> LimitingAnalysisType.SMALL_SIGNAL_STABILITY_ASSESSMENT;
-            case SYSTEM_SPECIFIC -> LimitingAnalysisType.SYSTEM_SPECIFIC;
-            case ENVIRONMENTAL_CONDITIONS -> LimitingAnalysisType.ENVIRONMENTAL_CONDITIONS;
-            case REGULATORY_REQUIREMENTS -> LimitingAnalysisType.REGULATORY_REQUIREMENTS;
-            case CONTRACT_CAPACITY -> LimitingAnalysisType.CONTRACT_CAPACITY;
-            case OTHER -> LimitingAnalysisType.OTHER;
-        };
-    }
 }
