@@ -1,5 +1,8 @@
 package energy.trolie.client.model.common;
 
+import energy.trolie.client.model.operatingsnapshots.ForecastPeriodSnapshot;
+import energy.trolie.client.model.operatingsnapshots.RealTimeLimit;
+import energy.trolie.client.model.operatingsnapshots.SeasonalPeriodSnapshot;
 import energy.trolie.client.model.ratingproposals.RealTimeRating;
 import energy.trolie.client.model.ratingproposals.ForecastRatingPeriod;
 import org.junit.jupiter.api.Test;
@@ -136,6 +139,99 @@ class LimitingAnalysisTest {
 
         assertEquals(
                 LimitingAnalysis.VOLTAGE_SECURITY_ASSESSMENT,
+                roundTripped.getLimitingAnalysis());
+    }
+
+    @Test
+    void field_is_optional_on_forecast_period_snapshot() throws IOException {
+        ForecastPeriodSnapshot withoutLimitingAnalysis = ForecastPeriodSnapshot.builder()
+                .periodStart(Instant.parse("2024-01-01T00:00:00Z"))
+                .periodEnd(Instant.parse("2024-01-01T01:00:00Z"))
+                .continuousOperatingLimit(RatingValue.fromMva(100f))
+                .build();
+
+        String json = jsonMapper.writeValueAsString(withoutLimitingAnalysis);
+        ForecastPeriodSnapshot roundTripped = jsonMapper.readValue(json, ForecastPeriodSnapshot.class);
+
+        assertNull(roundTripped.getLimitingAnalysis());
+    }
+
+    @Test
+    void field_round_trips_on_forecast_period_snapshot() throws IOException {
+        ForecastPeriodSnapshot withLimitingAnalysis = ForecastPeriodSnapshot.builder()
+                .periodStart(Instant.parse("2024-01-01T00:00:00Z"))
+                .periodEnd(Instant.parse("2024-01-01T01:00:00Z"))
+                .continuousOperatingLimit(RatingValue.fromMva(100f))
+                .limitingAnalysis(LimitingAnalysis.TRANSIENT_SECURITY_ASSESSMENT)
+                .build();
+
+        String json = jsonMapper.writeValueAsString(withLimitingAnalysis);
+        ForecastPeriodSnapshot roundTripped = jsonMapper.readValue(json, ForecastPeriodSnapshot.class);
+
+        assertEquals(
+                LimitingAnalysis.TRANSIENT_SECURITY_ASSESSMENT,
+                roundTripped.getLimitingAnalysis());
+    }
+
+    @Test
+    void field_is_optional_on_seasonal_period_snapshot() throws IOException {
+        SeasonalPeriodSnapshot withoutLimitingAnalysis = SeasonalPeriodSnapshot.builder()
+                .periodStart(Instant.parse("2024-01-01T00:00:00Z"))
+                .periodEnd(Instant.parse("2024-01-31T23:59:59Z"))
+                .seasonName("Winter")
+                .continuousOperatingLimit(RatingValue.fromMva(100f))
+                .build();
+
+        String json = jsonMapper.writeValueAsString(withoutLimitingAnalysis);
+        SeasonalPeriodSnapshot roundTripped = jsonMapper.readValue(json, SeasonalPeriodSnapshot.class);
+
+        assertNull(roundTripped.getLimitingAnalysis());
+    }
+
+    @Test
+    void field_round_trips_on_seasonal_period_snapshot() throws IOException {
+        SeasonalPeriodSnapshot withLimitingAnalysis = SeasonalPeriodSnapshot.builder()
+                .periodStart(Instant.parse("2024-01-01T00:00:00Z"))
+                .periodEnd(Instant.parse("2024-01-31T23:59:59Z"))
+                .seasonName("Winter")
+                .continuousOperatingLimit(RatingValue.fromMva(100f))
+                .limitingAnalysis(LimitingAnalysis.ENVIRONMENTAL_CONDITIONS)
+                .build();
+
+        String json = jsonMapper.writeValueAsString(withLimitingAnalysis);
+        SeasonalPeriodSnapshot roundTripped = jsonMapper.readValue(json, SeasonalPeriodSnapshot.class);
+
+        assertEquals(
+                LimitingAnalysis.ENVIRONMENTAL_CONDITIONS,
+                roundTripped.getLimitingAnalysis());
+    }
+
+    @Test
+    void field_is_optional_on_real_time_limit() throws IOException {
+        RealTimeLimit withoutLimitingAnalysis = RealTimeLimit.builder()
+                .resourceId("resource1")
+                .continuousOperatingLimit(RatingValue.fromMva(100f))
+                .build();
+
+        String json = jsonMapper.writeValueAsString(withoutLimitingAnalysis);
+        RealTimeLimit roundTripped = jsonMapper.readValue(json, RealTimeLimit.class);
+
+        assertNull(roundTripped.getLimitingAnalysis());
+    }
+
+    @Test
+    void field_round_trips_on_real_time_limit() throws IOException {
+        RealTimeLimit withLimitingAnalysis = RealTimeLimit.builder()
+                .resourceId("resource1")
+                .continuousOperatingLimit(RatingValue.fromMva(100f))
+                .limitingAnalysis(LimitingAnalysis.SYSTEM_SPECIFIC)
+                .build();
+
+        String json = jsonMapper.writeValueAsString(withLimitingAnalysis);
+        RealTimeLimit roundTripped = jsonMapper.readValue(json, RealTimeLimit.class);
+
+        assertEquals(
+                LimitingAnalysis.SYSTEM_SPECIFIC,
                 roundTripped.getLimitingAnalysis());
     }
 }

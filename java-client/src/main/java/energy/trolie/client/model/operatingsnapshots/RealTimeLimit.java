@@ -2,6 +2,7 @@ package energy.trolie.client.model.operatingsnapshots;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import energy.trolie.client.model.common.EmergencyRatingValue;
+import energy.trolie.client.model.common.LimitingAnalysis;
 import energy.trolie.client.model.common.RatingValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,5 +32,8 @@ public class RealTimeLimit {
 
     @JsonProperty("emergency-operating-limits")
     private List<EmergencyRatingValue> emergencyOperatingLimits;
+
+    @JsonProperty("limiting-analysis")
+    private LimitingAnalysis limitingAnalysis;
 
 }
