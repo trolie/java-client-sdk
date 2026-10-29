@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import energy.trolie.client.model.common.EmergencyRatingValue;
 import energy.trolie.client.model.common.RatingValue;
-
+import energy.trolie.client.model.common.LimitingAnalysis;
 import java.time.Instant;
 import java.util.List;
 
@@ -48,4 +48,8 @@ public class ForecastRatingPeriod {
      */
     @JsonProperty("current-source")
     private CurrentSource currentSource;
+
+    @JsonProperty("limiting-analysis")
+    private LimitingAnalysis limitingAnalysis;
+
 }

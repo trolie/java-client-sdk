@@ -10,6 +10,7 @@ import energy.trolie.client.model.common.CurrentSource;
 import energy.trolie.client.model.common.EmergencyRatingValue;
 import energy.trolie.client.model.common.InputValue;
 import energy.trolie.client.model.common.RatingValue;
+import energy.trolie.client.model.common.LimitingAnalysis;
 
 import java.util.List;
 
@@ -41,4 +42,8 @@ public class RealTimeRating {
      */
     @JsonProperty("current-source")
     private CurrentSource currentSource;
+
+    @JsonProperty("limiting-analysis")
+    private LimitingAnalysis limitingAnalysis;
+
 }
