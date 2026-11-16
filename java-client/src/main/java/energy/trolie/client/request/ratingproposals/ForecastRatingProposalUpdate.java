@@ -85,6 +85,11 @@ public class ForecastRatingProposalUpdate extends AbstractStreamingUpdate<Foreca
 	}
 
 	@Override
+	protected ContentType getAcceptType() {
+		return ContentType.create(TrolieApiConstants.CONTENT_TYPE_FORECAST_PROPOSAL_STATUS);
+	}
+
+	@Override
 	protected String getPath() {
 		return TrolieApiConstants.PATH_FORECAST_PROPOSAL;
 	}

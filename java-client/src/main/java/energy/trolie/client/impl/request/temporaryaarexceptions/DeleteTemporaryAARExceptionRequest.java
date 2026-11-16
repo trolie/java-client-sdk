@@ -2,11 +2,13 @@ package energy.trolie.client.impl.request.temporaryaarexceptions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import energy.trolie.client.RequestHeaderProvider;
+import energy.trolie.client.TrolieApiConstants;
 import energy.trolie.client.TrolieHost;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.http.HttpHeaders;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -39,6 +41,7 @@ public class DeleteTemporaryAARExceptionRequest extends AbstractTemporaryAARExce
 	protected HttpUriRequestBase createRequest() throws URISyntaxException {
 		HttpDelete delete = new HttpDelete(getFullPath());
 		appendPath(delete, id);
+		delete.addHeader(HttpHeaders.ACCEPT, TrolieApiConstants.ACCEPT_ANY);
 		return delete;
 	}
 

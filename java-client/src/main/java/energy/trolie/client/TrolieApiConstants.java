@@ -79,6 +79,11 @@ public class TrolieApiConstants {
 	public static final String CONTENT_TYPE_REALTIME_PROPOSAL = "application/vnd.trolie.rating-realtime-proposal.v1+json";
 
 	/**
+	 * Content type for real-time proposal status responses.
+	 */
+	public static final String CONTENT_TYPE_REALTIME_PROPOSAL_STATUS = "application/vnd.trolie.rating-realtime-proposal-status.v1+json";
+
+	/**
 	 * Content type for forecast limit snapshots
 	 */
 	public static final String CONTENT_TYPE_FORECAST_SNAPSHOT = "application/vnd.trolie.forecast-limits-snapshot.v1+json";
@@ -87,6 +92,11 @@ public class TrolieApiConstants {
 	 * Content type for forecast proposals
 	 */
 	public static final String CONTENT_TYPE_FORECAST_PROPOSAL = "application/vnd.trolie.rating-forecast-proposal.v1+json";
+
+	/**
+	 * Content type for forecast proposal status responses.
+	 */
+	public static final String CONTENT_TYPE_FORECAST_PROPOSAL_STATUS = "application/vnd.trolie.rating-forecast-proposal-status.v1+json";
 
 	/**
 	 * Content type for monitoring sets.
@@ -102,6 +112,12 @@ public class TrolieApiConstants {
 	 * Content type for a set (list) of Temporary AAR Exceptions.
 	 */
 	public static final String CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION_SET = "application/vnd.trolie.temporary-aar-exception-set.v1+json";
+
+	/**
+	 * Accept header value for operations whose response media type is not explicitly defined
+	 * by the specification (e.g. operations returning HTTP 204 No Content).
+	 */
+	public static final String ACCEPT_ANY = "*/*";
 
 	/**
 	 * Common query parameter name for monitoring set filter.
