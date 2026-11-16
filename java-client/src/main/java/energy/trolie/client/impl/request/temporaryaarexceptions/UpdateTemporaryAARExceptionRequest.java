@@ -54,6 +54,7 @@ public class UpdateTemporaryAARExceptionRequest extends AbstractTemporaryAARExce
 		String json = jsonMapper.writeValueAsString(requestBody);
 		put.setEntity(new StringEntity(json, ContentType.create(TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION)));
 		put.addHeader(HttpHeaders.CONTENT_TYPE, TrolieApiConstants.CONTENT_TYPE_TEMPORARY_AAR_EXCEPTION);
+		put.addHeader(HttpHeaders.ACCEPT, TrolieApiConstants.ACCEPT_ANY);
 		return put;
 	}
 

@@ -81,6 +81,12 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 
 	/**
 	 *
+	 * @return media type to send in the Accept header for this update
+	 */
+	protected abstract ContentType getAcceptType();
+
+	/**
+	 *
 	 * @return HTTP path associated with this update
 	 */
 	protected abstract String getPath();
@@ -139,6 +145,7 @@ public abstract class AbstractStreamingUpdate<T> implements StreamingUpdate<T> {
 		//they probably already set these parameters, but may as well make sure
 		HttpUriRequestBase request = getRequest();
 		request.addHeader(HttpHeaders.CONTENT_TYPE, getContentType());
+		request.addHeader(HttpHeaders.ACCEPT, getAcceptType());
 		if (this.httpHeaders != null && !this.httpHeaders.isEmpty()) {
 			httpHeaders.forEach(request::addHeader);
 		}

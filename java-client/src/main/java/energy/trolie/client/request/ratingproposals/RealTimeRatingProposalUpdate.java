@@ -73,6 +73,11 @@ public class RealTimeRatingProposalUpdate extends AbstractStreamingUpdate<RealTi
 	}
 
 	@Override
+	protected ContentType getAcceptType() {
+		return ContentType.create(TrolieApiConstants.CONTENT_TYPE_REALTIME_PROPOSAL_STATUS);
+	}
+
+	@Override
 	protected String getPath() {
 		return TrolieApiConstants.PATH_REALTIME_PROPOSAL;
 	}
